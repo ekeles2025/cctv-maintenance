@@ -47,9 +47,10 @@ os.environ['SECRET_KEY'] = 'dev-secret-key-change-in-production'
 app = Flask(__name__)
 app.config.from_object(Config)
 
+# إعداد قاعدة بيانات SQLAlchemy
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 
 SUPPORTED_LANGS = {"ar", "en"}
-
 
 TRANSLATIONS = {
     "ar": {
