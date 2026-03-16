@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{{ t('الفروع المغلقة') }}</h1>
+    <div>
+        <a href="{{ url_for('regions') }}" class="btn btn-secondary">{{ t('العودة للمناطق') }}</a>
+    </div>
+</div>
+
+<!-- Search functionality -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="input-group">
+            <span class="input-group-text">
+                <i class="fas fa-search"></i>
+            </span>
+            <input type="text" id="closedBranchSearch" class="form-control" placeholder="{% if current_lang == 'ar' %}ابحث عن فرع مغلق...{% else %}Search closed branch...{% endif %}">
+        </div>
+    </div>
+</div>
+
+<div class="stat-card">
+    {% if branches %}
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>{{ t('الرقم') }}</th>
+                    <th>{{ t('اسم الفرع') }}</th>
+                    <th>{{ t('الموقع') }}</th>
+                    <th>{{ t('المنطقة') }}</th>
+                    <th>{{ t('سبب الإغلاق') }}</th>
+                    <th>{{ t('اسم المبلغ') }}</th>
+                    <th>{{ t('تاريخ الإغلاق') }}</th>
+                    <th>{{ t('الإجراءات') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for branch_data in branches %}
+                {% set branch = branch_data.branch %}
+                {% set row_number = branch_data.row_number %}
+                <tr>
+                    <td>{{ row_number }}</td>
+                    <td>
+                        <span class="badge bg-danger">{{ branch.name }}</span>
+                    </td>
+                    <td>{{ branch.location or '-' }}</td>
+                    <td>{{ branch.region.name if branch.region else '-' }}</td>
+                    <td>
+                        <span class="text-muted">{{ branch.closure_reason or '-' }}</span>
+                    </td>
+                    <td>{{ branch.reporter_name or '-' }}</td>
+                    <td>
+                        {% if branch.closure_date %}
+                            {{ branch.closure_date | local_dt }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-success" onclick="reopenBranch({{ branch.id }}, '{{ branch.name|replace("'", "\\'") }}')">
+                            <i class="fas fa-unlock me-1"></i>{{ t('إعادة فتح') }}
+                        </button>
+                        <a href="{{ url_for('cameras', branch_id=branch.id) }}" class="btn btn-sm btn-info">{{ t('الكاميرات') }}</a>
+                        <a href="{{ url_for('devices', branch_id=branch.id) }}" class="btn btn-sm btn-primary">{{ t('الأجهزة') }}</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-lock fa-3x text-muted mb-3"></i>
+        <h4 class="text-muted">{{ t('لا توجد فروع مغلقة') }}</h4>
+        <p class="text-muted">{{ t('جميع الفروع مفتوحة حالياً') }}</p>
+        <a href="{{ url_for('regions') }}" class="btn btn-primary">
+            <i class="fas fa-arrow-left me-2"></i>{{ t('العودة للمناطق') }}
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function reopenBranch(branchId, branchName) {
+    if (confirm('{{ t("هل أنت متأكد من إعادة فتح هذا الفرع؟") }}' + '\n' + '{{ t("الفرع:") }} ' + branchName)) {
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>{{ t("جاري الفتح...") }}';
+        
+        fetch(`/reopen-branch/${branchId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message || '{{ t("تم إعادة فتح الفرع بنجاح") }}');
+                // Remove the row from table
+                const row = btn.closest('tr');
+                row.style.transition = 'opacity 0.3s';
+                row.style.opacity = '0';
+                setTimeout(() => {
+                    row.remove();
+                    // Check if table is empty
+                    const tbody = document.querySelector('tbody');
+                    if (tbody.children.length === 0) {
+                        location.reload();
+                    }
+                }, 300);
+            } else {
+                alert(data.message || '{{ t("حدث خطأ في إعادة فتح الفرع") }}');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('{{ t("حدث خطأ في الاتصال") }}');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        });
+    }
+}
+
+// Search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('closedBranchSearch');
+    const tableRows = document.querySelectorAll('tbody tr');
+    
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        
+        tableRows.forEach(row => {
+            const branchName = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
+            const location = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
+            const region = row.querySelector('td:nth-child(4)')?.textContent.toLowerCase() || '';
+            const reason = row.querySelector('td:nth-child(5)')?.textContent.toLowerCase() || '';
+            const reporter = row.querySelector('td:nth-child(6)')?.textContent.toLowerCase() || '';
+            
+            const matchesSearch = branchName.includes(searchTerm) || 
+                              location.includes(searchTerm) || 
+                              region.includes(searchTerm) ||
+                              reason.includes(searchTerm) ||
+                              reporter.includes(searchTerm);
+            
+            row.style.display = matchesSearch ? '' : 'none';
+        });
+    });
+});
+</script>
+{% endblock %}

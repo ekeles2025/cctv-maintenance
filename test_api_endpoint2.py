@@ -1,0 +1,36 @@
+import sys
+sys.path.append('.')
+from app import app
+from flask import session
+
+# Test the API endpoint directly without login
+try:
+    with app.test_client() as client:
+        print('App test client created successfully')
+        
+        # Test the API endpoint without login (should get 403)
+        response = client.get('/api/camera-faults')
+        print('API endpoint response status (no login):', response.status_code)
+        print('Response data:', response.get_data(as_text=True))
+        
+        # Now simulate login by setting session
+        with client.session_transaction() as sess:
+            sess['user_id'] = 1  # Assuming admin user has ID 1
+            sess['username'] = 'admin'
+            sess['role'] = 'admin'
+            sess['_fresh'] = True
+        
+        # Test the API endpoint with simulated login
+        response = client.get('/api/camera-faults')
+        print('API endpoint response status (with session):', response.status_code)
+        if response.status_code == 500:
+            print('Response data:', response.get_data(as_text=True))
+        elif response.status_code == 200:
+            print('Response data:', response.get_json())
+        else:
+            print('Response data:', response.get_data(as_text=True))
+            
+except Exception as e:
+    print('Error:', e)
+    import traceback
+    traceback.print_exc()

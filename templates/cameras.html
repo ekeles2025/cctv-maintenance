@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{{ _('كاميرات فرع:') }} {{ branch.name }}</h1>
+    <div>
+        <a href="{{ url_for('add_camera', branch_id=branch.id) }}" class="btn btn-primary">➕ {{ _('إضافة كاميرا') }}</a>
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#importExcelModal">
+            📊 {{ _('استيراد Excel') }}
+        </button>
+        {% if cameras %}
+        <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteAllCamerasModal">
+            🗑️ {{ _('حذف جميع الكاميرات') }}
+        </button>
+        {% endif %}
+        <a href="{{ url_for('branches', region_id=branch.region_id) }}" class="btn btn-secondary">{{ _('العودة للفروع') }}</a>
+    </div>
+</div>
+
+<!-- Modal لاستيراد Excel -->
+<div class="modal fade" id="importExcelModal" tabindex="-1" aria-labelledby="importExcelModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importExcelModalLabel">📊 {{ _('استيراد الكاميرات من Excel') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('import_cameras_excel', branch_id=branch.id) }}" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="excel_file" class="form-label">{{ _('اختر ملف Excel') }}</label>
+                        <input type="file" class="form-control" id="excel_file" name="excel_file" accept=".xlsx,.xls" required>
+                        <div class="form-text">
+                            {{ _('ملفات Excel المدعومة: .xlsx, .xls') }}
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <h6>{{ _('تنسيق الملف:') }}</h6>
+                        <p class="mb-0">
+                            <strong>{{ _('اسم الفرع') }} | {{ _('اسم الكاميرا') }} | {{ _('عنوان IP') }} | {{ _('نوع الكاميرا') }} | {{ _('ملاحظات') }}</strong><br>
+                            <small>{{ _('الصف الأول يحتوي على الرؤوس فقط') }}</small><br>
+                            <small>{{ _('سيتم استيراد الكاميرات الخاصة بالفرع الحالي فقط') }}</small><br>
+                            <small>🔍 {{ _('يمكن استيراد الكاميرات بناءً على تطابق عنوان IP مع كاميرات الفرع الموجودة') }}</small><br>
+                            <small>📝 {{ _('سيتم حفظ الملاحظات في حقل الملاحظات الخاص بالكاميرا') }}</small>
+                        </p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('إلغاء') }}</button>
+                    <button type="submit" class="btn btn-success">
+                        📊 {{ _('استيراد') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal لحذف جميع الكاميرات -->
+<div class="modal fade" id="deleteAllCamerasModal" tabindex="-1" aria-labelledby="deleteAllCamerasModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteAllCamerasModalLabel">🗑️ {{ _('حذف جميع الكاميرات') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <h6>⚠️ {{ _('تحذير') }}</h6>
+                    <p class="mb-0">
+                        {{ _('هل أنت متأكد من حذف جميع كاميرات فرع') }} <strong>{{ branch.name }}</strong>؟
+                        <br>
+                        <small>{{ _('هذا الإجراء لا يمكن التراجع عنه وسيؤدي إلى حذف') }} {{ cameras|length }} {{ _('كاميرا') }}</small>
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('لا') }}</button>
+                <form method="POST" action="{{ url_for('delete_all_cameras', branch_id=branch.id) }}" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">
+                        🗑️ {{ _('نعم، حذف جميع الكاميرات') }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="stat-card">
+    {% if cameras %}
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>{{ _('اسم الكاميرا') }}</th>
+                    <th>{{ _('عنوان IP') }}</th>
+                    <th>{{ _('عدد الأعطال') }}</th>
+                    <th>{{ _('الإجراءات') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for camera in cameras %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ camera.name }}</td>
+                    <td>{{ camera.ip_address or _('غير محدد') }}</td>
+                    <td>{{ camera.faults|length }}</td>
+                    <td>
+                        <a href="{{ url_for('faults', camera_id=camera.id) }}" class="btn btn-sm btn-info">{{ _('الأعطال') }}</a>
+                        <a href="{{ url_for('edit_camera', camera_id=camera.id) }}" class="btn btn-sm btn-warning">{{ _('تعديل') }}</a>
+                        <form method="POST" action="{{ url_for('delete_camera', camera_id=camera.id) }}" class="d-inline" onsubmit="return confirm('هل أنت متأكد من الحذف؟');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-danger">{{ _('حذف') }}</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted text-center">{{ _('لا توجد كاميرات مسجلة') }}</p>
+    {% endif %}
+</div>
+{% endblock %}

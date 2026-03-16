@@ -1,0 +1,3216 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: camera-system\n"
+"POT-Creation-Date: 2026-01-30 00:00+0000\n"
+"PO-Revision-Date: 2026-01-30 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: templates/base.html
+msgid "نظام الكاميرات"
+msgstr "Camera System"
+
+#: templates/regions.html
+msgid "السلسلة"
+msgstr "Chain"
+
+#: templates/regions.html
+msgid "مناطق السلسلة"
+msgstr "Chain Regions"
+
+#: templates/regions.html
+msgid "إدارة المناطق"
+msgstr "Manage Regions"
+
+#: templates/regions.html
+msgid "إضافة منطقة داخل هذه السلسلة"
+msgstr "Add Region to This Chain"
+
+#: templates/regions.html
+msgid "العودة للسلاسل"
+msgstr "Back to Chains"
+
+#: templates/regions.html
+msgid "إضافة منطقة جديدة"
+msgstr "Add New Region"
+
+#: templates/regions.html
+msgid "إجمالي المناطق"
+msgstr "Total Regions"
+
+#: templates/regions.html
+msgid "إجمالي الفروع"
+msgstr "Total Branches"
+
+#: templates/regions.html
+msgid "إجمالي الكاميرات"
+msgstr "Total Cameras"
+
+#: templates/regions.html
+msgid "إجمالي الأعطال"
+msgstr "Total Faults"
+
+#: templates/regions.html
+msgid "اسم المنطقة"
+msgstr "Region Name"
+
+#: templates/regions.html
+msgid "عدد الفروع"
+msgstr "Branch Count"
+
+#: templates/regions.html
+msgid "عدد الكاميرات"
+msgstr "Camera Count"
+
+#: templates/regions.html
+msgid "عدد الأعطال"
+msgstr "Fault Count"
+
+#: templates/regions.html
+msgid "الإجراءات"
+msgstr "Actions"
+
+#: templates/regions.html
+msgid "—"
+msgstr "—"
+
+#: templates/regions.html
+msgid "منطقة رئيسية"
+msgstr "Main Region"
+
+#: templates/regions.html
+msgid "الفروع"
+msgstr "Branches"
+
+#: templates/regions.html
+msgid "تعديل"
+msgstr "Edit"
+
+#: templates/regions.html
+msgid "حذف"
+msgstr "Delete"
+
+#: templates/regions.html
+msgid "لا توجد مناطق مسجلة"
+msgstr "No regions registered"
+
+#: templates/regions.html
+msgid "ابدأ بإضافة أول منطقة لنظام الكاميرات"
+msgstr "Start by adding the first region to the camera system"
+
+#: templates/regions.html
+msgid "إضافة أول منطقة"
+msgstr "Add First Region"
+
+#: templates/reports.html
+msgid "تقارير الكاميرات التي تم إصلاحها"
+msgstr "Repaired Cameras Reports"
+
+#: templates/reports.html
+msgid "تنزيل تقارير الكاميرات التي تم إصلاحها"
+msgstr "Download repaired cameras reports"
+
+#: templates/reports.html
+msgid "الكاميرات التي تم إصلاحها"
+msgstr "Repaired Cameras"
+
+#: templates/reports.html
+msgid "تقارير الأجهزة التي تم إصلاحها"
+msgstr "Repaired Devices Reports"
+
+#: templates/reports.html
+msgid "تنزيل تقارير الأجهزة التي تم إصلاحها"
+msgstr "Download repaired devices reports"
+
+#: templates/reports.html
+msgid "الأجهزة التي تم إصلاحها"
+msgstr "Repaired Devices"
+
+#: templates/reports.html
+msgid "الكاميرات المعطلة"
+msgstr "Faulty Cameras"
+
+#: templates/reports.html
+msgid "الأجهزة المعطلة"
+msgstr "Faulty Devices"
+
+#: templates/reports.html
+msgid "تقارير أعطال الكاميرا"
+msgstr "Camera Faults Reports"
+
+#: templates/reports.html
+msgid "تنزيل تقارير مفصلة عن أعطال الكاميرا"
+msgstr "Download detailed camera faults reports"
+
+#: templates/reports.html
+msgid "تقارير أعطال الأجهزة"
+msgstr "Device Faults Reports"
+
+#: templates/reports.html
+msgid "تنزيل تقارير مفصلة عن أعطال الأجهزة"
+msgstr "Download detailed device faults reports"
+
+#: templates/reports.html
+msgid "تقارير جميع الأعطال"
+msgstr "All Faults Reports"
+
+#: templates/reports.html
+msgid "تنزيل تقارير شاملة عن جميع الأعطال"
+msgstr "Download comprehensive all faults reports"
+
+#: templates/reports.html
+msgid "إجمالي أعطال الكاميرا"
+msgstr "Total Camera Faults"
+
+#: templates/reports.html
+msgid "إجمالي أعطال الأجهزة"
+msgstr "Total Device Faults"
+
+#: templates/reports.html
+msgid "إجمالي جميع الأعطال"
+msgstr "Total All Faults"
+
+#: templates/reports.html
+msgid "الأعطال المغلقة"
+msgstr "Closed Faults"
+
+#: templates/reports.html
+msgid "إحصائيات سريعة"
+msgstr "Quick Statistics"
+
+#: templates/upload_document.html
+msgid "رفع المستندات"
+msgstr "Upload Documents"
+
+#: templates/upload_document.html
+msgid "رفع مستند جديد"
+msgstr "Upload New Document"
+
+#: templates/upload_document.html
+msgid "اختر الفرع"
+msgstr "Select Branch"
+
+#: templates/upload_document.html
+msgid "اختر الفرع..."
+msgstr "Select Branch..."
+
+#: templates/upload_document.html
+msgid "اسم الفني"
+msgstr "Technician Name"
+
+#: templates/upload_document.html
+msgid "أدخل اسم الفني"
+msgstr "Enter technician name"
+
+#: templates/upload_document.html
+msgid "ملاحظات"
+msgstr "Notes"
+
+#: templates/upload_document.html
+msgid "أدخل أي ملاحظات إضافية"
+msgstr "Enter any additional notes"
+
+#: templates/upload_document.html
+msgid "ملاحظة هامة:"
+msgstr "Important Note:"
+
+#: templates/upload_document.html
+msgid "عند رفع مستند لـ NVR، سيتم تسجيل عطل تلقائي لجميع كاميرات الفرع"
+msgstr "When uploading a document for NVR, automatic faults will be registered for all cameras in the branch"
+
+#: templates/upload_document.html
+msgid "رفع المستند"
+msgstr "Upload Document"
+
+#: templates/upload_document.html
+msgid "إلغاء"
+msgstr "Cancel"
+
+#: templates/base.html
+msgid "رفع المستندات"
+msgstr "Upload Documents"
+
+#: templates/base.html
+msgid "الرئيسية"
+msgstr "Home"
+
+#: templates/base.html
+msgid "الأعطال"
+msgstr "Faults"
+
+#: templates/base.html
+msgid "الأجهزة المعطلة"
+msgstr "Faulty Devices"
+
+#: templates/base.html
+msgid "استيراد من Excel"
+msgstr "Import Excel"
+
+#: templates/base.html
+msgid "السلاسل"
+msgstr "Chains"
+
+#: templates/base.html
+msgid "المناطق"
+msgstr "Regions"
+
+#: templates/base.html
+msgid "الفنيين"
+msgstr "Technicians"
+
+#: templates/base.html
+msgid "الإعدادات"
+msgstr "Settings"
+
+#: templates/base.html
+msgid "مدير"
+msgstr "Admin"
+
+#: templates/base.html
+msgid "فني"
+msgstr "Technician"
+
+#: templates/base.html
+msgid "تسجيل الخروج"
+msgstr "Logout"
+
+#: templates/login.html
+msgid "تسجيل الدخول"
+msgstr "Sign In"
+
+#: templates/login.html
+msgid "نظام إدارة الكاميرات"
+msgstr "Camera Management System"
+
+#: templates/login.html
+msgid "اسم المستخدم"
+msgstr "Username"
+
+#: templates/login.html
+msgid "كلمة المرور"
+msgstr "Password"
+
+#: templates/login.html
+msgid "أدخل اسم المستخدم"
+msgstr "Enter username"
+
+#: templates/login.html
+msgid "أدخل كلمة المرور"
+msgstr "Enter password"
+
+#: templates/login.html
+msgid "جاري تسجيل الدخول..."
+msgstr "Signing in..."
+
+#: app.py
+msgid "الصفحة المطلوبة غير موجودة"
+msgstr "The requested page was not found"
+
+#: app.py
+msgid "حدث خطأ في الخادم. يرجى المحاولة لاحقاً"
+msgstr "A server error occurred. Please try again later"
+
+#: app.py
+msgid "لا تملك صلاحية للوصول لهذه الصفحة"
+msgstr "You do not have permission to access this page"
+
+#: app.py
+msgid "تم تسجيل الدخول بنجاح"
+msgstr "Signed in successfully"
+
+#: app.py
+msgid "اسم المستخدم أو كلمة المرور غير صحيحة"
+msgstr "Invalid username or password"
+
+#: app.py
+msgid "تم تسجيل الخروج بنجاح"
+msgstr "Signed out successfully"
+
+#: app.py
+msgid "فقط المدير يمكنه الوصول لهذه الصفحة"
+msgstr "Only admins can access this page"
+
+#: app.py
+msgid "فقط المدير يمكنه إضافة سلاسل"
+msgstr "Only admins can add chains"
+
+#: app.py
+msgid "تم إضافة السلسلة بنجاح"
+msgstr "Chain added successfully"
+
+#: app.py
+msgid "فقط المدير يمكنه تعديل السلاسل"
+msgstr "Only admins can edit chains"
+
+#: app.py
+msgid "تم تعديل السلسلة بنجاح"
+msgstr "Chain updated successfully"
+
+#: app.py
+msgid "فقط المدير يمكنه حذف السلاسل"
+msgstr "Only admins can delete chains"
+
+#: app.py
+msgid "تم حذف السلسلة بنجاح"
+msgstr "Chain deleted successfully"
+
+#: templates/chains.html
+msgid "إدارة السلاسل"
+msgstr "Manage Chains"
+
+#: templates/chains.html
+msgid "إضافة سلسلة جديدة"
+msgstr "Add New Chain"
+
+#: templates/chains.html
+msgid "السلسلة تجمع تحتلها عدة مناطق. أنشئ سلسلة ثم أضف داخلها المناطق من صفحة «المناطق» أو من زر «المناطق» بكل سلسلة."
+msgstr "A chain contains multiple regions. Create a chain, then add regions from the Regions page or via the Regions button for each chain."
+
+#: templates/chains.html
+msgid "إجمالي السلاسل"
+msgstr "Total Chains"
+
+#: templates/chains.html
+msgid "المناطق ضمن السلاسل"
+msgstr "Regions in Chains"
+
+#: templates/chains.html
+msgid "عرض كل المناطق"
+msgstr "View All Regions"
+
+#: templates/chains.html
+msgid "اسم السلسلة"
+msgstr "Chain Name"
+
+#: templates/chains.html
+msgid "عدد المناطق"
+msgstr "Regions Count"
+
+#: templates/chains.html
+msgid "الإجراءات"
+msgstr "Actions"
+
+#: templates/chains.html
+msgid "سلسلة"
+msgstr "Chain"
+
+#: templates/chains.html
+msgid "إضافة منطقة"
+msgstr "Add Region"
+
+#: templates/chains.html
+msgid "تعديل"
+msgstr "Edit"
+
+#: templates/chains.html
+msgid "هل أنت متأكد من حذف السلسلة"
+msgstr "Are you sure you want to delete the chain"
+
+#: templates/chains.html
+msgid "حذف"
+msgstr "Delete"
+
+#: templates/chains.html
+msgid "لا توجد سلاسل"
+msgstr "No chains found"
+
+#: templates/chains.html
+msgid "أضف أول سلسلة ثم أضف تحتها المناطق من نفس الصفحة أو من «المناطق»"
+msgstr "Add your first chain, then add regions from this page or from the Regions page."
+
+#: templates/chains.html
+msgid "إضافة أول سلسلة"
+msgstr "Add First Chain"
+
+#: templates/regions.html
+msgid "مناطق السلسلة"
+msgstr "Chain Regions"
+
+#: templates/regions.html
+msgid "إدارة المناطق"
+msgstr "Manage Regions"
+
+#: templates/regions.html
+msgid "إضافة منطقة داخل هذه السلسلة"
+msgstr "Add Region to This Chain"
+
+#: templates/regions.html
+msgid "العودة للسلاسل"
+msgstr "Back to Chains"
+
+#: templates/regions.html
+msgid "إضافة منطقة جديدة"
+msgstr "Add New Region"
+
+#: templates/regions.html
+msgid "إجمالي المناطق"
+msgstr "Total Regions"
+
+#: templates/regions.html
+msgid "إجمالي الفروع"
+msgstr "Total Branches"
+
+#: templates/regions.html
+msgid "إجمالي الكاميرات"
+msgstr "Total Cameras"
+
+#: templates/regions.html
+msgid "إجمالي الأعطال"
+msgstr "Total Faults"
+
+#: templates/regions.html
+msgid "اسم المنطقة"
+msgstr "Region Name"
+
+#: templates/regions.html
+msgid "عدد الفروع"
+msgstr "Branches Count"
+
+#: templates/regions.html
+msgid "عدد الكاميرات"
+msgstr "Cameras Count"
+
+#: templates/regions.html
+msgid "عدد الأعطال"
+msgstr "Faults Count"
+
+#: templates/regions.html
+msgid "منطقة رئيسية"
+msgstr "Main Region"
+
+#: templates/regions.html
+msgid "الفروع"
+msgstr "Branches"
+
+#: templates/regions.html
+msgid "هل أنت متأكد من حذف المنطقة"
+msgstr "Are you sure you want to delete the region"
+
+#: templates/regions.html
+msgid "سيتم حذف جميع الفروع والكاميرات التابعة لها."
+msgstr "All related branches and cameras will be deleted."
+
+#: templates/regions.html
+msgid "لا توجد مناطق مسجلة"
+msgstr "No regions found"
+
+#: templates/regions.html
+msgid "ابدأ بإضافة أول منطقة لنظام الكاميرات"
+msgstr "Start by adding your first region"
+
+#: templates/regions.html
+msgid "إضافة أول منطقة"
+msgstr "Add First Region"
+
+#: templates/reports.html
+msgid "تقارير الكاميرات التي تم إصلاحها"
+msgstr "Repaired Cameras Reports"
+
+#: templates/reports.html
+msgid "تنزيل تقارير الكاميرات التي تم إصلاحها"
+msgstr "Download repaired cameras reports"
+
+#: templates/reports.html
+msgid "الكاميرات التي تم إصلاحها"
+msgstr "Repaired Cameras"
+
+#: templates/reports.html
+msgid "تقارير الأجهزة التي تم إصلاحها"
+msgstr "Repaired Devices Reports"
+
+#: templates/reports.html
+msgid "تنزيل تقارير الأجهزة التي تم إصلاحها"
+msgstr "Download repaired devices reports"
+
+#: templates/reports.html
+msgid "الأجهزة التي تم إصلاحها"
+msgstr "Repaired Devices"
+
+#: templates/reports.html
+msgid "الكاميرات المعطلة"
+msgstr "Faulty Cameras"
+
+#: templates/reports.html
+msgid "الأجهزة المعطلة"
+msgstr "Faulty Devices"
+
+#: templates/reports.html
+msgid "تقارير أعطال الكاميرا"
+msgstr "Camera Faults Reports"
+
+#: templates/reports.html
+msgid "تنزيل تقارير مفصلة عن أعطال الكاميرا"
+msgstr "Download detailed camera faults reports"
+
+#: templates/reports.html
+msgid "تقارير أعطال الأجهزة"
+msgstr "Device Faults Reports"
+
+#: templates/reports.html
+msgid "تنزيل تقارير مفصلة عن أعطال الأجهزة"
+msgstr "Download detailed device faults reports"
+
+#: templates/reports.html
+msgid "تقارير جميع الأعطال"
+msgstr "All Faults Reports"
+
+#: templates/reports.html
+msgid "تنزيل تقارير شاملة عن جميع الأعطال"
+msgstr "Download comprehensive all faults reports"
+
+#: templates/reports.html
+msgid "إجمالي أعطال الكاميرا"
+msgstr "Total Camera Faults"
+
+#: templates/reports.html
+msgid "إجمالي أعطال الأجهزة"
+msgstr "Total Device Faults"
+
+#: templates/reports.html
+msgid "إجمالي جميع الأعطال"
+msgstr "Total All Faults"
+
+#: templates/reports.html
+msgid "الأعطال المغلقة"
+msgstr "Closed Faults"
+
+#: templates/reports.html
+msgid "إحصائيات سريعة"
+msgstr "Quick Statistics"
+
+#: templates/upload_document.html
+msgid "رفع المستندات"
+msgstr "Upload Documents"
+
+#: templates/upload_document.html
+msgid "رفع مستند جديد"
+msgstr "Upload New Document"
+
+#: templates/upload_document.html
+msgid "اختر الفرع"
+msgstr "Select Branch"
+
+#: templates/upload_document.html
+msgid "اختر الفرع..."
+msgstr "Select Branch..."
+
+#: templates/upload_document.html
+msgid "اسم الفني"
+msgstr "Technician Name"
+
+#: templates/upload_document.html
+msgid "أدخل اسم الفني"
+msgstr "Enter technician name"
+
+#: templates/upload_document.html
+msgid "ملاحظات"
+msgstr "Notes"
+
+#: templates/upload_document.html
+msgid "أدخل أي ملاحظات إضافية"
+msgstr "Enter any additional notes"
+
+#: templates/upload_document.html
+msgid "ملاحظة هامة:"
+msgstr "Important Note:"
+
+#: templates/upload_document.html
+msgid "عند رفع مستند لـ NVR، سيتم تسجيل عطل تلقائي لجميع كاميرات الفرع"
+msgstr "When uploading a document for NVR, automatic faults will be registered for all cameras in the branch"
+
+#: templates/upload_document.html
+msgid "رفع المستند"
+msgstr "Upload Document"
+
+#: templates/upload_document.html
+msgid "إلغاء"
+msgstr "Cancel"
+
+#: templates/base.html
+msgid "رفع المستندات"
+msgstr "Upload Documents"
+
+#: templates/technicians.html
+msgid "إدارة الفنيين"
+msgstr "Manage Technicians"
+
+#: templates/technicians.html
+msgid "إضافة فني جديد"
+msgstr "Add New Technician"
+
+#: templates/technicians.html
+msgid "عدد الأعطال المسندة"
+msgstr "Assigned Faults"
+
+#: templates/technicians.html
+msgid "تاريخ التسجيل"
+msgstr "Registration Date"
+
+#: templates/technicians.html
+msgid "فني متخصص"
+msgstr "Specialist Technician"
+
+#: templates/technicians.html
+msgid "هل أنت متأكد من حذف الفني"
+msgstr "Are you sure you want to delete the technician"
+
+#: templates/technicians.html
+msgid "لا توجد فنيين مسجلين"
+msgstr "No technicians found"
+
+#: templates/technicians.html
+msgid "ابدأ بإضافة أول فني لنظام الكاميرات"
+msgstr "Start by adding your first technician"
+
+#: templates/technicians.html
+msgid "إضافة أول فني"
+msgstr "Add First Technician"
+
+#: common
+msgid "تفاصيل العطل"
+msgstr "Fault Details"
+
+#: common
+msgid "تفاصيل العطل:"
+msgstr "Fault Description:"
+
+#: common
+msgid "وصف العطل"
+msgstr "Fault Description"
+
+#: common
+msgid "وصف العطل:"
+msgstr "Fault Description:"
+
+#: common
+msgid "معلومات العطل"
+msgstr "Fault Information"
+
+#: common
+msgid "معلومات العطل الأساسية"
+msgstr "Basic Fault Information"
+
+#: common
+msgid "معلومات الجهاز"
+msgstr "Device Information"
+
+#: common
+msgid "إصلاح"
+msgstr "Fix"
+
+#: common
+msgid "إصلاح العطل"
+msgstr "Fix Fault"
+
+#: common
+msgid "إصلاح عطل الجهاز"
+msgstr "Fix Device Fault"
+
+#: common
+msgid "إصلاح العطل الآن"
+msgstr "Fix the fault now"
+
+#: common
+msgid "تفاصيل الإصلاح"
+msgstr "Repair Details"
+
+#: common
+msgid "تقرير الإصلاح"
+msgstr "Repair Report"
+
+#: common
+msgid "ملاحظات الإصلاح"
+msgstr "Repair Notes"
+
+#: common
+msgid "ملاحظات الإصلاح:"
+msgstr "Repair Notes:"
+
+#: common
+msgid "صورة الإصلاح (اختياري)"
+msgstr "Repair image (optional)"
+
+#: common
+msgid "صورة بعد الإصلاح (اختياري)"
+msgstr "Post-repair image (optional)"
+
+#: common
+msgid "تأكيد الإصلاح"
+msgstr "Confirm Repair"
+
+#: common
+msgid "إلغاء"
+msgstr "Cancel"
+
+#: common
+msgid "عرض"
+msgstr "View"
+
+#: common
+msgid "مُصلح"
+msgstr "Resolved"
+
+#: common
+msgid "قيد الانتظار"
+msgstr "Pending"
+
+#: common
+msgid "قيد الإصلاح"
+msgstr "In progress"
+
+#: common
+msgid "العودة للأعطال"
+msgstr "Back to Faults"
+
+#: common
+msgid "الكاميرا"
+msgstr "Camera"
+
+#: common
+msgid "الكاميرا:"
+msgstr "Camera:"
+
+#: common
+msgid "الجهاز"
+msgstr "Device"
+
+#: common
+msgid "الجهاز:"
+msgstr "Device:"
+
+#: common
+msgid "نوع الجهاز"
+msgstr "Device Type"
+
+#: common
+msgid "نوع الجهاز:"
+msgstr "Device Type:"
+
+#: common
+msgid "نوع العطل"
+msgstr "Fault Type"
+
+#: common
+msgid "نوع العطل:"
+msgstr "Fault Type:"
+
+#: common
+msgid "الوصف"
+msgstr "Description"
+
+#: common
+msgid "المُبلّغ"
+msgstr "Reported By"
+
+#: common
+msgid "المُبلّغ:"
+msgstr "Reported By:"
+
+#: common
+msgid "المبلغ"
+msgstr "Reported By"
+
+#: common
+msgid "المبلغ:"
+msgstr "Reported By:"
+
+#: common
+msgid "الفني"
+msgstr "Technician"
+
+#: common
+msgid "الفني:"
+msgstr "Technician:"
+
+#: common
+msgid "تاريخ الإبلاغ"
+msgstr "Reported At"
+
+#: common
+msgid "تاريخ الإبلاغ:"
+msgstr "Reported At:"
+
+#: common
+msgid "تاريخ الإصلاح"
+msgstr "Repaired At"
+
+#: common
+msgid "تاريخ الإصلاح:"
+msgstr "Repaired At:"
+
+#: common
+msgid "الحالة"
+msgstr "Status"
+
+#: common
+msgid "الحالة:"
+msgstr "Status:"
+
+#: common
+msgid "إجراءات"
+msgstr "Actions"
+
+#: common
+msgid "إضافة جهاز"
+msgstr "Add Device"
+
+#: common
+msgid "إضافة جهاز جديد"
+msgstr "Add New Device"
+
+#: common
+msgid "الأجهزة"
+msgstr "Devices"
+
+#: common
+msgid "أعطال الأجهزة"
+msgstr "Device Faults"
+
+#: common
+msgid "أعطال الجهاز"
+msgstr "Device Faults"
+
+#: common
+msgid "أعطال مفتوحة"
+msgstr "Open Faults"
+
+#: common
+msgid "سليم"
+msgstr "Healthy"
+
+#: common
+msgid "كهرباء"
+msgstr "Electrical"
+
+#: common
+msgid "شبكة"
+msgstr "Network"
+
+#: common
+msgid "جهاز"
+msgstr "Device"
+
+#: common
+msgid "برمجيات"
+msgstr "Software"
+
+#: common
+msgid "كابل"
+msgstr "Cable"
+
+#: common
+msgid "أخرى"
+msgstr "Other"
+
+#: common
+msgid "عطل تشغيل"
+msgstr "Operational fault"
+
+#: common
+msgid "عطل اتصال"
+msgstr "Connectivity fault"
+
+#: common
+msgid "عطل طاقة"
+msgstr "Power fault"
+
+#: common
+msgid "عطل صيانة"
+msgstr "Maintenance fault"
+
+#: common
+msgid "عطل آخر"
+msgstr "Other fault"
+
+#: common
+msgid "هل أنت متأكد من حذف هذا الجهاز؟"
+msgstr "Are you sure you want to delete this device?"
+
+#: common
+msgid "لا توجد أجهزة مسجلة في هذا الفرع."
+msgstr "No devices are registered in this branch."
+
+#: common
+msgid "لا توجد أعطال أجهزة مسجلة."
+msgstr "No device faults were found."
+
+#: common
+msgid "لا توجد أعطال مسجلة لهذا الجهاز."
+msgstr "No faults are recorded for this device."
+
+#: common
+msgid "إعدادات النظام"
+msgstr "System Settings"
+
+#: common
+msgid "حفظ الإعدادات"
+msgstr "Save Settings"
+
+#: common
+msgid "جاري الحفظ..."
+msgstr "Saving..."
+
+#: common
+msgid "حفظ"
+msgstr "Save"
+
+#: common
+msgid "حفظ التعديلات"
+msgstr "Save Changes"
+
+#: common
+msgid "تعديل العطل"
+msgstr "Edit Fault"
+
+#: common
+msgid "تسجيل عطل جديد"
+msgstr "Register New Fault"
+
+#: common
+msgid "تسجيل العطل"
+msgstr "Register Fault"
+
+#: common
+msgid "اختر نوع العطل"
+msgstr "Select fault type"
+
+#: common
+msgid "مشكلة كهرباء"
+msgstr "Electrical issue"
+
+#: common
+msgid "مشكلة شبكة"
+msgstr "Network issue"
+
+#: common
+msgid "عطل في الجهاز"
+msgstr "Device malfunction"
+
+#: common
+msgid "مشكلة برمجية"
+msgstr "Software issue"
+
+#: common
+msgid "عطل في الكابلات"
+msgstr "Cable fault"
+
+#: common
+msgid "نوع الجهاز المعطل"
+msgstr "Faulty device type"
+
+#: common
+msgid "اسم المبلغ"
+msgstr "Reporter name"
+
+#: common
+msgid "الفني المسؤول"
+msgstr "Responsible technician"
+
+#: common
+msgid "اختر الفني"
+msgstr "Select technician"
+
+#: common
+msgid "وصف مفصل للعطل..."
+msgstr "Detailed fault description..."
+
+#: common
+msgid "ملاحظة:"
+msgstr "Note:"
+
+#: common
+msgid "مهلة إصلاح العطل هي 7 أيام من تاريخ التسجيل"
+msgstr "The fault repair deadline is 7 days from the registration date"
+
+#: common
+msgid "فروع منطقة:"
+msgstr "Region branches:"
+
+#: common
+msgid "إضافة فرع"
+msgstr "Add Branch"
+
+#: common
+msgid "العودة للمناطق"
+msgstr "Back to Regions"
+
+#: common
+msgid "اسم الفرع"
+msgstr "Branch Name"
+
+#: common
+msgid "الكاميرات"
+msgstr "Cameras"
+
+#: common
+msgid "لا توجد فروع مسجلة"
+msgstr "No branches found"
+
+#: common
+msgid "كاميرات فرع:"
+msgstr "Branch cameras:"
+
+#: common
+msgid "إضافة كاميرا"
+msgstr "Add Camera"
+
+#: common
+msgid "العودة للفروع"
+msgstr "Back to Branches"
+
+#: common
+msgid "اسم الكاميرا"
+msgstr "Camera Name"
+
+#: common
+msgid "لا توجد كاميرات مسجلة"
+msgstr "No cameras found"
+
+#: common
+msgid "غير محدد"
+msgstr "Not specified"
+
+#: common
+msgid "هل أنت متأكد من الحذف؟"
+msgstr "Are you sure you want to delete?"
+
+#: common
+msgid "تعديل الفرع"
+msgstr "Edit Branch"
+
+#: common
+msgid "إضافة فرع جديد"
+msgstr "Add New Branch"
+
+#: common
+msgid "تعديل الكاميرا"
+msgstr "Edit Camera"
+
+#: common
+msgid "إضافة كاميرا جديدة"
+msgstr "Add New Camera"
+
+#: common
+msgid "تعديل جهاز"
+msgstr "Edit Device"
+
+#: common
+msgid "اختر نوع الجهاز"
+msgstr "Select device type"
+
+#: common
+msgid "مثال: 192.168.1.100"
+msgstr "Example: 192.168.1.100"
+
+#: common
+msgid "غرفة الخوادم، الطابق الأول"
+msgstr "Server room, first floor"
+
+#: common
+msgid "معلومات الفرع"
+msgstr "Branch Information"
+
+#: common
+msgid "السلسلة:"
+msgstr "Chain:"
+
+#: common
+msgid "المنطقة:"
+msgstr "Region:"
+
+#: common
+msgid "الأعطال المفتوحة:"
+msgstr "Open faults:"
+
+#: common
+msgid "الأعطال المغلقة:"
+msgstr "Closed faults:"
+
+#: common
+msgid "إجمالي الأعطال:"
+msgstr "Total faults:"
+
+#: common
+msgid "عرض الأعطال"
+msgstr "View faults"
+
+#: common
+msgid "تعديل عطل"
+msgstr "Edit Fault"
+
+#: common
+msgid "إضافة عطل جهاز"
+msgstr "Add Device Fault"
+
+#: common
+msgid "إضافة عطل جهاز جديد"
+msgstr "Add New Device Fault"
+
+#: common
+msgid "صف العطل بالتفصيل (حد أقصى 200 حرف)"
+msgstr "Describe the fault in detail (max 200 characters)"
+
+#: common
+msgid "الفني المسند إليه"
+msgstr "Assigned technician"
+
+#: common
+msgid "اختر فني (اختياري)"
+msgstr "Select a technician (optional)"
+
+#: common
+msgid "إضافة العطل"
+msgstr "Add fault"
+
+#: common
+msgid "الاسم:"
+msgstr "Name:"
+
+#: common
+msgid "النوع:"
+msgstr "Type:"
+
+#: common
+msgid "عنوان IP:"
+msgstr "IP Address:"
+
+#: common
+msgid "الموقع:"
+msgstr "Location:"
+
+#: common
+msgid "الفرع:"
+msgstr "Branch:"
+
+#: common
+msgid "عرض جميع الأعطال"
+msgstr "View all faults"
+
+#: common
+msgid "تعديل السلسلة"
+msgstr "Edit Chain"
+
+#: common
+msgid "السلسلة تحتوي على مناطق، والمنطقة تحتوي على فروع وكاميرات."
+msgstr "A chain contains regions, and a region contains branches and cameras."
+
+#: common
+msgid "مثال: سلسلة الفرع الرئيسي"
+msgstr "Example: Main Branch Chain"
+
+#: common
+msgid "تعديل المنطقة"
+msgstr "Edit Region"
+
+#: common
+msgid "المنطقة تكون داخل سلسلة. اختر السلسلة ثم الاسم."
+msgstr "A region belongs to a chain. Select the chain then enter the name."
+
+#: common
+msgid "— بدون سلسلة —"
+msgstr "— No chain —"
+
+#: common
+msgid "لا توجد سلاسل."
+msgstr "No chains found."
+
+#: common
+msgid "أضف سلسلة أولاً"
+msgstr "Add a chain first"
+
+#: common
+msgid "إضافة فني"
+msgstr "Add Technician"
+
+#: common
+msgid "مرحباً"
+msgstr "Welcome"
+
+#: common
+msgid "أنت مسجل كمشرف على النظام. يمكنك إدارة جميع المناطق والفروع والكاميرات والأعطال."
+msgstr "You are logged in as a system administrator. You can manage all regions, branches, cameras, and faults."
+
+#: common
+msgid "أنت مسجل كفني. يمكنك عرض الأعطال المسندة إليك وإصلاحها."
+msgstr "You are logged in as a technician. You can view faults assigned to you and fix them."
+
+#: common
+msgid "آخر تحديث"
+msgstr "Last updated"
+
+#: common
+msgid "التقارير"
+msgstr "Reports"
+
+#: common
+msgid "تنزيل تقرير الأعطال بصيغة Excel (سلسلة، منطقة، فرع، كاميرا، نوع العطل، الحالة، الفني، التواريخ)."
+msgstr "Download the faults report as an Excel file (chain, region, branch, camera, fault type, status, technician, dates)."
+
+#: common
+msgid "تنزيل تقرير Excel"
+msgstr "Download Excel Report"
+
+#: common
+msgid "إجراءات سريعة"
+msgstr "Quick Actions"
+
+#: common
+msgid "السلاسل والمناطق"
+msgstr "Chains & Regions"
+
+#: common
+msgid "إضافة سلسلة"
+msgstr "Add Chain"
+
+#: common
+msgid "جميع الأعطال"
+msgstr "All Faults"
+
+#: common
+msgid "إجمالي الأجهزة"
+msgstr "Total Devices"
+
+#: common
+msgid "كاميرات معطلة"
+msgstr "Faulty Cameras"
+
+#: common
+msgid "أجهزة معطلة"
+msgstr "Faulty Devices"
+
+#: common
+msgid "أعطال مغلقة"
+msgstr "Closed Faults"
+
+#: common
+msgid "إحصائيات سريعة"
+msgstr "Quick Statistics"
+
+#: common
+msgid "حية"
+msgstr "Live"
+
+#: common
+msgid "أعطال كاميرات مفتوحة"
+msgstr "Open Camera Faults"
+
+#: common
+msgid "أعطال أجهزة مفتوحة"
+msgstr "Open Device Faults"
+
+#: common
+msgid "أعطال كاميرات مغلقة"
+msgstr "Closed Camera Faults"
+
+#: common
+msgid "أعطال أجهزة مغلقة"
+msgstr "Closed Device Faults"
+
+#: common
+msgid "الإشعارات"
+msgstr "Notifications"
+
+#: common
+msgid "جديدة"
+msgstr "New"
+
+#: common
+msgid "تنبيه:"
+msgstr "Alert:"
+
+#: common
+msgid "يوجد"
+msgstr "There are"
+
+#: common
+msgid "عطل كاميرا و"
+msgstr "camera fault(s) and"
+
+#: common
+msgid "عطل جهاز يحتاجان للإصلاح"
+msgstr "device fault(s) that need repair"
+
+#: common
+msgid "ممتاز:"
+msgstr "Great:"
+
+#: common
+msgid "جميع الأعطال تم إصلاحها"
+msgstr "All faults have been repaired"
+
+#: common
+msgid "معلومات:"
+msgstr "Info:"
+
+#: common
+msgid "إجمالي الكاميرات النشطة"
+msgstr "Total active cameras"
+
+#: common
+msgid "من"
+msgstr "out of"
+
+#: common
+msgid "وإجمالي الأجهزة النشطة"
+msgstr "and total active devices"
+
+#: common
+msgid "أقدم 10 أعطال لم يتم إصلاحها"
+msgstr "Oldest 10 unrepaired faults"
+
+#: common
+msgid "مكتمل"
+msgstr "Complete"
+
+#: templates/base.html
+msgid "Ping On Store"
+msgstr "Ping On Store"
+
+#: templates/base.html
+msgid "التقارير"
+msgstr "Reports"
+
+#: templates/reports.html
+msgid "تقارير أعطال الكاميرا"
+msgstr "Camera Faults Reports"
+
+#: templates/reports.html
+msgid "تقارير أعطال الأجهزة"
+msgstr "Device Faults Reports"
+
+#: templates/reports.html
+msgid "تقارير جميع الأعطال"
+msgstr "All Faults Reports"
+
+#: templates/reports.html
+msgid "تنزيل تقارير مفصلة عن أعطال الكاميرا"
+msgstr "Download detailed camera fault reports"
+
+#: templates/reports.html
+msgid "تنزيل تقارير مفصلة عن أعطال الأجهزة"
+msgstr "Download detailed device fault reports"
+
+#: templates/reports.html
+msgid "تنزيل تقارير شاملة عن جميع الأعطال"
+msgstr "Download comprehensive all faults reports"
+
+#: templates/reports.html
+msgid "إحصائيات سريعة"
+msgstr "Quick Statistics"
+
+#: templates/upload_document.html
+msgid "رفع المستندات"
+msgstr "Upload Documents"
+
+#: templates/upload_document.html
+msgid "رفع مستند جديد"
+msgstr "Upload New Document"
+
+#: templates/upload_document.html
+msgid "اختر الفرع"
+msgstr "Select Branch"
+
+#: templates/upload_document.html
+msgid "اختر الفرع..."
+msgstr "Select Branch..."
+
+#: templates/upload_document.html
+msgid "اسم الفني"
+msgstr "Technician Name"
+
+#: templates/upload_document.html
+msgid "أدخل اسم الفني"
+msgstr "Enter technician name"
+
+#: templates/upload_document.html
+msgid "ملاحظات"
+msgstr "Notes"
+
+#: templates/upload_document.html
+msgid "أدخل أي ملاحظات إضافية"
+msgstr "Enter any additional notes"
+
+#: templates/upload_document.html
+msgid "ملاحظة هامة:"
+msgstr "Important Note:"
+
+#: templates/upload_document.html
+msgid "عند رفع مستند لـ NVR، سيتم تسجيل عطل تلقائي لجميع كاميرات الفرع"
+msgstr "When uploading a document for NVR, automatic faults will be registered for all cameras in the branch"
+
+#: templates/upload_document.html
+msgid "رفع المستند"
+msgstr "Upload Document"
+
+#: templates/upload_document.html
+msgid "إلغاء"
+msgstr "Cancel"
+
+#: templates/base.html
+msgid "رفع المستندات"
+msgstr "Upload Documents"
+
+#: templates/reports.html
+msgid "إجمالي أعطال الكاميرا"
+msgstr "Total Camera Faults"
+
+#: templates/reports.html
+msgid "إجمالي أعطال الأجهزة"
+msgstr "Total Device Faults"
+
+#: templates/reports.html
+msgid "إجمالي جميع الأعطال"
+msgstr "Total All Faults"
+
+#: templates/reports.html
+msgid "الأعطال المغلقة"
+msgstr "Closed Faults"
+
+#: templates/reports.html
+msgid "تقرير أعطال الكاميرا"
+msgstr "Camera Fault Report"
+
+#: templates/reports.html
+msgid "تقرير أعطال الأجهزة"
+msgstr "Device Fault Report"
+
+#: templates/reports.html
+msgid "تقرير جميع الأعطال"
+msgstr "All Faults Report"
+
+#: templates/add_edit_branch.html
+msgid "تعديل الفرع"
+msgstr "Edit Branch"
+
+#: templates/add_edit_branch.html
+msgid "إضافة فرع جديد"
+msgstr "Add New Branch"
+
+#: templates/add_edit_branch.html
+msgid "رقم التليفون"
+msgstr "Phone Number"
+
+#: templates/add_edit_branch.html
+msgid "أدخل رقم هاتف الفرع (اختياري)"
+msgstr "Enter branch phone number (optional)"
+
+#: templates/add_edit_branch.html
+msgid "رقم التليفون 2"
+msgstr "Phone Number 2"
+
+#: templates/add_edit_branch.html
+msgid "أدخل رقم هاتف آخر للفرع (اختياري)"
+msgstr "Enter another phone number for the branch (optional)"
+
+#: templates/add_edit_branch.html
+msgid "رقم التليفون 3"
+msgstr "Phone Number 3"
+
+#: templates/add_edit_branch.html
+msgid "أدخل رقم هاتف ثالث للفرع (اختياري)"
+msgstr "Enter a third phone number for the branch (optional)"
+
+#: templates/add_edit_branch.html
+msgid "رقم التليفون 4"
+msgstr "Phone Number 4"
+
+#: templates/add_edit_branch.html
+msgid "أدخل رقم هاتف رابع للفرع (اختياري)"
+msgstr "Enter a fourth phone number for the branch (optional)"
+
+#: templates/add_edit_branch.html
+msgid "عنوان IP"
+msgstr "IP Address"
+
+#: templates/add_edit_branch.html
+msgid "أدخل عنوان IP للفرع (اختياري)"
+msgstr "Enter IP address for the branch (optional)"
+
+#: templates/add_edit_branch.html
+msgid "اختبار اتصال سريع"
+msgstr "Quick Connection Test"
+
+#: templates/add_edit_branch.html
+msgid "اختبار"
+msgstr "Test"
+
+#: templates/branches.html
+msgid "رقم التليفون"
+msgstr "Phone Number"
+
+#: templates/branches.html
+msgid "رقم التليفون 2"
+msgstr "Phone Number 2"
+
+#: templates/branches.html
+msgid "رقم التليفون 3"
+msgstr "Phone Number 3"
+
+#: templates/branches.html
+msgid "رقم التليفون 4"
+msgstr "Phone Number 4"
+
+#: templates/branches.html
+msgid "غير محدد"
+msgstr "Not Specified"
+
+#: templates/branches.html
+msgid "اختبار اتصال سريع"
+msgstr "Quick Connection Test"
+
+#: app.py
+msgid "فقط المدير يمكنه الوصول إلى التقارير"
+msgstr "Only admins can access reports"
+
+#: app.py
+msgid "خطأ في إنشاء التقرير"
+msgstr "Error generating report"
+
+#: templates/branches.html
+msgid "الرقم"
+msgstr "Number"
+
+#: templates/branches.html
+msgid "الموقع"
+msgstr "Location"
+
+#: templates/devices.html
+msgid "الموقع"
+msgstr "Location"
+
+#: templates/add_edit_device.html
+msgid "الموقع"
+msgstr "Location"
+
+#: templates/add_edit_branch.html
+msgid "الموقع"
+msgstr "Location"
+
+#: templates/dashboard.html
+msgid "لا توجد أعطال مفتوحة"
+msgstr "No open faults"
+
+#: templates/dashboard.html
+msgid "جميع الأعطال تم إصلاحها بنجاح"
+msgstr "All faults have been successfully repaired"
+
+#: templates/dashboard.html
+msgid "تسجيل عطل"
+msgstr "Register Fault"
+
+#: templates/devices.html
+msgid "اسم الجهاز"
+msgstr "Device Name"
+
+#: templates/devices.html
+msgid "النوع"
+msgstr "Type"
+
+#: templates/add_edit_device.html
+msgid "اسم الجهاز"
+msgstr "Device Name"
+
+#: templates/add_edit_device.html
+msgid "نوع الجهاز"
+msgstr "Device Type"
+
+#: templates/ping_store_simple.html
+msgid "اختبار اتصال الأجهزة"
+msgstr "Device Connectivity Test"
+
+#: templates/ping_store_simple.html
+msgid "العودة للرئيسية"
+msgstr "Back to Home"
+
+#: templates/ping_store_simple.html
+msgid "أدخل عنوان IP لاختبار الاتصال به"
+msgstr "Enter IP address to test connection"
+
+#: templates/ping_store_simple.html
+msgid "ابدأ الاختبار"
+msgstr "Start Test"
+
+#: templates/import_excel.html
+msgid "استيراد الأعطال من Excel"
+msgstr "Import Faults from Excel"
+
+#: templates/import_excel.html
+msgid "استيراد الأعطال من ملف Excel"
+msgstr "Import Faults from Excel File"
+
+#: templates/import_excel.html
+msgid "رفع ملف Excel"
+msgstr "Upload Excel File"
+
+#: templates/import_excel.html
+msgid "اسحب الملف هنا أو انقر للاختيار"
+msgstr "Drag file here or click to select"
+
+#: templates/import_excel.html
+msgid "ملفات Excel فقط (.xlsx, .xls)"
+msgstr "Excel files only (.xlsx, .xls)"
+
+#: templates/import_excel.html
+msgid "استيراد الأعطال"
+msgstr "Import Faults"
+
+#: templates/import_excel.html
+msgid "العودة"
+msgstr "Back"
+
+#: templates/import_excel.html
+msgid "تعليمات الاستخدام"
+msgstr "Usage Instructions"
+
+#: templates/import_excel.html
+msgid "صيغة الملف المطلوبة"
+msgstr "Required File Format"
+
+#: templates/import_excel.html
+msgid "الملف يجب أن يحتوي على الأعمدة التالية:"
+msgstr "The file must contain the following columns:"
+
+#: templates/import_excel.html
+msgid "الترتيب"
+msgstr "Order"
+
+#: templates/import_excel.html
+msgid "اسم العمود"
+msgstr "Column Name"
+
+#: templates/import_excel.html
+msgid "الوصف"
+msgstr "Description"
+
+#: templates/import_excel.html
+msgid "اسم الكاميرا"
+msgstr "Camera Name"
+
+#: templates/import_excel.html
+msgid "اسم الكاميرا بالضبط كما في النظام"
+msgstr "Camera name exactly as in the system"
+
+#: templates/import_excel.html
+msgid "نوع العطل"
+msgstr "Fault Type"
+
+#: templates/import_excel.html
+msgid "مثل: عطل صورة، عطل صوت، إلخ"
+msgstr "e.g., image fault, sound fault, etc."
+
+#: templates/import_excel.html
+msgid "نوع الجهاز"
+msgstr "Device Type"
+
+#: templates/import_excel.html
+msgid "NVR أو Switch أو Router أو Up Link"
+msgstr "NVR or Switch or Router or Up Link"
+
+#: templates/import_excel.html
+msgid "وصف تفصيلي للعطل"
+msgstr "Detailed fault description"
+
+#: templates/import_excel.html
+msgid "المبلّغ"
+msgstr "Reporter"
+
+#: templates/import_excel.html
+msgid "اسم من أبلّغ عن العطل"
+msgstr "Name of who reported the fault"
+
+#: templates/import_excel.html
+msgid "الفني (اختياري)"
+msgstr "Technician (Optional)"
+
+#: templates/import_excel.html
+msgid "اسم الفني المسؤول (إن وجد)"
+msgstr "Name of responsible technician (if any)"
+
+#: templates/import_excel.html
+msgid "الفني"
+msgstr "Technician"
+
+#: templates/import_excel.html
+msgid "مثال على الصيغة الصحيحة"
+msgstr "Example of Correct Format"
+
+#: templates/import_excel.html
+msgid "ملاحظات مهمة"
+msgstr "Important Notes"
+
+#: templates/import_excel.html
+msgid "أسماء الكاميرات:"
+msgstr "Camera Names:"
+
+#: templates/import_excel.html
+msgid "يجب أن تطابق بالضبط الأسماء المسجلة في النظام"
+msgstr "Must match exactly the names registered in the system"
+
+#: templates/import_excel.html
+msgid "أسماء الفنيين:"
+msgstr "Technician Names:"
+
+#: templates/import_excel.html
+msgid "يجب أن تكون أسماء مستخدمين فنيين موجودين بالفعل"
+msgstr "Must be usernames of existing technicians"
+
+#: templates/import_excel.html
+msgid "الحقول الإلزامية:"
+msgstr "Required Fields:"
+
+#: templates/import_excel.html
+msgid "الكاميرا، النوع، نوع الجهاز، الوصف"
+msgstr "Camera, Type, Device Type, Description"
+
+#: templates/import_excel.html
+msgid "الحد الأقصى للوصف:"
+msgstr "Maximum Description Length:"
+
+#: templates/import_excel.html
+msgid "200 حرف"
+msgstr "200 characters"
+
+#: templates/import_excel.html
+msgid "صيغة الملف:"
+msgstr "File Format:"
+
+#: templates/import_excel.html
+msgid ".xlsx أو .xls فقط"
+msgstr ".xlsx or .xls only"
+
+#: templates/import_excel.html
+msgid "تحميل نموذج Excel"
+msgstr "Download Excel Template"
+
+#: templates/import_excel.html
+msgid "الملف المختار:"
+msgstr "Selected File:"
+
+#: templates/settings.html
+msgid "إعدادات النظام"
+msgstr "System Settings"
+
+#: templates/settings.html
+msgid "تخصيص إعدادات النظام والعلامة التجارية"
+msgstr "Customize system settings and branding"
+
+#: templates/settings.html
+msgid "لوجو الشركة"
+msgstr "Company Logo"
+
+#: templates/settings.html
+msgid "رفع لوجو جديد"
+msgstr "Upload New Logo"
+
+#: templates/settings.html
+msgid "الصيغ المدعومة: PNG, JPG, JPEG, GIF, SVG (الحجم الموصى به: 200x200 بكسل)"
+msgstr "Supported formats: PNG, JPG, JPEG, GIF, SVG (Recommended size: 200x200 pixels)"
+
+#: templates/settings.html
+msgid "اسم الشركة"
+msgstr "Company Name"
+
+#: templates/settings.html
+msgid "أدخل اسم الشركة"
+msgstr "Enter company name"
+
+#: templates/settings.html
+msgid "حجم اللوجو (بكسل)"
+msgstr "Logo Size (pixels)"
+
+#: templates/settings.html
+msgid "الحجم الحالي:"
+msgstr "Current size:"
+
+#: templates/settings.html
+msgid "بكسل (الحد الأدنى: 20، الحد الأقصى: 200)"
+msgstr "pixels (Minimum: 20, Maximum: 200)"
+
+#: templates/settings.html
+msgid "حفظ الإعدادات"
+msgstr "Save Settings"
+
+#: templates/settings.html
+msgid "معاينة اللوجو"
+msgstr "Logo Preview"
+
+#: templates/settings.html
+msgid "لوجو الشركة الحالي"
+msgstr "Current Company Logo"
+
+#: templates/settings.html
+msgid "بكسل"
+msgstr "pixels"
+
+#: templates/settings.html
+msgid "لا يوجد لوجو حالياً"
+msgstr "No logo currently available"
+
+#: templates/settings.html
+msgid "معلومات اللوجو"
+msgstr "Logo Information"
+
+#: templates/settings.html
+msgid "الحالة"
+msgstr "Status"
+
+#: templates/settings.html
+msgid "مثبت"
+msgstr "Installed"
+
+#: templates/settings.html
+msgid "غير مثبت"
+msgstr "Not Installed"
+
+#: templates/settings.html
+msgid "حجم اللوجو"
+msgstr "Logo Size"
+
+#: templates/settings.html
+msgid "تعليمات"
+msgstr "Instructions"
+
+#: templates/settings.html
+msgid "اللوجو سيظهر في الهيدر الرئيسي والسايد بار"
+msgstr "Logo will appear in the main header and sidebar"
+
+#: templates/settings.html
+msgid "يُنصح باستخدام صورة بخلفية شفافة (PNG) للحصول على أفضل نتيجة"
+msgstr "It is recommended to use an image with transparent background (PNG) for best results"
+
+#: templates/settings.html
+msgid "الحجم المثالي للوجو: 200x200 بكسل أو أكبر"
+msgstr "Ideal logo size: 200x200 pixels or larger"
+
+#: templates/settings.html
+msgid "اسم الشركة سيظهر بجانب اللوجو في جميع صفحات النظام"
+msgstr "Company name will appear next to the logo in all system pages"
+
+#: templates/settings.html
+msgid "يمكنك تخصيص حجم اللوجو من 20 إلى 200 بكسل من الإعدادات أعلاه"
+msgstr "You can customize the logo size from 20 to 200 pixels from the settings above"
+
+#: templates/settings.html
+msgid "بعد رفع اللوجو، قد تحتاج لتحديث الصفحة (F5) لرؤية التغييرات"
+msgstr "After uploading the logo, you may need to refresh the page (F5) to see the changes"
+
+#: templates/settings.html
+msgid "جاري الحفظ..."
+msgstr "Saving..."
+
+#: templates/base.html
+msgid "الإعدادات"
+msgstr "Settings"
+
+#: templates/base.html
+msgid "الرئيسية"
+msgstr "Home"
+
+#: templates/base.html
+msgid "الأعطال"
+msgstr "Faults"
+
+#: templates/base.html
+msgid "الأجهزة المعطلة"
+msgstr "Faulty Devices"
+
+#: templates/base.html
+msgid "استيراد من Excel"
+msgstr "Import Excel"
+
+#: templates/base.html
+msgid "السلاسل"
+msgstr "Chains"
+
+#: templates/base.html
+msgid "المناطق"
+msgstr "Regions"
+
+#: templates/base.html
+msgid "الفنيين"
+msgstr "Technicians"
+
+#: templates/base.html
+msgid "تسجيل الخروج"
+msgstr "Logout"
+
+#: templates/base.html
+msgid "نظام الكاميرات"
+msgstr "Camera System"
+
+#: templates/regions.html
+msgid "السلسلة"
+msgstr "Chain"
+
+#: templates/regions.html
+msgid "مناطق السلسلة"
+msgstr "Chain Regions"
+
+#: templates/regions.html
+msgid "إدارة المناطق"
+msgstr "Manage Regions"
+
+#: templates/regions.html
+msgid "إضافة منطقة داخل هذه السلسلة"
+msgstr "Add Region to This Chain"
+
+#: templates/regions.html
+msgid "العودة للسلاسل"
+msgstr "Back to Chains"
+
+#: templates/regions.html
+msgid "إضافة منطقة جديدة"
+msgstr "Add New Region"
+
+#: templates/regions.html
+msgid "إجمالي المناطق"
+msgstr "Total Regions"
+
+#: templates/regions.html
+msgid "إجمالي الفروع"
+msgstr "Total Branches"
+
+#: templates/regions.html
+msgid "إجمالي الكاميرات"
+msgstr "Total Cameras"
+
+#: templates/regions.html
+msgid "إجمالي الأعطال"
+msgstr "Total Faults"
+
+#: templates/regions.html
+msgid "اسم المنطقة"
+msgstr "Region Name"
+
+#: templates/regions.html
+msgid "عدد الفروع"
+msgstr "Branch Count"
+
+#: templates/regions.html
+msgid "عدد الكاميرات"
+msgstr "Camera Count"
+
+#: templates/regions.html
+msgid "عدد الأعطال"
+msgstr "Fault Count"
+
+#: templates/regions.html
+msgid "الإجراءات"
+msgstr "Actions"
+
+#: templates/regions.html
+msgid "—"
+msgstr "—"
+
+#: templates/regions.html
+msgid "منطقة رئيسية"
+msgstr "Main Region"
+
+#: templates/regions.html
+msgid "الفروع"
+msgstr "Branches"
+
+#: templates/regions.html
+msgid "تعديل"
+msgstr "Edit"
+
+#: templates/regions.html
+msgid "حذف"
+msgstr "Delete"
+
+#: templates/regions.html
+msgid "لا توجد مناطق مسجلة"
+msgstr "No regions registered"
+
+#: templates/regions.html
+msgid "ابدأ بإضافة أول منطقة لنظام الكاميرات"
+msgstr "Start by adding the first region to the camera system"
+
+#: templates/regions.html
+msgid "إضافة أول منطقة"
+msgstr "Add First Region"
+
+#: templates/reports.html
+msgid "تقارير الكاميرات التي تم إصلاحها"
+msgstr "Repaired Cameras Reports"
+
+#: templates/reports.html
+msgid "تنزيل تقارير الكاميرات التي تم إصلاحها"
+msgstr "Download repaired cameras reports"
+
+#: templates/reports.html
+msgid "الكاميرات التي تم إصلاحها"
+msgstr "Repaired Cameras"
+
+#: templates/reports.html
+msgid "تقارير الأجهزة التي تم إصلاحها"
+msgstr "Repaired Devices Reports"
+
+#: templates/reports.html
+msgid "تنزيل تقارير الأجهزة التي تم إصلاحها"
+msgstr "Download repaired devices reports"
+
+#: templates/reports.html
+msgid "الأجهزة التي تم إصلاحها"
+msgstr "Repaired Devices"
+
+#: templates/reports.html
+msgid "الكاميرات المعطلة"
+msgstr "Faulty Cameras"
+
+#: templates/reports.html
+msgid "الأجهزة المعطلة"
+msgstr "Faulty Devices"
+
+#: templates/reports.html
+msgid "تقارير أعطال الكاميرا"
+msgstr "Camera Faults Reports"
+
+#: templates/reports.html
+msgid "تنزيل تقارير مفصلة عن أعطال الكاميرا"
+msgstr "Download detailed camera faults reports"
+
+#: templates/reports.html
+msgid "تقارير أعطال الأجهزة"
+msgstr "Device Faults Reports"
+
+#: templates/reports.html
+msgid "تنزيل تقارير مفصلة عن أعطال الأجهزة"
+msgstr "Download detailed device faults reports"
+
+#: templates/reports.html
+msgid "تقارير جميع الأعطال"
+msgstr "All Faults Reports"
+
+#: templates/reports.html
+msgid "تنزيل تقارير شاملة عن جميع الأعطال"
+msgstr "Download comprehensive all faults reports"
+
+#: templates/reports.html
+msgid "إجمالي أعطال الكاميرا"
+msgstr "Total Camera Faults"
+
+#: templates/reports.html
+msgid "إجمالي أعطال الأجهزة"
+msgstr "Total Device Faults"
+
+#: templates/reports.html
+msgid "إجمالي جميع الأعطال"
+msgstr "Total All Faults"
+
+#: templates/reports.html
+msgid "الأعطال المغلقة"
+msgstr "Closed Faults"
+
+#: templates/reports.html
+msgid "إحصائيات سريعة"
+msgstr "Quick Statistics"
+
+#: templates/upload_document.html
+msgid "رفع المستندات"
+msgstr "Upload Documents"
+
+#: templates/upload_document.html
+msgid "رفع مستند جديد"
+msgstr "Upload New Document"
+
+#: templates/upload_document.html
+msgid "اختر الفرع"
+msgstr "Select Branch"
+
+#: templates/upload_document.html
+msgid "اختر الفرع..."
+msgstr "Select Branch..."
+
+#: templates/upload_document.html
+msgid "اسم الفني"
+msgstr "Technician Name"
+
+#: templates/upload_document.html
+msgid "أدخل اسم الفني"
+msgstr "Enter technician name"
+
+#: templates/upload_document.html
+msgid "ملاحظات"
+msgstr "Notes"
+
+#: templates/upload_document.html
+msgid "أدخل أي ملاحظات إضافية"
+msgstr "Enter any additional notes"
+
+#: templates/upload_document.html
+msgid "ملاحظة هامة:"
+msgstr "Important Note:"
+
+#: templates/upload_document.html
+msgid "عند رفع مستند لـ NVR، سيتم تسجيل عطل تلقائي لجميع كاميرات الفرع"
+msgstr "When uploading a document for NVR, automatic faults will be registered for all cameras in the branch"
+
+#: templates/upload_document.html
+msgid "رفع المستند"
+msgstr "Upload Document"
+
+#: templates/upload_document.html
+msgid "إلغاء"
+msgstr "Cancel"
+
+#: templates/base.html
+msgid "رفع المستندات"
+msgstr "Upload Documents"
+
+#: templates/regions.html
+msgid "عدد أجهزة NVR"
+msgstr "NVR Count"
+
+#: menu_config.py
+msgid "الرئيسية"
+msgstr "Dashboard"
+
+#: menu_config.py
+msgid "الأعطال"
+msgstr "Faults"
+
+#: menu_config.py
+msgid "إدارة الأجهزة"
+msgstr "Device Management"
+
+#: menu_config.py
+msgid "أعطال الأجهزة"
+msgstr "Device Faults"
+
+#: menu_config.py
+msgid "Ping On Store"
+msgstr "Ping On Store"
+
+#: menu_config.py
+msgid "استيراد من Excel"
+msgstr "Import from Excel"
+
+#: menu_config.py
+msgid "التقارير"
+msgstr "Reports"
+
+#: menu_config.py
+msgid "السلاسل"
+msgstr "Chains"
+
+#: menu_config.py
+msgid "المناطق"
+msgstr "Regions"
+
+#: menu_config.py
+msgid "الفنيين"
+msgstr "Technicians"
+
+#: menu_config.py
+msgid "رفع المستندات"
+msgstr "Upload Documents"
+
+#: menu_config.py
+msgid "الإعدادات"
+msgstr "Settings"
+
+#: templates/base.html
+msgid "التحكم في القائمة"
+msgstr "Menu Control"
+
+#: templates/menu_control.html
+msgid "التحكم في القائمة الجانبية"
+msgstr "Sidebar Menu Control"
+
+#: templates/menu_control.html
+msgid "حفظ التغييرات"
+msgstr "Save Changes"
+
+#: templates/menu_control.html
+msgid "مدير فقط"
+msgstr "Admin Only"
+
+#: templates/menu_control.html
+msgid "كيفية الاستخدام"
+msgstr "How to Use"
+
+#: templates/menu_control.html
+msgid "اسحب وأفلت العناصر لتغيير الترتيب"
+msgstr "Drag and drop items to change order"
+
+#: templates/menu_control.html
+msgid "اضغط على عين الرؤية لإظهار/إخفاء العنصر"
+msgstr "Click the eye icon to show/hide items"
+
+#: templates/menu_control.html
+msgid "العناصر التي تحمل أيقونة التاج خاصة بالمدير فقط"
+msgstr "Items with crown icon are admin only"
+
+#: templates/menu_control.html
+msgid "اضغط حفظ لحفظ التغييرات"
+msgstr "Click save to save changes"
+
+#: templates/menu_control.html
+msgid "ملاحظة هامة"
+msgstr "Important Note"
+
+#: templates/menu_control.html
+msgid "التغييرات هنا ستؤثر على ظهور القائمة الجانبية لجميع المستخدمين. كن حذراً عند إخفاء العناصر الهامة."
+msgstr "Changes here will affect the sidebar menu appearance for all users. Be careful when hiding important items."
+
+#: templates/menu_control.html
+msgid "تهيئة القائمة الافتراضية"
+msgstr "Initialize Default Menu"
+
+#: templates/menu_control.html
+msgid "العودة للرئيسية"
+msgstr "Back to Dashboard"
+
+#: templates/menu_control.html
+msgid "هل أنت متأكد من تهيئة القائمة الافتراضية؟ سيتم فقدان جميع التغييرات الحالية."
+msgstr "Are you sure you want to initialize the default menu? All current changes will be lost."
+
+#: templates/menu_control.html
+msgid "جاري الحفظ..."
+msgstr "Saving..."
+
+#: templates/menu_control.html
+msgid "هل أنت متأكد من المغادرة؟ لديك تغييرات غير محفوظة."
+msgstr "Are you sure you want to leave? You have unsaved changes."
+
+#: templates/add_edit_branch.html
+msgid "عدد أجهزة NVR"
+msgstr "NVR Count"
+
+#: templates/add_edit_branch.html
+msgid "أدخل عدد أجهزة NVR في هذا الفرع (اختياري)"
+msgstr "Enter the number of NVR devices in this branch (optional)"
+
+#: templates/menu_control.html
+msgid "????? ???????"
+msgstr "Refresh Menu"
+
+#: templates/menu_control.html
+msgid "????? ???????"
+msgstr "Update Menu"
+
+#: templates/menu_control.html
+msgid "????? ????"
+msgstr "Hide Item"
+
+#: templates/menu_control.html
+msgid "????? ?????"
+msgstr "Reorder"
+
+#: templates/menu_control.html
+msgid "????? ???????"
+msgstr "Reset Order"
+
+#: templates/menu_control.html
+msgid "????? ????"
+msgstr "Show All"
+
+#: templates/menu_control.html
+msgid "????? ????"
+msgstr "Hide All"
+
+#: templates/menu_control.html
+msgid "??????"
+msgstr "Move to Top"
+
+#: templates/menu_control.html
+msgid "??????"
+msgstr "Move to Bottom"
+
+#: templates/menu_control.html
+msgid "???????? ?????"
+msgstr "Quick Actions"
+
+#: templates/enhanced_reports.html
+msgid "التقارير المفصلة"
+msgstr "Enhanced Reports"
+
+#: templates/enhanced_reports.html
+msgid "العودة للرئيسية"
+msgstr "Back to Dashboard"
+
+#: templates/enhanced_reports.html
+msgid "سجل الكاميرات"
+msgstr "Camera Log"
+
+#: templates/enhanced_reports.html
+msgid "الأعطال حسب الفرع"
+msgstr "Faults by Branch"
+
+#: templates/enhanced_reports.html
+msgid "الفرع"
+msgstr "Branch"
+
+#: templates/enhanced_reports.html
+msgid "المنطقة"
+msgstr "Region"
+
+#: templates/enhanced_reports.html
+msgid "السلسلة"
+msgstr "Chain"
+
+#: templates/enhanced_reports.html
+msgid "إجمالي الأعطال"
+msgstr "Total Faults"
+
+#: templates/enhanced_reports.html
+msgid "الأعطال المفتوحة"
+msgstr "Open Faults"
+
+#: templates/enhanced_reports.html
+msgid "الأعطال المغلقة"
+msgstr "Closed Faults"
+
+#: templates/enhanced_reports.html
+msgid "نسبة الإنجاز"
+msgstr "Completion Rate"
+
+#: templates/enhanced_reports.html
+msgid "إجراءات"
+msgstr "Actions"
+
+#: templates/enhanced_reports.html
+msgid "غير محدد"
+msgstr "Not Specified"
+
+#: templates/enhanced_reports.html
+msgid "عرض الأعطال"
+msgstr "View Faults"
+
+#: templates/enhanced_reports.html
+msgid "تنزيل تقرير"
+msgstr "Download Report"
+
+#: templates/enhanced_reports.html
+msgid "بيانات ملف Excel"
+msgstr "Excel File Data"
+
+#: templates/enhanced_reports.html
+msgid "إجمالي السجلات"
+msgstr "Total Records"
+
+#: templates/enhanced_reports.html
+msgid "اسم الملف"
+msgstr "File Name"
+
+#: templates/enhanced_reports.html
+msgid "كاميرات معطلة"
+msgstr "Offline Cameras"
+
+#: templates/enhanced_reports.html
+msgid "كاميرات عاملة"
+msgstr "Online Cameras"
+
+#: templates/enhanced_reports.html
+msgid "آخر تحديث:"
+msgstr "Last Update:"
+
+#: templates/enhanced_reports.html
+msgid "الآن"
+msgstr "Now"
+
+#: templates/enhanced_reports.html
+msgid "الاسم"
+msgstr "Name"
+
+#: templates/enhanced_reports.html
+msgid "العنوان"
+msgstr "Address"
+
+#: templates/enhanced_reports.html
+msgid "الحالة"
+msgstr "Status"
+
+#: templates/enhanced_reports.html
+msgid "الشبكة"
+msgstr "Network"
+
+#: templates/enhanced_reports.html
+msgid "معطلة"
+msgstr "Offline"
+
+#: templates/enhanced_reports.html
+msgid "عاملة"
+msgstr "Online"
+
+#: templates/enhanced_reports.html
+msgid "و"
+msgstr "and"
+
+#: templates/enhanced_reports.html
+msgid "سجل آخر..."
+msgstr "more records..."
+
+#: templates/enhanced_reports.html
+msgid "لا توجد بيانات Excel"
+msgstr "No Excel Data Available"
+
+#: templates/enhanced_reports.html
+msgid "قم برفع ملف Excel لعرض البيانات هنا"
+msgstr "Upload an Excel file to display data here"
+
+#: templates/enhanced_reports.html
+msgid "رفع ملف Excel"
+msgstr "Upload Excel File"
+
+#: templates/enhanced_reports.html
+msgid "إجراءات سريعة"
+msgstr "Quick Actions"
+
+#: templates/enhanced_reports.html
+msgid "تقرير أعطال الكاميرا"
+msgstr "Camera Fault Report"
+
+#: templates/enhanced_reports.html
+msgid "تقرير الكاميرات التي تم إصلاحها"
+msgstr "Repaired Cameras Report"
+
+#: templates/enhanced_reports.html
+msgid "تقرير أعطال الأجهزة"
+msgstr "Device Fault Report"
+
+#: templates/enhanced_reports.html
+msgid "تقرير جميع الأعطال"
+msgstr "All Faults Report"
+
+#: app.py
+msgid "فقط المدير يمكنه الوصول إلى التقارير المفصلة ❌"
+msgstr "Only admin can access enhanced reports ❌"
+
+#: templates/dashboard.html
+msgid "مرحباً"
+msgstr "Welcome"
+
+#: templates/dashboard.html
+msgid "أنت مسجل كمشرف على النظام. يمكنك إدارة جميع المناطق والفروع والكاميرات والأعطال."
+msgstr "You are logged in as an administrator. You can manage all regions, branches, cameras, and faults."
+
+#: templates/dashboard.html
+msgid "أنت مسجل كفني. يمكنك عرض الأعطال المسندة إليك وإصلاحها."
+msgstr "You are logged in as a technician. You can view and repair faults assigned to you."
+
+#: templates/dashboard.html
+msgid "آخر تحديث"
+msgstr "Last Update"
+
+#: templates/dashboard.html
+msgid "التقارير"
+msgstr "Reports"
+
+#: templates/dashboard.html
+msgid "تنزيل تقرير الأعطال بصيغة Excel (سلسلة، منطقة، فرع، كاميرا، نوع العطل، الحالة، الفني، التواريخ)."
+msgstr "Download fault report in Excel format (chain, region, branch, camera, fault type, status, technician, dates)."
+
+#: templates/dashboard.html
+msgid "تنزيل تقرير Excel"
+msgstr "Download Excel Report"
+
+#: templates/dashboard.html
+msgid "إجراءات سريعة"
+msgstr "Quick Actions"
+
+#: templates/dashboard.html
+msgid "السلاسل والمناطق"
+msgstr "Chains and Regions"
+
+#: templates/dashboard.html
+msgid "إضافة سلسلة"
+msgstr "Add Chain"
+
+#: templates/dashboard.html
+msgid "إضافة فني"
+msgstr "Add Technician"
+
+#: templates/dashboard.html
+msgid "جميع الأعطال"
+msgstr "All Faults"
+
+#: templates/dashboard.html
+msgid "أعطال الأجهزة"
+msgstr "Device Faults"
+
+#: templates/dashboard.html
+msgid "إضافة كاميرا"
+msgstr "Add Camera"
+
+#: templates/dashboard.html
+msgid "تسجيل عطل"
+msgstr "Report Fault"
+
+#: templates/dashboard.html
+msgid "كاميرات الفروع"
+msgstr "Branch Cameras"
+
+#: templates/dashboard.html
+msgid "المسجلة في الفروع فقط"
+msgstr "Registered in branches only"
+
+#: templates/dashboard.html
+msgid "إجمالي الأجهزة"
+msgstr "Total Devices"
+
+#: templates/dashboard.html
+msgid "كاميرات معطلة"
+msgstr "Faulty Cameras"
+
+#: templates/dashboard.html
+msgid "أجهزة معطلة"
+msgstr "Faulty Devices"
+
+#: templates/dashboard.html
+msgid "أعطال مفتوحة"
+msgstr "Open Faults"
+
+#: templates/dashboard.html
+msgid "أعطال مغلقة"
+msgstr "Closed Faults"
+
+#: templates/dashboard.html
+msgid "إحصائيات سريعة"
+msgstr "Quick Statistics"
+
+#: templates/dashboard.html
+msgid "حية"
+msgstr "Live"
+
+#: templates/dashboard.html
+msgid "كاميرات عاملة"
+msgstr "Working Cameras"
+
+#: templates/dashboard.html
+msgid "من قائمة الأعطال"
+msgstr "from fault list"
+
+#: templates/dashboard.html
+msgid "إجمالي الأعطال المفتوحة"
+msgstr "Total Open Faults"
+
+#: templates/dashboard.html
+msgid "أعطال أجهزة مفتوحة"
+msgstr "Open Device Faults"
+
+#: templates/dashboard.html
+msgid "مكتمل"
+msgstr "Complete"
+
+#: templates/dashboard.html
+msgid "أعطالي المسندة"
+msgstr "My Assigned Faults"
+
+#: templates/dashboard.html
+msgid "أعطال الكاميرات"
+msgstr "Camera Faults"
+
+#: templates/dashboard.html
+msgid "إصلاح"
+msgstr "Repair"
+
+#: templates/dashboard.html
+msgid "أعطال الأجهزة"
+msgstr "Device Faults"
+
+#: templates/dashboard.html
+msgid "الإشعارات"
+msgstr "Notifications"
+
+#: templates/dashboard.html
+msgid "جديدة"
+msgstr "New"
+
+#: templates/dashboard.html
+msgid "تنبيه:"
+msgstr "Alert:"
+
+#: templates/dashboard.html
+msgid "يوجد"
+msgstr "There are"
+
+#: templates/dashboard.html
+msgid "عطل كاميرا و"
+msgstr "camera fault and"
+
+#: templates/dashboard.html
+msgid "عطل جهاز يحتاجان للإصلاح"
+msgstr "device fault need repair"
+
+#: templates/dashboard.html
+msgid "ممتاز:"
+msgstr "Excellent:"
+
+#: templates/dashboard.html
+msgid "جميع الأعطال تم إصلاحها"
+msgstr "All faults have been repaired"
+
+#: templates/dashboard.html
+msgid "معلومات:"
+msgstr "Info:"
+
+#: templates/dashboard.html
+msgid "إجمالي الكاميرات النشطة"
+msgstr "Total active cameras"
+
+#: templates/dashboard.html
+msgid "من"
+msgstr "of"
+
+#: templates/dashboard.html
+msgid "وإجمالي الأجهزة النشطة"
+msgstr "and total active devices"
+
+#: templates/dashboard.html
+msgid "أقدم 10 أعطال مفتوحة"
+msgstr "Oldest 10 Open Faults"
+
+#: templates/dashboard.html
+msgid "عرض جميع الأعطال"
+msgstr "View All Faults"
+
+#: templates/dashboard.html
+msgid "معلومات سريعة:"
+msgstr "Quick Info:"
+
+#: templates/dashboard.html
+msgid "يتم عرض أقدم 10 أعطال مفتوحة من إجمالي"
+msgstr "Showing oldest 10 open faults from total of"
+
+#: templates/dashboard.html
+msgid "عطل مفتوح في النظام"
+msgstr "open faults in system"
+
+#: templates/dashboard.html
+msgid "الكاميرا"
+msgstr "Camera"
+
+#: templates/dashboard.html
+msgid "نوع العطل"
+msgstr "Fault Type"
+
+#: templates/dashboard.html
+msgid "الوصف"
+msgstr "Description"
+
+#: templates/dashboard.html
+msgid "الفني المسؤول"
+msgstr "Responsible Technician"
+
+#: templates/dashboard.html
+msgid "تاريخ الإبلاغ"
+msgstr "Report Date"
+
+#: templates/dashboard.html
+msgid "مدة العطل"
+msgstr "Fault Duration"
+
+#: templates/dashboard.html
+msgid "الحالة"
+msgstr "Status"
+
+#: templates/dashboard.html
+msgid "الإجراء"
+msgstr "Action"
+
+#: templates/dashboard.html
+msgid "لم يتم التعيين"
+msgstr "Not Assigned"
+
+#: templates/dashboard.html
+msgid "مُصلح"
+msgstr "Repaired"
+
+#: templates/dashboard.html
+msgid "يوم"
+msgstr "day"
+
+#: templates/dashboard.html
+msgid "ساعة"
+msgstr "hour"
+
+#: templates/dashboard.html
+msgid "أقل من ساعة"
+msgstr "Less than hour"
+
+#: templates/dashboard.html
+msgid "قيد الانتظار"
+msgstr "Pending"
+
+#: templates/dashboard.html
+msgid "غير مسموح"
+msgstr "Not Allowed"
+
+#: templates/dashboard.html
+msgid "عرض"
+msgstr "View"
+
+#: templates/dashboard.html
+msgid "لا توجد أعطال مفتوحة"
+msgstr "No Open Faults"
+
+#: templates/dashboard.html
+msgid "جميع الأعطال تم إصلاحها بنجاح"
+msgstr "All faults have been successfully repaired"
+
+#: templates/dashboard.html
+msgid "كاميرات سليمة"
+msgstr "Working Cameras"
+
+#: app.py
+msgid "فقط المدير يمكنه إضافة مناطق ❌"
+msgstr "Only admin can add regions ❌"
+
+#: app.py
+msgid "فقط المدير يمكنه تعديل المناطق ❌"
+msgstr "Only admin can edit regions ❌"
+
+#: app.py
+msgid "فقط المدير يمكنه حذف المناطق ❌"
+msgstr "Only admin can delete regions ❌"
+
+#: app.py
+msgid "فقط المدير يمكنه استيراد المناطق من Excel ❌"
+msgstr "Only admin can import regions from Excel ❌"
+
+#: app.py
+msgid "فقط المدير يمكنه استيراد الفروع من Excel ❌"
+msgstr "Only admin can import branches from Excel ❌"
+
+#: templates/bbm_management.html
+msgid "صرف BPM"
+msgstr "BPM Management"
+
+#: templates/bbm_management.html
+msgid "العودة للأعطال"
+msgstr "Back to Faults"
+
+#: templates/bbm_management.html
+msgid "إجمالي أعطال BPM"
+msgstr "Total BPM Faults"
+
+#: templates/bbm_management.html
+msgid "في الانتظار"
+msgstr "Pending"
+
+#: templates/bbm_management.html
+msgid "قيد التنفيذ"
+msgstr "In Progress"
+
+#: templates/bbm_management.html
+msgid "تم الإصلاح"
+msgstr "Resolved"
+
+#: templates/bbm_management.html
+msgid "أعطال BPM المحولة"
+msgstr "Transferred BPM Faults"
+
+#: templates/bbm_management.html
+msgid "رقم العطل الأصلي"
+msgstr "Original Fault ID"
+
+#: templates/bbm_management.html
+msgid "تاريخ التحويل"
+msgstr "Transfer Date"
+
+#: templates/bbm_management.html
+msgid "حول بواسطة"
+msgstr "Transferred By"
+
+#: templates/bbm_management.html
+msgid "إصلاح عطل BPM"
+msgstr "Resolve BPM Fault"
+
+#: templates/bbm_management.html
+msgid "حذف عطل BPM"
+msgstr "Delete BPM Fault"
+
+#: templates/bbm_management.html
+msgid "لا توجد أعطال BPM"
+msgstr "No BPM Faults"
+
+#: templates/bbm_management.html
+msgid "لم يتم تحويل أي أعطال إلى BPM بعد"
+msgstr "No faults have been transferred to BPM yet"
+
+#: app.py
+msgid "فقط المدير يمكنه الوصول لصفحة BPM ❌"
+msgstr "Only admin can access BPM page ❌"
+
+#: app.py
+msgid "غير مسموح لك بإصلاح عطل BPM ❌"
+msgstr "You are not allowed to repair BPM fault ❌"
+
+#: app.py
+msgid "تم إصلاح عطل BPM بنجاح ✅"
+msgstr "BPM fault repaired successfully ✅"
+
+#: app.py
+msgid "غير مسموح لك بحذف عطل BPM ❌"
+msgstr "You are not allowed to delete BPM fault ❌"
+
+#: app.py
+msgid "تم حذف عطل BPM بنجاح ✅"
+msgstr "BPM fault deleted successfully ✅"
+
+#: templates/resolve_bbm.html
+msgid "العودة لصرف BPM"
+msgstr "Back to BPM Management"
+
+#: templates/resolve_bbm.html
+msgid "تفاصيل عطل BPM"
+msgstr "BPM Fault Details"
+
+#: templates/resolve_bbm.html
+msgid "الحالة الحالية"
+msgstr "Current Status"
+
+#: templates/resolve_bbm.html
+msgid "وصف العطل"
+msgstr "Fault Description"
+
+#: templates/resolve_bbm.html
+msgid "الفني الحالي"
+msgstr "Current Technician"
+
+#: templates/resolve_bbm.html
+msgid "ملاحظات الإصلاح"
+msgstr "Repair Notes"
+
+#: templates/resolve_bbm.html
+msgid "اكتب ملاحظات الإصلاح هنا..."
+msgstr "Write repair notes here..."
+
+#: templates/resolve_bbm.html
+msgid "تأكيد الإصلاح"
+msgstr "Confirm Repair"
+
+#: templates/resolve_bbm.html
+msgid "إلغاء"
+msgstr "Cancel"
+
+#: templates/resolve_bbm.html
+msgid "معلومات إضافية"
+msgstr "Additional Information"
+
+#: templates/resolve_bbm.html
+msgid "جهاز"
+msgstr "Device"
+
+#: templates/resolve_bbm.html
+msgid "أبلغ بواسطة"
+msgstr "Reported By"
+
+#: templates/resolve_bbm.html
+msgid "ملاحظات هامة"
+msgstr "Important Notes"
+
+#: templates/resolve_bbm.html
+msgid "عطل BPM"
+msgstr "BPM Fault"
+
+#: templates/resolve_bbm.html
+msgid "هذا عطل تم تحويله من نظام الأعطال الرئيسي إلى نظام BPM للمعالجة المتخصصة."
+msgstr "This fault has been transferred from the main fault system to BPM system for specialized handling."
+
+#: templates/resolve_bbm.html
+msgid "الإجراء المطلوب"
+msgstr "Required Action"
+
+#: templates/resolve_bbm.html
+msgid "قم بإصلاح العطل وإضافة ملاحظات تفصيلية عن العمل المنجز."
+msgstr "Repair the fault and add detailed notes about the work performed."
+
+#: templates/resolve_bbm.html
+msgid "الحالة النهائية"
+msgstr "Final Status"
+
+#: templates/resolve_bbm.html
+msgid "بعد الإصلاح، سيتم تحديث حالة العطل إلى \"مُصلح\" ولن يظهر في قائمة الأعطال النشطة."
+msgstr "After repair, the fault status will be updated to 'Resolved' and will not appear in the active faults list."
+
+#: templates/bbm_management.html
+msgid "Pending"
+msgstr "Pending"
+
+#: templates/bbm_management.html
+msgid "In Progress"
+msgstr "In Progress"
+
+#: templates/bbm_management.html
+msgid "Resolved"
+msgstr "Resolved"
+
+#: app.py
+msgid "فقط المدير يمكنه حذف الكاميرات ❌"
+msgstr "Only admin can delete cameras ❌"
+
+#: app.py
+msgid "لا توجد كاميرات لحذفها في هذا الفرع ℹ️"
+msgstr "No cameras to delete in this branch ℹ️"
+
+#: app.py
+msgid "تم حذف الكاميرا بنجاح ✅"
+msgstr "Camera deleted successfully ✅"
+
+#: app.py
+msgid "حدث خطأ أثناء حذف الكاميرا: {str(e)} ❌"
+msgstr "Error occurred while deleting camera: {str(e)} ❌"
+
+#: templates/branches.html
+msgid "ملاحظة: سيتم استيراد أسماء الفروع من العمود C فقط. البيانات الأخرى (الموقع، التليفون، IP) ستترك فارغة للملء يدوياً."
+msgstr "Note: Only branch names will be imported from column C. Other data (location, phone, IP) will be left empty for manual entry."
+
+#: templates/branches.html
+msgid "عدم استيراد الأسماء المكررة من العمود C"
+msgstr "Don't import duplicate names from column C"
+
+#: templates/branches.html
+msgid "هل أنت متأكد من حذف جميع فروع هذه المنطقة؟ هذا الإجراء لا يمكن التراجع عنه."
+msgstr "Are you sure you want to delete all branches in this region? This action cannot be undone."
+
+#: templates/branches.html
+msgid "تحذير: سيتم حذف جميع الكاميرات والأجهزة المرتبطة بهذه الفروع أيضاً. هل تريد المتابعة؟"
+msgstr "Warning: All cameras and devices associated with these branches will also be deleted. Do you want to continue?"
+
+#: app.py
+msgid "فقط المدير يمكنه حذف الفروع ❌"
+msgstr "Only admin can delete branches ❌"
+
+#: app.py
+msgid "لا توجد فروع لحذفها في هذه المنطقة ℹ️"
+msgstr "No branches to delete in this region ℹ️"
+
+#: templates/total_camera_report.html
+msgid "Are you sure you want to delete ALL data from this page? This action cannot be undone."
+msgstr "Are you sure you want to delete ALL data from this page? This action cannot be undone."
+
+#: templates/total_camera_report.html
+msgid "This will permanently delete all camera data. Are you absolutely sure?"
+msgstr "This will permanently delete all camera data. Are you absolutely sure?"
+
+#: app.py
+msgid "فقط المدير يمكنه حذف البيانات ❌"
+msgstr "Only admin can delete data ❌"
+
+#: templates/login.html
+msgid "تسجيل الدخول"
+msgstr "Login"
+
+#: templates/login.html
+msgid "نظام إدارة الكاميرات"
+msgstr "Camera Management System"
+
+#: templates/login.html
+msgid "اسم المستخدم"
+msgstr "Username"
+
+#: templates/login.html
+msgid "أدخل اسم المستخدم"
+msgstr "Enter username"
+
+#: templates/login.html
+msgid "كلمة المرور"
+msgstr "Password"
+
+#: templates/login.html
+msgid "أدخل كلمة المرور"
+msgstr "Enter password"
+
+#: templates/login.html
+msgid "جاري تسجيل الدخول..."
+msgstr "Signing in..."
+
+#: templates/login.html
+msgid "الحسابات الافتراضية"
+msgstr "Default Accounts"
+
+#: templates/login.html
+msgid "معلومات الدخول"
+msgstr "Login Information"
+
+#: templates/login.html
+msgid "مدير:"
+msgstr "Admin:"
+
+#: templates/login.html
+msgid "فني:"
+msgstr "Technician:"
+
+#: app.py
+msgid "تم تسجيل الدخول بنجاح"
+msgstr "Login successful"
+
+#: app.py
+msgid "اسم المستخدم أو كلمة المرور غير صحيحة"
+msgstr "Incorrect username or password"
+
+#: templates/camera_faults_sidebar.html
+msgid "جميع أعطال الكاميرات المسجلة"
+msgstr "All Registered Camera Faults"
+
+#: templates/camera_faults_sidebar.html
+msgid "إدارة جميع أعطال الكاميرات المسجلة"
+msgstr "Manage All Registered Camera Faults"
+
+#: templates/camera_faults_sidebar.html
+msgid "ابحث عن عطل..."
+msgstr "Search for a fault..."
+
+#: templates/camera_faults_sidebar.html
+msgid "حالة العطل"
+msgstr "Fault Status"
+
+#: templates/camera_faults_sidebar.html
+msgid "الكل"
+msgstr "All"
+
+#: templates/camera_faults_sidebar.html
+msgid "مفتوحة"
+msgstr "Open"
+
+#: templates/camera_faults_sidebar.html
+msgid "مُصلحة"
+msgstr "Resolved"
+
+#: templates/camera_faults_sidebar.html
+msgid "الفرع"
+msgstr "Branch"
+
+#: templates/camera_faults_sidebar.html
+msgid "كل الفروع"
+msgstr "All Branches"
+
+#: templates/camera_faults_sidebar.html
+msgid "إحصائيات سريعة"
+msgstr "Quick Statistics"
+
+#: templates/camera_faults_sidebar.html
+msgid "الإجمالي:"
+msgstr "Total:"
+
+#: templates/camera_faults_sidebar.html
+msgid "مفتوحة:"
+msgstr "Open:"
+
+#: templates/camera_faults_sidebar.html
+msgid "مُصلحة:"
+msgstr "Resolved:"
+
+#: templates/camera_faults_sidebar.html
+msgid "محول الي BPM"
+msgstr "Converted to BPM"
+
+#: menu_items.json
+msgid "الرئيسية"
+msgstr "Home"
+
+#: menu_items.json
+msgid "الأعطال"
+msgstr "Faults"
+
+#: menu_items.json
+msgid "إدارة الأجهزة"
+msgstr "Device Management"
+
+#: menu_items.json
+msgid "أعطال الأجهزة"
+msgstr "Device Faults"
+
+#: menu_items.json
+msgid "التقارير"
+msgstr "Reports"
+
+#: menu_items.json
+msgid "التقارير المفصلة"
+msgstr "Detailed Reports"
+
+#: menu_items.json
+msgid "السلاسل"
+msgstr "Chains"
+
+#: menu_items.json
+msgid "المناطق"
+msgstr "Regions"
+
+#: menu_items.json
+msgid "الفنيين"
+msgstr "Technicians"
+
+#: menu_items.json
+msgid "صرف BPM"
+msgstr "BPM Management"
+
+#: menu_items.json
+msgid "رفع المستندات"
+msgstr "Upload Documents"
+
+#: menu_items.json
+msgid "الإعدادات"
+msgstr "Settings"
+
+#: templates/camera_faults_sidebar.html
+msgid "تحويل إلى BPM"
+msgstr "Convert to BPM"
+
+#: templates/camera_faults_sidebar.html
+msgid "هل أنت متأكد من تحويل هذا العطل إلى BPM؟ سيتم نقله إلى قسم BPM ولن يظهر في قائمة الأعطال الرئيسية"
+msgstr "Are you sure you want to convert this fault to BPM? It will be moved to BPM department and will not appear in the main faults list"
+
+#: templates/camera_faults_sidebar.html
+msgid "تم تحويل العطل إلى BPM بنجاح"
+msgstr "Fault converted to BPM successfully"
+
+#: templates/camera_faults_sidebar.html
+msgid "حدث خطأ في تحويل العطل إلى BPM"
+msgstr "Error converting fault to BPM"
+
+#: app.py
+msgid "تم تسجيل الخروج بنجاح"
+msgstr "Logout successful"
+
+#: templates/faults.html
+msgid "جميع أعطال الكاميرات المسجلة"
+msgstr "All Registered Camera Faults"
+
+#: templates/faults.html
+msgid "ابحث عن عطل..."
+msgstr "Search for fault..."
+
+#: templates/faults.html
+msgid "حالة العطل"
+msgstr "Fault Status"
+
+#: templates/faults.html
+msgid "الكل"
+msgstr "All"
+
+#: templates/faults.html
+msgid "الفرع"
+msgstr "Branch"
+
+#: templates/faults.html
+msgid "كل الفروع"
+msgstr "All Branches"
+
+#: templates/faults.html
+msgid "إحصائيات سريعة"
+msgstr "Quick Statistics"
+
+#: templates/faults.html
+msgid "الإجمالي:"
+msgstr "Total:"
+
+#: templates/faults.html
+msgid "مفتوحة:"
+msgstr "Open:"
+
+#: templates/faults.html
+msgid "مُصلحة:"
+msgstr "Resolved:"
+
+#: templates/faults.html
+msgid "إدارة جميع أعطال الكاميرات المسجلة"
+msgstr "Manage All Registered Camera Faults"

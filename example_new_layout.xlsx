@@ -1,0 +1,19 @@
+This is a placeholder file. To create an actual Excel example, create a file with the following structure:
+
+Column A: Camera Name (optional)
+Column B: IP Address (optional)  
+Column C: Branch Name (required)
+Column D: Phone Number (optional)
+
+Example data:
+| A         | B             | C     | D           |
+|-----------|---------------|-------|-------------|
+| كاميرا 1  | 192.168.1.1   | فرع 1 | 01234567890 |
+| كاميرا 2  | 192.168.1.2   | فرع 2 | 01123456789 |
+| كاميرا 3  | 192.168.1.3   | فرع 3 | 01098765432 |
+|           | 192.168.1.4   | فرع 4 | 01555555555 |
+
+Note: 
+- Only Column C (Branch Name) is required
+- The system will skip duplicate branch names if the option is selected
+- Camera names and IP addresses are optional but will be stored if provided

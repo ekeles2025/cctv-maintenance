@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="stat-card">
+            <h3 class="text-center">{{ _('تعديل الفرع') if branch else _('إضافة فرع جديد') }}</h3>
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="mb-3">
+                    <label class="form-label">{{ _('اسم الفرع') }}</label>
+                    <input type="text" name="name" class="form-control" 
+                           value="{{ branch.name if branch }}" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ _('الموقع') }}</label>
+                    <input type="text" name="location" class="form-control" 
+                           value="{{ branch.location if branch }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ _('رقم التليفون') }}</label>
+                    <input type="tel" 
+                           name="phone_number" 
+                           class="form-control" 
+                           placeholder="01xxxxxxxxx"
+                           value="{{ branch.phone_number if branch }}"
+                           maxlength="11">
+                    <div class="form-text text-muted">
+                        {{ _('أدخل رقم هاتف الفرع (اختياري)') }}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ _('رقم التليفون 2') }}</label>
+                    <input type="tel" 
+                           name="phone_number_2" 
+                           class="form-control" 
+                           placeholder="01xxxxxxxxx"
+                           value="{{ branch.phone_number_2 if branch }}"
+                           maxlength="11">
+                    <div class="form-text text-muted">
+                        {{ _('أدخل رقم هاتف آخر للفرع (اختياري)') }}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ _('رقم التليفون 3') }}</label>
+                    <input type="tel" 
+                           name="phone_number_3" 
+                           class="form-control" 
+                           placeholder="01xxxxxxxxx"
+                           value="{{ branch.phone_number_3 if branch }}"
+                           maxlength="11">
+                    <div class="form-text text-muted">
+                        {{ _('أدخل رقم هاتف ثالث للفرع (اختياري)') }}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ _('رقم التليفون 4') }}</label>
+                    <input type="tel" 
+                           name="phone_number_4" 
+                           class="form-control" 
+                           placeholder="01xxxxxxxxx"
+                           value="{{ branch.phone_number_4 if branch }}"
+                           maxlength="11">
+                    <div class="form-text text-muted">
+                        {{ _('أدخل رقم هاتف رابع للفرع (اختياري)') }}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ _('عنوان IP') }}</label>
+                    <div class="input-group">
+                        <input type="text" 
+                               name="ip_address" 
+                               class="form-control" 
+                               placeholder="192.168.1.1"
+                               value="{{ branch.ip_address if branch }}">
+                        <button type="button" 
+                                class="btn btn-success" 
+                                onclick="quickPingBranch()"
+                                title="{{ _('اختبار اتصال سريع') }}">
+                            <i class="fas fa-play"></i> {{ _('اختبار') }}
+                        </button>
+                    </div>
+                    <div class="form-text text-muted">
+                        {{ _('أدخل عنوان IP للفرع (اختياري)') }}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ _('عدد أجهزة NVR') }}</label>
+                    <input type="number" 
+                           name="nvr_count" 
+                           class="form-control" 
+                           placeholder="0"
+                           value="{{ branch.nvr_count if branch else 0 }}"
+                           min="0"
+                           max="100">
+                    <div class="form-text text-muted">
+                        {{ _('أدخل عدد أجهزة NVR في هذا الفرع (اختياري)') }}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ _('نوع الفرع') }}</label>
+                    <select name="branch_type" class="form-control" required>
+                        <option value="دائم" {% if branch and branch.branch_type == 'دائم' %}selected{% endif %}>{{ _('دائم') }}</option>
+                        <option value="موسمي" {% if branch and branch.branch_type == 'موسمي' %}selected{% endif %}>{{ _('موسمي') }}</option>
+                    </select>
+                    <div class="form-text text-muted">
+                        {{ _('اختر نوع الفرع (دائم أو موسمي)') }}
+                    </div>
+                </div>
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">{{ _('حفظ') }}</button>
+                    <a href="{{ url_for('branches', region_id=region.id) }}" class="btn btn-secondary">{{ _('إلغاء') }}</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Ping Modal -->
+<div class="modal fade" id="pingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ _('نتيجة اختبار الاتصال') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="pingResult"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function quickPingBranch() {
+    const ipInput = document.querySelector('input[name="ip_address"]');
+    const ipAddress = ipInput.value.trim();
+    
+    if (!ipAddress) {
+        alert('{{ _("يرجى إدخال عنوان IP") }}');
+        return;
+    }
+    
+    // Validate IP
+    const ipPattern = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+    if (!ipPattern.test(ipAddress)) {
+        alert('{{ _("عنوان IP غير صحيح") }}');
+        return;
+    }
+    
+    // Show loading
+    const resultDiv = document.getElementById('pingResult');
+    resultDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin fa-2x"></i><p class="mt-2">{{ _("جاري اختبار الاتصال...") }}</p></div>';
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('pingModal'));
+    modal.show();
+    
+    // Send ping request
+    fetch('/quick-ping', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ ip_address: ipAddress })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle fa-2x me-3"></i>
+                        <div>
+                            <h5 class="mb-1">{{ _('نجح الاتصال!') }}</h5>
+                            <p class="mb-0">${data.ip}</p>
+                        </div>
+                    </div>
+                    ${data.output ? `<pre class="mt-3" style="background: #f8f9fa; padding: 10px; border-radius: 5px; font-size: 12px;">${data.output}</pre>` : ''}
+                </div>
+            `;
+        } else {
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-times-circle fa-2x me-3"></i>
+                        <div>
+                            <h5 class="mb-1">{{ _('فشل الاتصال') }}</h5>
+                            <p class="mb-0">${data.ip}</p>
+                        </div>
+                    </div>
+                    ${data.error ? `<p class="mt-2 text-danger">${data.error}</p>` : ''}
+                    ${data.output ? `<pre class="mt-3" style="background: #f8f9fa; padding: 10px; border-radius: 5px; font-size: 12px;">${data.output}</pre>` : ''}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        resultDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                {{ _('خطأ في الاتصال:') }} ${error.message}
+            </div>
+        `;
+    });
+}
+</script>
+{% endblock %}

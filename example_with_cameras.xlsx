@@ -1,0 +1,27 @@
+This is a placeholder file. To create an actual Excel example, create a file with the following structure:
+
+Column A: Camera Name (optional - will create camera automatically)
+Column B: IP Address (optional - used for both branch and camera)  
+Column C: Branch Name (required)
+Column D: Phone Number (optional)
+
+Example data:
+| A         | B             | C     | D           |
+|-----------|---------------|-------|-------------|
+| كاميرا 1  | 192.168.1.1   | فرع 1 | 01234567890 |
+| كاميرا 2  | 192.168.1.2   | فرع 2 | 01123456789 |
+| كاميرا 3  | 192.168.1.3   | فرع 3 | 01098765432 |
+|           | 192.168.1.4   | فرع 4 | 01555555555 |
+
+Features:
+- Only Column C (Branch Name) is required
+- If Column A has camera name, a camera will be created automatically for that branch
+- If branch already exists, camera will be added/updated
+- Duplicate branch names can be skipped with the checkbox option
+- IP address from Column B will be used for both branch and camera
+
+Camera Creation Logic:
+- New branch + camera name = Creates both branch and camera
+- Existing branch + camera name = Adds/updates camera in existing branch
+- Existing branch + existing camera name = Updates camera IP if provided
+- No camera name = Only creates/updates branch

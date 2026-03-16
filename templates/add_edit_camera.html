@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="stat-card">
+            <h3 class="text-center">{{ _('تعديل الكاميرا') if camera else _('إضافة كاميرا جديدة') }}</h3>
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="mb-3">
+                    <label class="form-label">{{ _('اسم الكاميرا') }}</label>
+                    <input type="text" name="name" class="form-control" 
+                           value="{{ camera.name if camera }}" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ _('عنوان IP') }}</label>
+                    <input type="text" name="ip_address" class="form-control" 
+                           value="{{ camera.ip_address if camera }}">
+                </div>
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">{{ _('حفظ') }}</button>
+                    <a href="{{ url_for('cameras', branch_id=branch.id) }}" class="btn btn-secondary">{{ _('إلغاء') }}</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

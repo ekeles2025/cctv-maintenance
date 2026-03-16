@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('صرف BBM') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="fas fa-exchange-alt me-2"></i>
+            {{ _('صرف BBM') }}
+        </h1>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('camera_faults_sidebar') }}" class="btn btn-primary">
+                <i class="fas fa-arrow-left me-1"></i>
+                {{ _('العودة للأعطال') }}
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stat-card text-center">
+                <div class="h3 text-primary mb-1">{{ bbm_faults|length }}</div>
+                <small class="text-muted">{{ _('إجمالي أعطال BBM') }}</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card text-center">
+                <div class="h3 text-warning mb-1">{{ bbm_faults|selectattr('status', 'equalto', 'Pending')|list|length }}</div>
+                <small class="text-muted">{{ _('في الانتظار') }}</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card text-center">
+                <div class="h3 text-info mb-1">{{ bbm_faults|selectattr('status', 'equalto', 'In Progress')|list|length }}</div>
+                <small class="text-muted">{{ _('قيد التنفيذ') }}</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card text-center">
+                <div class="h3 text-success mb-1">{{ bbm_faults|selectattr('status', 'equalto', 'Resolved')|list|length }}</div>
+                <small class="text-muted">{{ _('تم الإصلاح') }}</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- BBM Faults Table -->
+    <div class="stat-card">
+        <h5 class="mb-3">
+            <i class="fas fa-list me-2"></i>
+            {{ _('أعطال BBM المحولة') }}
+        </h5>
+        
+        {% if bbm_faults %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>{{ _('رقم العطل الأصلي') }}</th>
+                        <th>{{ _('الكاميرا') }}</th>
+                        <th>{{ _('الفرع') }}</th>
+                        <th>{{ _('نوع العطل') }}</th>
+                        <th>{{ _('الوصف') }}</th>
+                        <th>{{ _('الحالة') }}</th>
+                        <th>{{ _('تاريخ الإبلاغ') }}</th>
+                        <th>{{ _('تاريخ التحويل') }}</th>
+                        <th>{{ _('حول بواسطة') }}</th>
+                        <th>{{ _('الفني') }}</th>
+                        <th>{{ _('إجراءات') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set row_num = 1 %}
+                    {% for bbm_fault in bbm_faults %}
+                    <tr class="{% if bbm_fault.status == 'Resolved' %}table-success{% elif bbm_fault.status == 'In Progress' %}table-info{% else %}table-warning{% endif %}">
+                        <td><strong>#{{ row_num }}</strong></td>
+                        <td>
+                            <span class="badge bg-secondary">#{{ bbm_fault.original_fault_id }}</span>
+                        </td>
+                        <td>{{ bbm_fault.camera.name if bbm_fault.camera else '---' }}</td>
+                        <td>{{ bbm_fault.branch.name if bbm_fault.branch else '---' }}</td>
+                        <td>
+                            <span class="badge bg-secondary">{{ _(bbm_fault.fault_type) }}</span>
+                        </td>
+                        <td>{{ bbm_fault.description[:50] }}{% if bbm_fault.description|length > 50 %}...{% endif %}</td>
+                        <td>
+                            {% if bbm_fault.status == 'Resolved' %}
+                                <span class="badge bg-success">{{ _('مُصلح') }}</span>
+                            {% elif bbm_fault.status == 'In Progress' %}
+                                <span class="badge bg-info">{{ _('قيد التنفيذ') }}</span>
+                            {% else %}
+                                <span class="badge bg-warning">{{ _('في الانتظار') }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ bbm_fault.date_reported|local_dt('%Y-%m-%d %H:%M') }}</td>
+                        <td>{{ bbm_fault.date_transferred|local_dt('%Y-%m-%d %H:%M') }}</td>
+                        <td>{{ bbm_fault.transferred_by }}</td>
+                        <td>
+                            {% if bbm_fault.technician %}
+                                {{ bbm_fault.technician.username }}
+                            {% else %}
+                                <span class="text-muted">---</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                {% if bbm_fault.status != 'Resolved' %}
+                                    <a href="{{ url_for('resolve_bbm', bbm_id=bbm_fault.id) }}" 
+                                       class="btn btn-success" 
+                                       title="{{ _('إصلاح عطل BBM') }}">
+                                        <i class="fas fa-wrench"></i>
+                                    </a>
+                                {% else %}
+                                    <button class="btn btn-info" disabled>
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                {% endif %}
+                                
+                                <form method="POST" action="{{ url_for('delete_bbm', bbm_id=bbm_fault.id) }}" 
+                                      style="display: inline;" 
+                                      onsubmit="return confirm('هل أنت متأكد من حذف عطل BBM هذا؟');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-danger" title="{{ _('حذف عطل BBM') }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% set row_num = row_num + 1 %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-exchange-alt text-muted fa-4x mb-3"></i>
+            <h4 class="text-muted">{{ _('لا توجد أعطال BBM') }}</h4>
+            <p class="text-muted">{{ _('لم يتم تحويل أي أعطال إلى BBM بعد') }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

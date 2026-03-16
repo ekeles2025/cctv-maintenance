@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-map me-2"></i>{% if chain %}{{ _('مناطق السلسلة') }}: {{ chain.name }}{% else %}{{ _('إدارة المناطق') }}{% endif %}</h1>
+    </div>
+
+    <!-- Debug Info -->
+    <div class="alert alert-info">
+        <h5>Debug Information:</h5>
+        <p>Regions count: {{ regions|length }}</p>
+        {% if regions %}
+            <p>First item type: {{ regions[0].__class__.__name__ }}</p>
+            {% if regions[0].region is defined %}
+                <p>First region ID: {{ regions[0].region.id }}</p>
+                <p>First region name: {{ regions[0].region.name }}</p>
+            {% else %}
+                <p>ERROR: regions[0].region is NOT defined</p>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    <!-- Simple Table -->
+    {% if regions %}
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Region Name</th>
+                <th>Branches Count</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for region_data in regions %}
+            <tr>
+                <td>{{ region_data.row_number }}</td>
+                <td>{{ region_data.region.name }}</td>
+                <td>{{ region_data.region.branches|length }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No regions found.</p>
+    {% endif %}
+</div>
+{% endblock %}

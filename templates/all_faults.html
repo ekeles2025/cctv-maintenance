@@ -1,0 +1,415 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="fas fa-list me-2"></i>
+            {% if current_user.role == "admin" %}
+                {{ _('جميع الأعطال') }}
+            {% else %}
+                {{ _('الأعطال المسندة إلي') }}
+            {% endif %}
+        </h1>
+        {% if current_user.role == "admin" %}
+        <a href="{{ url_for('regions') }}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-1"></i>{{ _('تسجيل عطل جديد') }}
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Search Section -->
+    <div class="stat-card mb-4">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" 
+                           id="faultSearchInput" 
+                           class="form-control" 
+                           placeholder="{{ _('ابحث عن كاميرا بالرقم أو الاسم...') }}"
+                           oninput="performSearch()">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <button class="btn btn-secondary w-100" onclick="resetSearch()">
+                    <i class="fas fa-times me-1"></i>{{ _('مسح البحث') }}
+                </button>
+            </div>
+        </div>
+        <div id="searchResults" class="mt-2 text-muted small"></div>
+    </div>
+
+    <div class="stat-card">
+        {% if faults %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>{{ _('الكاميرا') }}</th>
+                        <th>{{ _('الفرع') }}</th>
+                        <th>{{ _('نوع العطل') }}</th>
+                        <th>{{ _('الوصف') }}</th>
+                        <th>{{ _('الحالة') }}</th>
+                        <th>{{ _('تاريخ الإبلاغ') }}</th>
+                        <th>{{ _('تاريخ الإصلاح') }}</th>
+                        <th>{{ _('الفني') }}</th>
+                        <th>{{ _('الإجراءات') }}</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% set row_num = 1 %}
+                    {% for fault in faults %}
+                    {% if fault.repair_notes and "تم النقل إلى قسم BPM" not in fault.repair_notes %}
+                    <tr class="{% if fault.resolved_at %}table-success{% else %}table-warning{% endif %}" 
+                        data-camera-name="{{ fault.camera.name|lower }}"
+                        data-camera-search="{{ fault.camera.name|lower }}">
+                        <td><strong>#{{ row_num }}</strong></td>
+                        <td>{{ fault.camera.name }}</td>
+                        <td>{{ fault.camera.branch.name if fault.camera.branch else '---' }}</td>
+                        <td>
+                            <span class="badge bg-secondary">{{ _(fault.fault_type) }}</span>
+                        </td>
+                        <td>{{ fault.description[:50] }}{% if fault.description|length > 50 %}...{% endif %}</td>
+                        <td>
+                            {% if fault.repair_notes and 'تم النقل إلى قسم BPM' in fault.repair_notes %}
+                                <span class="badge bg-warning">{{ _('محول الي BPM') }}</span>
+                            {% elif fault.resolved_at %}
+                                <span class="badge bg-success">{{ _('مُصلح') }}</span>
+                            {% else %}
+                                <span class="badge bg-danger">{{ _('قيد الانتظار') }}</span>
+                            {% endif %}
+                        </td>
+
+                        <td>{{ fault.date_reported|local_dt('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            {% if fault.resolved_at %}
+                                {{ fault.resolved_at|local_dt('%Y-%m-%d %H:%M') }}
+                            {% else %}
+                                <span class="text-muted">---</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if fault.technician %}
+                                {{ fault.technician.username }}
+                            {% else %}
+                                <span class="text-muted">---</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                {% if current_user.role == "admin" %}
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" 
+                                       data-bs-target="#editModal{{ fault.id }}" title="{{ _('تعديل العطل') }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                {% endif %}
+                                {% if not fault.resolved_at %}
+                                    {% if current_user.role == "admin" or fault.technician_id == current_user.id %}
+                                    <button type="button" class="btn btn-success" data-bs-toggle="modal" 
+                                           data-bs-target="#resolveModal{{ fault.id }}">
+                                        <i class="fas fa-wrench me-1"></i>{{ _('إصلاح') }}
+                                    </button>
+                                    {% else %}
+                                    <span class="text-muted">{{ _('غير مسموح') }}</span>
+                                    {% endif %}
+                                {% else %}
+                                    <a href="{{ url_for('fault_details', fault_id=fault.id) }}" 
+                                       class="btn btn-info">
+                                        <i class="fas fa-eye me-1"></i>{{ _('عرض') }}
+                                    </a>
+                                {% endif %}
+                                {% if current_user.role == "admin" %}
+                                <script>
+                                    var confirmBPMMessage = "{{ _('هل أنت متأكد من تحويل هذا العطل إلى BPM؟ سيتم نقله إلى قسم BPM ولن يظهر في قائمة الأعطال الرئيسية') }}";
+                                </script>
+                                <form method="POST" action="{{ url_for('convert_to_bpm', fault_id=fault.id) }}" 
+                                      style="display: inline;" 
+                                      onsubmit="return confirm(confirmBPMMessage);">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-warning">
+                                        <i class="fas fa-exchange-alt me-1"></i>{{ _('تحويل إلى BPM') }}
+                                    </button>
+                                </form>
+                                {% endif %}
+                                <form method="POST" action="{{ url_for('delete_fault', fault_id=fault.id) }}" 
+                                      style="display: inline;" 
+                                      onsubmit="return confirm('هل أنت متأكد من حذف هذا العطل؟ لا يمكن التراجع عن هذا الإجراء');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-danger">
+                                        <i class="fas fa-trash me-1"></i>{{ _('حذف') }}
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+
+                    </tr>
+                    {% set row_num = row_num + 1 %}
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
+            <h4 class="text-muted">{{ _('لا توجد أعطال') }}</h4>
+            <p class="text-muted">
+                {% if current_user.role == "admin" %}
+                {{ _('لم يتم تسجيل أي أعطال بعد') }}
+                {% else %}
+                {{ _('لا توجد أعطال مسندة إليك حالياً') }}
+                {% endif %}
+            </p>
+        </div>
+
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modals for Edit and Resolve -->
+{% for fault in faults %}
+{% if fault.repair_notes and "تم النقل إلى قسم BPM" not in fault.repair_notes %}
+<!-- Modal للإصلاح -->
+<div class="modal fade" id="resolveModal{{ fault.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ _('تأكيد إصلاح العطل') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>{{ _('هل أنت متأكد من إصلاح العطل') }} #{{ fault.id }}؟</p>
+                <form method="POST" action="{{ url_for('resolve_fault', fault_id=fault.id) }}" 
+                      enctype="multipart/form-data" id="resolveForm{{ fault.id }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('صورة الإصلاح (اختياري)') }}</label>
+                        <input type="file" name="repair_image" class="form-control" 
+                               accept="image/*">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('إلغاء') }}</button>
+                <button type="submit" form="resolveForm{{ fault.id }}" class="btn btn-success" onclick="closeModalAfterAction()">
+                    <i class="fas fa-check me-1"></i>{{ _('تأكيد الإصلاح') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal للتعديل -->
+<div class="modal fade" id="editModal{{ fault.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ _('تعديل بيانات العطل') }} #{{ fault.id }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('edit_fault', fault_id=fault.id) }}" id="editForm{{ fault.id }}">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">{{ _('نوع العطل') }}</label>
+                                <select class="form-select" name="fault_type" required>
+                                    <option value="كهرباء" {% if fault.fault_type == 'كهرباء' %}selected{% endif %}>{{ _('كهرباء') }}</option>
+                                    <option value="شبكة" {% if fault.fault_type == 'شبكة' %}selected{% endif %}>{{ _('شبكة') }}</option>
+                                    <option value="جهاز" {% if fault.fault_type == 'جهاز' %}selected{% endif %}>{{ _('جهاز') }}</option>
+                                    <option value="برمجيات" {% if fault.fault_type == 'برمجيات' %}selected{% endif %}>{{ _('برمجيات') }}</option>
+                                    <option value="كابل" {% if fault.fault_type == 'كابل' %}selected{% endif %}>{{ _('كابل') }}</option>
+                                    <option value="محروق" {% if fault.fault_type == 'محروق' %}selected{% endif %}>{{ _('محروق') }}</option>
+                                    <option value="أخرى" {% if fault.fault_type == 'أخرى' %}selected{% endif %}>{{ _('أخرى') }}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">{{ _('نوع الجهاز') }}</label>
+                                <select class="form-select" name="device_type" required>
+                                    <option value="NVR" {% if fault.device_type == 'NVR' %}selected{% endif %}">NVR</option>
+                                    <option value="Switch" {% if fault.device_type == 'Switch' %}selected{% endif %}">Switch</option>
+                                    <option value="Router" {% if fault.device_type == 'Router' %}selected{% endif %}">Router</option>
+                                    <option value="Up Link" {% if fault.device_type == 'Up Link' %}selected{% endif %}">Up Link</option>
+                                    <option value="Camera" {% if fault.device_type == 'Camera' %}selected{% endif %}>{{ _('كاميرا') }}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('الوصف') }}</label>
+                        <textarea class="form-control" name="description" rows="3" required>{{ fault.description }}</textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">{{ _('المبلغ') }}</label>
+                                <input type="text" class="form-control" name="reported_by" value="{{ fault.reported_by }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">{{ _('الفني المسؤول') }}</label>
+                                <select class="form-select" name="technician_id">
+                                    <option value="">{{ _('لم يتم التعيين') }}</option>
+                                    {% for technician in technicians %}
+                                    <option value="{{ technician.id }}" {% if fault.technician_id == technician.id %}selected{% endif %}>{{ technician.username }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('ملاحظات الإصلاح') }}</label>
+                        <textarea class="form-control" name="repair_notes" rows="2">{{ fault.repair_notes or '' }}</textarea>
+                    </div>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('إلغاء') }}</button>
+                <button type="submit" form="editForm{{ fault.id }}" class="btn btn-primary" onclick="closeModalAfterAction()">
+                    <i class="fas fa-save me-1"></i>{{ _('حفظ التعديلات') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Simple and clean search function - NO CONFLICTS
+function performSearch() {
+    var searchInput = document.getElementById('faultSearchInput');
+    var searchValue = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    var table = document.querySelector('table tbody');
+    var rows = table ? table.getElementsByTagName('tr') : [];
+    var visibleCount = 0;
+    
+    // Reset all rows first
+    for (var i = 0; i < rows.length; i++) {
+        rows[i].style.display = '';
+    }
+    
+    // If search is empty, show all
+    if (searchValue === '') {
+        updateResults(0, '');
+        return;
+    }
+    
+    // Search in each row
+    for (var i = 0; i < rows.length; i++) {
+        var row = rows[i];
+        var cameraCell = row.getElementsByTagName('td')[1]; // Camera column
+        
+        if (cameraCell) {
+            var cameraName = cameraCell.textContent || cameraCell.innerText || '';
+            cameraName = cameraName.toLowerCase();
+            
+            if (cameraName.includes(searchValue)) {
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        }
+    }
+    
+    updateResults(visibleCount, searchValue);
+}
+
+function updateResults(count, searchTerm) {
+    var resultsDiv = document.getElementById('searchResults');
+    if (!resultsDiv) return;
+    
+    if (searchTerm !== '') {
+        if (count > 0) {
+            resultsDiv.innerHTML = '<span class="text-success"><i class="fas fa-check-circle me-1"></i>تم العثور على ' + count + ' نتيجة</span>';
+        } else {
+            resultsDiv.innerHTML = '<span class="text-danger"><i class="fas fa-times-circle me-1"></i>لا توجد نتائج</span>';
+        }
+    } else {
+        resultsDiv.innerHTML = '';
+    }
+}
+
+function resetSearch() {
+    var searchInput = document.getElementById('faultSearchInput');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+    performSearch();
+}
+
+// Initialize immediately when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Search script loaded');
+    
+    var searchInput = document.getElementById('faultSearchInput');
+    if (searchInput) {
+        console.log('Search input found, adding event listener');
+        searchInput.addEventListener('input', performSearch);
+    } else {
+        console.log('Search input not found');
+    }
+});
+
+// Also try window.onload as backup
+window.onload = function() {
+    console.log('Window onload triggered');
+    
+    var searchInput = document.getElementById('faultSearchInput');
+    if (searchInput) {
+        console.log('Adding backup event listener');
+        searchInput.addEventListener('input', performSearch);
+    }
+};
+
+// إغلاق النافذة بعد الإجراء
+function closeModalAfterAction() {
+    setTimeout(function() {
+        // إغلاق جميع النوافذ المفتوحة
+        const modals = document.querySelectorAll('.modal.show');
+        modals.forEach(function(modal) {
+            try {
+                const modalInstance = bootstrap.Modal.getInstance(modal);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            } catch (e) {
+                console.log('Modal close error:', e);
+            }
+            
+            // إغلاق يدوي
+            modal.classList.remove('show');
+            modal.style.display = 'none';
+            modal.setAttribute('aria-hidden', 'true');
+        });
+        
+        // إزالة backdrop
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(function(backdrop) {
+            backdrop.remove();
+        });
+        
+        // تنظيف body
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+        
+        console.log('Modal closed after action');
+    }, 300);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,10 @@
+CREATE INDEX IF NOT EXISTS idx_camera_branch_id ON camera (branch_id);
+CREATE INDEX IF NOT EXISTS idx_branch_region_id ON branch (region_id);
+CREATE INDEX IF NOT EXISTS idx_region_chain_id ON region (chain_id);
+CREATE INDEX IF NOT EXISTS idx_fault_camera_id ON fault (camera_id);
+CREATE INDEX IF NOT EXISTS idx_device_branch_id ON device (branch_id);
+CREATE INDEX IF NOT EXISTS idx_devicefault_device_id ON devicefault (device_id);
+CREATE INDEX IF NOT EXISTS idx_bbmfault_camera_id ON bbmfault (camera_id);
+CREATE INDEX IF NOT EXISTS idx_bbmfault_branch_id ON bbmfault (branch_id);
+CREATE INDEX IF NOT EXISTS idx_camera_ip_address ON camera (ip_address);
+CREATE INDEX IF NOT EXISTS idx_branch_closed ON branch (closed);

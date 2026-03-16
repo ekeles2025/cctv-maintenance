@@ -1,0 +1,932 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: camera-system\n"
+"POT-Creation-Date: 2026-02-04 00:00+0000\n"
+"PO-Revision-Date: 2026-02-04 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: templates/base.html
+msgid "نظام الكاميرات"
+msgstr "نظام الكاميرات"
+
+#: templates/base.html
+msgid "الرئيسية"
+msgstr "الرئيسية"
+
+#: templates/base.html
+msgid "الأعطال"
+msgstr "الأعطال"
+
+#: templates/base.html
+msgid "الأجهزة المعطلة"
+msgstr "الأجهزة المعطلة"
+
+#: templates/base.html
+msgid "استيراد من Excel"
+msgstr "استيراد من Excel"
+
+#: templates/base.html
+msgid "السلاسل"
+msgstr "السلاسل"
+
+#: templates/base.html
+msgid "المناطق"
+msgstr "المناطق"
+
+#: templates/base.html
+msgid "الفنيين"
+msgstr "الفنيين"
+
+#: templates/base.html
+msgid "الإعدادات"
+msgstr "الإعدادات"
+
+#: templates/base.html
+msgid "تسجيل الخروج"
+msgstr "تسجيل الخروج"
+
+#: templates/settings.html
+msgid "إعدادات النظام"
+msgstr "إعدادات النظام"
+
+#: templates/settings.html
+msgid "تخصيص إعدادات النظام والعلامة التجارية"
+msgstr "تخصيص إعدادات النظام والعلامة التجارية"
+
+#: templates/settings.html
+msgid "لوجو الشركة"
+msgstr "لوجو الشركة"
+
+#: templates/settings.html
+msgid "رفع لوجو جديد"
+msgstr "رفع لوجو جديد"
+
+#: templates/settings.html
+msgid "الصيغ المدعومة: PNG, JPG, JPEG, GIF, SVG (الحجم الموصى به: 200x200 بكسل)"
+msgstr "الصيغ المدعومة: PNG, JPG, JPEG, GIF, SVG (الحجم الموصى به: 200x200 بكسل)"
+
+#: templates/settings.html
+msgid "اسم الشركة"
+msgstr "اسم الشركة"
+
+#: templates/settings.html
+msgid "أدخل اسم الشركة"
+msgstr "أدخل اسم الشركة"
+
+#: templates/settings.html
+msgid "حجم اللوجو (بكسل)"
+msgstr "حجم اللوجو (بكسل)"
+
+#: templates/settings.html
+msgid "الحجم الحالي:"
+msgstr "الحجم الحالي:"
+
+#: templates/settings.html
+msgid "بكسل (الحد الأدنى: 20، الحد الأقصى: 200)"
+msgstr "بكسل (الحد الأدنى: 20، الحد الأقصى: 200)"
+
+#: templates/settings.html
+msgid "حفظ الإعدادات"
+msgstr "حفظ الإعدادات"
+
+#: templates/settings.html
+msgid "معاينة اللوجو"
+msgstr "معاينة اللوجو"
+
+#: templates/settings.html
+msgid "لوجو الشركة الحالي"
+msgstr "لوجو الشركة الحالي"
+
+#: templates/settings.html
+msgid "بكسل"
+msgstr "بكسل"
+
+#: templates/settings.html
+msgid "لا يوجد لوجو حالياً"
+msgstr "لا يوجد لوجو حالياً"
+
+#: templates/settings.html
+msgid "معلومات اللوجو"
+msgstr "معلومات اللوجو"
+
+#: templates/settings.html
+msgid "الحالة"
+msgstr "الحالة"
+
+#: templates/settings.html
+msgid "مثبت"
+msgstr "مثبت"
+
+#: templates/settings.html
+msgid "غير مثبت"
+msgstr "غير مثبت"
+
+#: templates/settings.html
+msgid "حجم اللوجو"
+msgstr "حجم اللوجو"
+
+#: templates/settings.html
+msgid "تعليمات"
+msgstr "تعليمات"
+
+#: templates/settings.html
+msgid "اللوجو سيظهر في الهيدر الرئيسي والسايد بار"
+msgstr "اللوجو سيظهر في الهيدر الرئيسي والسايد بار"
+
+#: templates/settings.html
+msgid "يُنصح باستخدام صورة بخلفية شفافة (PNG) للحصول على أفضل نتيجة"
+msgstr "يُنصح باستخدام صورة بخلفية شفافة (PNG) للحصول على أفضل نتيجة"
+
+#: templates/settings.html
+msgid "الحجم المثالي للوجو: 200x200 بكسل أو أكبر"
+msgstr "الحجم المثالي للوجو: 200x200 بكسل أو أكبر"
+
+#: templates/settings.html
+msgid "اسم الشركة سيظهر بجانب اللوجو في جميع صفحات النظام"
+msgstr "اسم الشركة سيظهر بجانب اللوجو في جميع صفحات النظام"
+
+#: templates/settings.html
+msgid "يمكنك تخصيص حجم اللوجو من 20 إلى 200 بكسل من الإعدادات أعلاه"
+msgstr "يمكنك تخصيص حجم اللوجو من 20 إلى 200 بكسل من الإعدادات أعلاه"
+
+#: templates/settings.html
+msgid "بعد رفع اللوجو، قد تحتاج لتحديث الصفحة (F5) لرؤية التغييرات"
+msgstr "بعد رفع اللوجو، قد تحتاج لتحديث الصفحة (F5) لرؤية التغييرات"
+
+#: templates/settings.html
+msgid "جاري الحفظ..."
+msgstr "جاري الحفظ..."
+
+#: templates/enhanced_reports.html
+msgid "التقارير المفصلة"
+msgstr "التقارير المفصلة"
+
+#: templates/enhanced_reports.html
+msgid "العودة للرئيسية"
+msgstr "العودة للرئيسية"
+
+#: templates/enhanced_reports.html
+msgid "سجل الكاميرات"
+msgstr "سجل الكاميرات"
+
+#: templates/enhanced_reports.html
+msgid "الأعطال حسب الفرع"
+msgstr "الأعطال حسب الفرع"
+
+#: templates/enhanced_reports.html
+msgid "الفرع"
+msgstr "الفرع"
+
+#: templates/enhanced_reports.html
+msgid "المنطقة"
+msgstr "المنطقة"
+
+#: templates/enhanced_reports.html
+msgid "السلسلة"
+msgstr "السلسلة"
+
+#: templates/enhanced_reports.html
+msgid "إجمالي الأعطال"
+msgstr "إجمالي الأعطال"
+
+#: templates/enhanced_reports.html
+msgid "الأعطال المفتوحة"
+msgstr "الأعطال المفتوحة"
+
+#: templates/enhanced_reports.html
+msgid "الأعطال المغلقة"
+msgstr "الأعطال المغلقة"
+
+#: templates/enhanced_reports.html
+msgid "نسبة الإنجاز"
+msgstr "نسبة الإنجاز"
+
+#: templates/enhanced_reports.html
+msgid "إجراءات"
+msgstr "إجراءات"
+
+#: templates/enhanced_reports.html
+msgid "غير محدد"
+msgstr "غير محدد"
+
+#: templates/enhanced_reports.html
+msgid "عرض الأعطال"
+msgstr "عرض الأعطال"
+
+#: templates/enhanced_reports.html
+msgid "تنزيل تقرير"
+msgstr "تنزيل تقرير"
+
+#: templates/enhanced_reports.html
+msgid "بيانات ملف Excel"
+msgstr "بيانات ملف Excel"
+
+#: templates/enhanced_reports.html
+msgid "إجمالي السجلات"
+msgstr "إجمالي السجلات"
+
+#: templates/enhanced_reports.html
+msgid "اسم الملف"
+msgstr "اسم الملف"
+
+#: templates/enhanced_reports.html
+msgid "كاميرات معطلة"
+msgstr "كاميرات معطلة"
+
+#: templates/enhanced_reports.html
+msgid "كاميرات عاملة"
+msgstr "كاميرات عاملة"
+
+#: templates/enhanced_reports.html
+msgid "آخر تحديث:"
+msgstr "آخر تحديث:"
+
+#: templates/enhanced_reports.html
+msgid "الآن"
+msgstr "الآن"
+
+#: templates/enhanced_reports.html
+msgid "الاسم"
+msgstr "الاسم"
+
+#: templates/enhanced_reports.html
+msgid "العنوان"
+msgstr "العنوان"
+
+#: templates/enhanced_reports.html
+msgid "الحالة"
+msgstr "الحالة"
+
+#: templates/enhanced_reports.html
+msgid "الشبكة"
+msgstr "الشبكة"
+
+#: templates/enhanced_reports.html
+msgid "معطلة"
+msgstr "معطلة"
+
+#: templates/enhanced_reports.html
+msgid "عاملة"
+msgstr "عاملة"
+
+#: templates/enhanced_reports.html
+msgid "و"
+msgstr "و"
+
+#: templates/enhanced_reports.html
+msgid "سجل آخر..."
+msgstr "سجل آخر..."
+
+#: templates/enhanced_reports.html
+msgid "لا توجد بيانات Excel"
+msgstr "لا توجد بيانات Excel"
+
+#: templates/enhanced_reports.html
+msgid "قم برفع ملف Excel لعرض البيانات هنا"
+msgstr "قم برفع ملف Excel لعرض البيانات هنا"
+
+#: templates/enhanced_reports.html
+msgid "رفع ملف Excel"
+msgstr "رفع ملف Excel"
+
+#: templates/enhanced_reports.html
+msgid "إجراءات سريعة"
+msgstr "إجراءات سريعة"
+
+#: templates/enhanced_reports.html
+msgid "تقرير أعطال الكاميرا"
+msgstr "تقرير أعطال الكاميرا"
+
+#: templates/enhanced_reports.html
+msgid "تقرير الكاميرات التي تم إصلاحها"
+msgstr "تقرير الكاميرات التي تم إصلاحها"
+
+#: templates/enhanced_reports.html
+msgid "تقرير أعطال الأجهزة"
+msgstr "تقرير أعطال الأجهزة"
+
+#: templates/enhanced_reports.html
+msgid "تقرير جميع الأعطال"
+msgstr "تقرير جميع الأعطال"
+
+#: app.py
+msgid "فقط المدير يمكنه الوصول إلى التقارير المفصلة ❌"
+msgstr "فقط المدير يمكنه الوصول إلى التقارير المفصلة ❌"
+
+#: templates/dashboard.html
+msgid "مرحباً"
+msgstr "مرحباً"
+
+#: templates/dashboard.html
+msgid "أنت مسجل كمشرف على النظام. يمكنك إدارة جميع المناطق والفروع والكاميرات والأعطال."
+msgstr "أنت مسجل كمشرف على النظام. يمكنك إدارة جميع المناطق والفروع والكاميرات والأعطال."
+
+#: templates/dashboard.html
+msgid "أنت مسجل كفني. يمكنك عرض الأعطال المسندة إليك وإصلاحها."
+msgstr "أنت مسجل كفني. يمكنك عرض الأعطال المسندة إليك وإصلاحها."
+
+#: templates/dashboard.html
+msgid "آخر تحديث"
+msgstr "آخر تحديث"
+
+#: templates/dashboard.html
+msgid "التقارير"
+msgstr "التقارير"
+
+#: templates/dashboard.html
+msgid "تنزيل تقرير الأعطال بصيغة Excel (سلسلة، منطقة، فرع، كاميرا، نوع العطل، الحالة، الفني، التواريخ)."
+msgstr "تنزيل تقرير الأعطال بصيغة Excel (سلسلة، منطقة، فرع، كاميرا، نوع العطل، الحالة، الفني، التواريخ)."
+
+#: templates/dashboard.html
+msgid "تنزيل تقرير Excel"
+msgstr "تنزيل تقرير Excel"
+
+#: templates/dashboard.html
+msgid "إجراءات سريعة"
+msgstr "إجراءات سريعة"
+
+#: templates/dashboard.html
+msgid "السلاسل والمناطق"
+msgstr "السلاسل والمناطق"
+
+#: templates/dashboard.html
+msgid "إضافة سلسلة"
+msgstr "إضافة سلسلة"
+
+#: templates/dashboard.html
+msgid "إضافة فني"
+msgstr "إضافة فني"
+
+#: templates/dashboard.html
+msgid "جميع الأعطال"
+msgstr "جميع الأعطال"
+
+#: templates/dashboard.html
+msgid "أعطال الأجهزة"
+msgstr "أعطال الأجهزة"
+
+#: templates/dashboard.html
+msgid "إضافة كاميرا"
+msgstr "إضافة كاميرا"
+
+#: templates/dashboard.html
+msgid "تسجيل عطل"
+msgstr "تسجيل عطل"
+
+#: templates/dashboard.html
+msgid "كاميرات الفروع"
+msgstr "كاميرات الفروع"
+
+#: templates/dashboard.html
+msgid "المسجلة في الفروع فقط"
+msgstr "المسجلة في الفروع فقط"
+
+#: templates/dashboard.html
+msgid "إجمالي الأجهزة"
+msgstr "إجمالي الأجهزة"
+
+#: templates/dashboard.html
+msgid "كاميرات معطلة"
+msgstr "كاميرات معطلة"
+
+#: templates/dashboard.html
+msgid "أجهزة معطلة"
+msgstr "أجهزة معطلة"
+
+#: templates/dashboard.html
+msgid "أعطال مفتوحة"
+msgstr "أعطال مفتوحة"
+
+#: templates/dashboard.html
+msgid "أعطال مغلقة"
+msgstr "أعطال مغلقة"
+
+#: templates/dashboard.html
+msgid "إحصائيات سريعة"
+msgstr "إحصائيات سريعة"
+
+#: templates/dashboard.html
+msgid "حية"
+msgstr "حية"
+
+#: templates/dashboard.html
+msgid "كاميرات عاملة"
+msgstr "كاميرات عاملة"
+
+#: templates/dashboard.html
+msgid "من قائمة الأعطال"
+msgstr "من قائمة الأعطال"
+
+#: templates/dashboard.html
+msgid "إجمالي الأعطال المفتوحة"
+msgstr "إجمالي الأعطال المفتوحة"
+
+#: templates/dashboard.html
+msgid "أعطال أجهزة مفتوحة"
+msgstr "أعطال أجهزة مفتوحة"
+
+#: templates/dashboard.html
+msgid "مكتمل"
+msgstr "مكتمل"
+
+#: templates/dashboard.html
+msgid "أعطالي المسندة"
+msgstr "أعطالي المسندة"
+
+#: templates/dashboard.html
+msgid "أعطال الكاميرات"
+msgstr "أعطال الكاميرات"
+
+#: templates/dashboard.html
+msgid "إصلاح"
+msgstr "إصلاح"
+
+#: templates/dashboard.html
+msgid "أعطال الأجهزة"
+msgstr "أعطال الأجهزة"
+
+#: templates/dashboard.html
+msgid "الإشعارات"
+msgstr "الإشعارات"
+
+#: templates/dashboard.html
+msgid "جديدة"
+msgstr "جديدة"
+
+#: templates/dashboard.html
+msgid "تنبيه:"
+msgstr "تنبيه:"
+
+#: templates/dashboard.html
+msgid "يوجد"
+msgstr "يوجد"
+
+#: templates/dashboard.html
+msgid "عطل كاميرا و"
+msgstr "عطل كاميرا و"
+
+#: templates/dashboard.html
+msgid "عطل جهاز يحتاجان للإصلاح"
+msgstr "عطل جهاز يحتاجان للإصلاح"
+
+#: templates/dashboard.html
+msgid "ممتاز:"
+msgstr "ممتاز:"
+
+#: templates/dashboard.html
+msgid "جميع الأعطال تم إصلاحها"
+msgstr "جميع الأعطال تم إصلاحها"
+
+#: templates/dashboard.html
+msgid "معلومات:"
+msgstr "معلومات:"
+
+#: templates/dashboard.html
+msgid "إجمالي الكاميرات النشطة"
+msgstr "إجمالي الكاميرات النشطة"
+
+#: templates/dashboard.html
+msgid "من"
+msgstr "من"
+
+#: templates/dashboard.html
+msgid "وإجمالي الأجهزة النشطة"
+msgstr "وإجمالي الأجهزة النشطة"
+
+#: templates/dashboard.html
+msgid "أقدم 10 أعطال مفتوحة"
+msgstr "أقدم 10 أعطال مفتوحة"
+
+#: templates/dashboard.html
+msgid "عرض جميع الأعطال"
+msgstr "عرض جميع الأعطال"
+
+#: templates/dashboard.html
+msgid "معلومات سريعة:"
+msgstr "معلومات سريعة:"
+
+#: templates/dashboard.html
+msgid "يتم عرض أقدم 10 أعطال مفتوحة من إجمالي"
+msgstr "يتم عرض أقدم 10 أعطال مفتوحة من إجمالي"
+
+#: templates/dashboard.html
+msgid "عطل مفتوح في النظام"
+msgstr "عطل مفتوح في النظام"
+
+#: templates/dashboard.html
+msgid "الكاميرا"
+msgstr "الكاميرا"
+
+#: templates/dashboard.html
+msgid "نوع العطل"
+msgstr "نوع العطل"
+
+#: templates/dashboard.html
+msgid "الوصف"
+msgstr "الوصف"
+
+#: templates/dashboard.html
+msgid "الفني المسؤول"
+msgstr "الفني المسؤول"
+
+#: templates/dashboard.html
+msgid "تاريخ الإبلاغ"
+msgstr "تاريخ الإبلاغ"
+
+#: templates/dashboard.html
+msgid "مدة العطل"
+msgstr "مدة العطل"
+
+#: templates/dashboard.html
+msgid "الحالة"
+msgstr "الحالة"
+
+#: templates/dashboard.html
+msgid "الإجراء"
+msgstr "الإجراء"
+
+#: templates/dashboard.html
+msgid "لم يتم التعيين"
+msgstr "لم يتم التعيين"
+
+#: templates/dashboard.html
+msgid "مُصلح"
+msgstr "مُصلح"
+
+#: templates/dashboard.html
+msgid "يوم"
+msgstr "يوم"
+
+#: templates/dashboard.html
+msgid "ساعة"
+msgstr "ساعة"
+
+#: templates/dashboard.html
+msgid "أقل من ساعة"
+msgstr "أقل من ساعة"
+
+#: templates/dashboard.html
+msgid "قيد الانتظار"
+msgstr "قيد الانتظار"
+
+#: templates/dashboard.html
+msgid "غير مسموح"
+msgstr "غير مسموح"
+
+#: templates/dashboard.html
+msgid "عرض"
+msgstr "عرض"
+
+#: templates/dashboard.html
+msgid "لا توجد أعطال مفتوحة"
+msgstr "لا توجد أعطال مفتوحة"
+
+#: templates/dashboard.html
+msgid "جميع الأعطال تم إصلاحها بنجاح"
+msgstr "جميع الأعطال تم إصلاحها بنجاح"
+
+#: templates/dashboard.html
+msgid "كاميرات سليمة"
+msgstr "كاميرات سليمة"
+
+#: app.py
+msgid "فقط المدير يمكنه إضافة مناطق ❌"
+msgstr "فقط المدير يمكنه إضافة مناطق ❌"
+
+#: app.py
+msgid "فقط المدير يمكنه تعديل المناطق ❌"
+msgstr "فقط المدير يمكنه تعديل المناطق ❌"
+
+#: app.py
+msgid "فقط المدير يمكنه حذف المناطق ❌"
+msgstr "فقط المدير يمكنه حذف المناطق ❌"
+
+#: app.py
+msgid "فقط المدير يمكنه استيراد المناطق من Excel ❌"
+msgstr "فقط المدير يمكنه استيراد المناطق من Excel ❌"
+
+#: app.py
+msgid "فقط المدير يمكنه استيراد الفروع من Excel ❌"
+msgstr "فقط المدير يمكنه استيراد الفروع من Excel ❌"
+
+#: templates/bbm_management.html
+msgid "صرف BBM"
+msgstr "صرف BBM"
+
+#: templates/bbm_management.html
+msgid "العودة للأعطال"
+msgstr "العودة للأعطال"
+
+#: templates/bbm_management.html
+msgid "إجمالي أعطال BBM"
+msgstr "إجمالي أعطال BBM"
+
+#: templates/bbm_management.html
+msgid "في الانتظار"
+msgstr "في الانتظار"
+
+#: templates/bbm_management.html
+msgid "قيد التنفيذ"
+msgstr "قيد التنفيذ"
+
+#: templates/bbm_management.html
+msgid "تم الإصلاح"
+msgstr "تم الإصلاح"
+
+#: templates/bbm_management.html
+msgid "أعطال BBM المحولة"
+msgstr "أعطال BBM المحولة"
+
+#: templates/bbm_management.html
+msgid "رقم العطل الأصلي"
+msgstr "رقم العطل الأصلي"
+
+#: templates/bbm_management.html
+msgid "تاريخ التحويل"
+msgstr "تاريخ التحويل"
+
+#: templates/bbm_management.html
+msgid "حول بواسطة"
+msgstr "حول بواسطة"
+
+#: templates/bbm_management.html
+msgid "إصلاح عطل BBM"
+msgstr "إصلاح عطل BBM"
+
+#: templates/bbm_management.html
+msgid "حذف عطل BBM"
+msgstr "حذف عطل BBM"
+
+#: templates/bbm_management.html
+msgid "لا توجد أعطال BBM"
+msgstr "لا توجد أعطال BBM"
+
+#: templates/bbm_management.html
+msgid "لم يتم تحويل أي أعطال إلى BBM بعد"
+msgstr "لم يتم تحويل أي أعطال إلى BBM بعد"
+
+#: app.py
+msgid "فقط المدير يمكنه الوصول لصفحة BBM ❌"
+msgstr "فقط المدير يمكنه الوصول لصفحة BBM ❌"
+
+#: app.py
+msgid "غير مسموح لك بإصلاح عطل BBM ❌"
+msgstr "غير مسموح لك بإصلاح عطل BBM ❌"
+
+#: app.py
+msgid "تم إصلاح عطل BBM بنجاح ✅"
+msgstr "تم إصلاح عطل BBM بنجاح ✅"
+
+#: app.py
+msgid "غير مسموح لك بحذف عطل BBM ❌"
+msgstr "غير مسموح لك بحذف عطل BBM ❌"
+
+#: app.py
+msgid "تم حذف عطل BBM بنجاح ✅"
+msgstr "تم حذف عطل BBM بنجاح ✅"
+
+#: templates/resolve_bbm.html
+msgid "العودة لصرف BBM"
+msgstr "العودة لصرف BBM"
+
+#: templates/resolve_bbm.html
+msgid "تفاصيل عطل BBM"
+msgstr "تفاصيل عطل BBM"
+
+#: templates/resolve_bbm.html
+msgid "الحالة الحالية"
+msgstr "الحالة الحالية"
+
+#: templates/resolve_bbm.html
+msgid "وصف العطل"
+msgstr "وصف العطل"
+
+#: templates/resolve_bbm.html
+msgid "الفني الحالي"
+msgstr "الفني الحالي"
+
+#: templates/resolve_bbm.html
+msgid "ملاحظات الإصلاح"
+msgstr "ملاحظات الإصلاح"
+
+#: templates/resolve_bbm.html
+msgid "اكتب ملاحظات الإصلاح هنا..."
+msgstr "اكتب ملاحظات الإصلاح هنا..."
+
+#: templates/resolve_bbm.html
+msgid "تأكيد الإصلاح"
+msgstr "تأكيد الإصلاح"
+
+#: templates/resolve_bbm.html
+msgid "إلغاء"
+msgstr "إلغاء"
+
+#: templates/resolve_bbm.html
+msgid "معلومات إضافية"
+msgstr "معلومات إضافية"
+
+#: templates/resolve_bbm.html
+msgid "جهاز"
+msgstr "جهاز"
+
+#: templates/resolve_bbm.html
+msgid "أبلغ بواسطة"
+msgstr "أبلغ بواسطة"
+
+#: templates/resolve_bbm.html
+msgid "ملاحظات هامة"
+msgstr "ملاحظات هامة"
+
+#: templates/resolve_bbm.html
+msgid "عطل BBM"
+msgstr "عطل BBM"
+
+#: templates/resolve_bbm.html
+msgid "هذا عطل تم تحويله من نظام الأعطال الرئيسي إلى نظام BBM للمعالجة المتخصصة."
+msgstr "هذا عطل تم تحويله من نظام الأعطال الرئيسي إلى نظام BBM للمعالجة المتخصصة."
+
+#: templates/resolve_bbm.html
+msgid "الإجراء المطلوب"
+msgstr "الإجراء المطلوب"
+
+#: templates/resolve_bbm.html
+msgid "قم بإصلاح العطل وإضافة ملاحظات تفصيلية عن العمل المنجز."
+msgstr "قم بإصلاح العطل وإضافة ملاحظات تفصيلية عن العمل المنجز."
+
+#: templates/resolve_bbm.html
+msgid "الحالة النهائية"
+msgstr "الحالة النهائية"
+
+#: templates/resolve_bbm.html
+msgid "بعد الإصلاح، سيتم تحديث حالة العطل إلى \"مُصلح\" ولن يظهر في قائمة الأعطال النشطة."
+msgstr "بعد الإصلاح، سيتم تحديث حالة العطل إلى \"مُصلح\" ولن يظهر في قائمة الأعطال النشطة."
+
+#: templates/bbm_management.html
+msgid "Pending"
+msgstr "في الانتظار"
+
+#: templates/bbm_management.html
+msgid "In Progress"
+msgstr "قيد التنفيذ"
+
+#: templates/bbm_management.html
+msgid "Resolved"
+msgstr "مُصلح"
+
+#: templates/branches.html
+msgid "حذف جميع الفروع"
+msgstr "حذف جميع الفروع"
+
+#: templates/branches.html
+msgid "ملاحظة: سيتم استيراد أسماء الفروع من العمود C فقط. البيانات الأخرى (الموقع، التليفون، IP) ستترك فارغة للملء يدوياً."
+msgstr "ملاحظة: سيتم استيراد أسماء الفروع من العمود C فقط. البيانات الأخرى (الموقع، التليفون، IP) ستترك فارغة للملء يدوياً."
+
+#: templates/branches.html
+msgid "عدم استيراد الأسماء المكررة من العمود C"
+msgstr "عدم استيراد الأسماء المكررة من العمود C"
+
+#: templates/branches.html
+msgid "هل أنت متأكد من حذف جميع فروع هذه المنطقة؟ هذا الإجراء لا يمكن التراجع عنه."
+msgstr "هل أنت متأكد من حذف جميع فروع هذه المنطقة؟ هذا الإجراء لا يمكن التراجع عنه."
+
+#: templates/branches.html
+msgid "تحذير: سيتم حذف جميع الكاميرات والأجهزة المرتبطة بهذه الفروع أيضاً. هل تريد المتابعة؟"
+msgstr "تحذير: سيتم حذف جميع الكاميرات والأجهزة المرتبطة بهذه الفروع أيضاً. هل تريد المتابعة؟"
+
+#: app.py
+msgid "فقط المدير يمكنه حذف الكاميرات ❌"
+msgstr "فقط المدير يمكنه حذف الكاميرات ❌"
+
+#: app.py
+msgid "لا توجد كاميرات لحذفها في هذا الفرع ℹ️"
+msgstr "لا توجد كاميرات لحذفها في هذا الفرع ℹ️"
+
+#: app.py
+msgid "تم حذف الكاميرا بنجاح ✅"
+msgstr "تم حذف الكاميرا بنجاح ✅"
+
+#: app.py
+msgid "حدث خطأ أثناء حذف الكاميرا: {str(e)} ❌"
+msgstr "حدث خطأ أثناء حذف الكاميرا: {str(e)} ❌"
+
+#: app.py
+msgid "لا توجد فروع لحذفها في هذه المنطقة ℹ️"
+msgstr "لا توجد فروع لحذفها في هذه المنطقة ℹ️"
+
+#: templates/total_camera_report.html
+msgid "Are you sure you want to delete ALL data from this page? This action cannot be undone."
+msgstr "هل أنت متأكد من حذف جميع البيانات من هذه الصفحة؟ هذا الإجراء لا يمكن التراجع عنه."
+
+#: templates/total_camera_report.html
+msgid "This will permanently delete all camera data. Are you absolutely sure?"
+msgstr "سيتم حذف جميع بيانات الكاميرات بشكل دائم. هل أنت متأكد تماماً؟"
+
+#: app.py
+msgid "فقط المدير يمكنه حذف البيانات ❌"
+msgstr "فقط المدير يمكنه حذف البيانات ❌"
+
+#: templates/login.html
+msgid "تسجيل الدخول"
+msgstr "تسجيل الدخول"
+
+#: templates/login.html
+msgid "نظام إدارة الكاميرات"
+msgstr "نظام إدارة الكاميرات"
+
+#: templates/login.html
+msgid "اسم المستخدم"
+msgstr "اسم المستخدم"
+
+#: templates/login.html
+msgid "أدخل اسم المستخدم"
+msgstr "أدخل اسم المستخدم"
+
+#: templates/login.html
+msgid "كلمة المرور"
+msgstr "كلمة المرور"
+
+#: templates/login.html
+msgid "أدخل كلمة المرور"
+msgstr "أدخل كلمة المرور"
+
+#: templates/login.html
+msgid "جاري تسجيل الدخول..."
+msgstr "جاري تسجيل الدخول..."
+
+#: templates/login.html
+msgid "الحسابات الافتراضية"
+msgstr "الحسابات الافتراضية"
+
+#: templates/login.html
+msgid "معلومات الدخول"
+msgstr "معلومات الدخول"
+
+#: templates/login.html
+msgid "مدير:"
+msgstr "مدير:"
+
+#: templates/login.html
+msgid "فني:"
+msgstr "فني:"
+
+#: app.py
+msgid "تم تسجيل الدخول بنجاح"
+msgstr "تم تسجيل الدخول بنجاح"
+
+#: app.py
+msgid "اسم المستخدم أو كلمة المرور غير صحيحة"
+msgstr "اسم المستخدم أو كلمة المرور غير صحيحة"
+
+#: app.py
+msgid "تم تسجيل الخروج بنجاح"
+msgstr "تم تسجيل الخروج بنجاح"
+
+#: templates/faults.html
+msgid "جميع أعطال الكاميرات المسجلة"
+msgstr "جميع أعطال الكاميرات المسجلة"
+
+#: templates/faults.html
+msgid "ابحث عن عطل..."
+msgstr "ابحث عن عطل..."
+
+#: templates/faults.html
+msgid "حالة العطل"
+msgstr "حالة العطل"
+
+#: templates/faults.html
+msgid "الكل"
+msgstr "الكل"
+
+#: templates/faults.html
+msgid "الفرع"
+msgstr "الفرع"
+
+#: templates/faults.html
+msgid "كل الفروع"
+msgstr "كل الفروع"
+
+#: templates/faults.html
+msgid "إحصائيات سريعة"
+msgstr "إحصائيات سريعة"
+
+#: templates/faults.html
+msgid "الإجمالي:"
+msgstr "الإجمالي:"
+
+#: templates/faults.html
+msgid "مفتوحة:"
+msgstr "مفتوحة:"
+
+#: templates/faults.html
+msgid "مُصلحة:"
+msgstr "مُصلحة:"
+
+#: templates/faults.html
+msgid "إدارة جميع أعطال الكاميرات المسجلة"
+msgstr "إدارة جميع أعطال الكاميرات المسجلة"

@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('استيراد الأعطال من Excel') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="h3 mb-3 fw-bold">
+                <i class="fas fa-file-excel me-2" style="color: #2E7D32;"></i>
+                {{ _('استيراد الأعطال من ملف Excel') }}
+            </h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- عمود الرفع -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0" style="border-radius: 12px;">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-4 fw-bold">
+                        <i class="fas fa-upload me-2"></i>{{ _('رفع ملف Excel') }}
+                    </h5>
+
+                    <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <!-- منطقة الرفع -->
+                        <div class="mb-4">
+                            <div class="upload-area border-2 border-dashed rounded-3 p-5 text-center bg-light" 
+                                 id="uploadArea" style="cursor: pointer; transition: all 0.3s;">
+                                <i class="fas fa-cloud-upload-alt fa-3x mb-3" style="color: #2E7D32;"></i>
+                                <h6 class="mb-2 fw-bold">{{ _('اسحب الملف هنا أو انقر للاختيار') }}</h6>
+                                <small class="text-muted">{{ _('ملفات Excel فقط (.xlsx, .xls)') }}</small>
+                                <input type="file" name="excel_file" id="excelFile" class="d-none" accept=".xlsx,.xls">
+                            </div>
+                        </div>
+
+                        <!-- اسم الملف المختار -->
+                        <div id="fileInfo" class="mb-3 d-none">
+                            <div class="alert alert-info d-flex align-items-center" role="alert">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <span id="fileName"></span>
+                            </div>
+                        </div>
+
+                        <!-- الأزرار -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg fw-bold" id="uploadBtn" disabled>
+                                <i class="fas fa-upload me-2"></i>{{ _('استيراد الأعطال') }}
+                            </button>
+                            <a href="{{ url_for('all_faults') }}" class="btn btn-secondary btn-lg fw-bold">
+                                <i class="fas fa-arrow-left me-2"></i>{{ _('العودة') }}
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- عمود التعليمات -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0" style="border-radius: 12px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-4 fw-bold">
+                        <i class="fas fa-info-circle me-2"></i>{{ _('تعليمات الاستخدام') }}
+                    </h5>
+
+                    <div class="accordion" id="instructionsAccordion">
+                        <!-- التعليمات -->
+                        <div class="accordion-item border-0 mb-2 rounded-3" style="background: white;">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button fw-bold" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#instruction1">
+                                    <i class="fas fa-list-check me-2" style="color: #2E7D32;"></i>
+                                    {{ _('صيغة الملف المطلوبة') }}
+                                </button>
+                            </h2>
+                            <div id="instruction1" class="accordion-collapse collapse show" data-bs-parent="#instructionsAccordion">
+                                <div class="accordion-body">
+                                    <p class="mb-2">{{ _('الملف يجب أن يحتوي على الأعمدة التالية:') }}</p>
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr style="background-color: #f0f0f0;">
+                                                <th>{{ _('الترتيب') }}</th>
+                                                <th>{{ _('اسم العمود') }}</th>
+                                                <th>{{ _('الوصف') }}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><span class="badge bg-success">1</span></td>
+                                                <td><strong>{{ _('اسم الكاميرا') }}</strong></td>
+                                                <td>{{ _('اسم الكاميرا بالضبط كما في النظام') }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><span class="badge bg-success">2</span></td>
+                                                <td><strong>{{ _('IP Address') }}</strong></td>
+                                                <td>{{ _('عنوان IP للكاميرا (اختياري)') }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><span class="badge bg-success">3</span></td>
+                                                <td><strong>{{ _('اسم الفرع') }}</strong></td>
+                                                <td>{{ _('اسم الفرع بالضبط كما في النظام') }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- مثال -->
+                        <div class="accordion-item border-0 mb-2 rounded-3" style="background: white;">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button fw-bold collapsed" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#instruction2">
+                                    <i class="fas fa-eye me-2" style="color: #1976D2;"></i>
+                                    {{ _('مثال على الصيغة الصحيحة') }}
+                                </button>
+                            </h2>
+                            <div id="instruction2" class="accordion-collapse collapse" data-bs-parent="#instructionsAccordion">
+                                <div class="accordion-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <thead style="background-color: #2E7D32; color: white;">
+                                                <tr>
+                                                    <th>{{ _('اسم الكاميرا') }}</th>
+                                                    <th>{{ _('IP Address') }}</th>
+                                                    <th>{{ _('اسم الفرع') }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>كاميرا المدخل الرئيسي</td>
+                                                    <td>192.168.1.100</td>
+                                                    <td>فرع القاهرة</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>كاميرا الممر</td>
+                                                    <td>192.168.2.50</td>
+                                                    <td>فرع الجيزة</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ملاحظات مهمة -->
+                        <div class="accordion-item border-0 rounded-3" style="background: white;">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button fw-bold collapsed" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#instruction3">
+                                    <i class="fas fa-warning me-2" style="color: #F57C00;"></i>
+                                    {{ _('ملاحظات مهمة') }}
+                                </button>
+                            </h2>
+                            <div id="instruction3" class="accordion-collapse collapse" data-bs-parent="#instructionsAccordion">
+                                <div class="accordion-body">
+                                    <ul class="mb-0">
+                                        <li class="mb-2">
+                                            <strong>{{ _('أسماء الكاميرات:') }}</strong> {{ _('يجب أن تطابق بالضبط الأسماء المسجلة في النظام') }}
+                                        </li>
+                                        <li class="mb-2">
+                                            <strong>{{ _('أسماء الفنيين:') }}</strong> {{ _('يجب أن تكون أسماء مستخدمين فنيين موجودين بالفعل') }}
+                                        </li>
+                                        <li class="mb-2">
+                                            <strong>{{ _('الحقول الإلزامية:') }}</strong> {{ _('الكاميرا، النوع، نوع الجهاز، الوصف') }}
+                                        </li>
+                                        <li class="mb-2">
+                                            <strong>{{ _('الحد الأقصى للوصف:') }}</strong> {{ _('200 حرف') }}
+                                        </li>
+                                        <li class="mb-0">
+                                            <strong>{{ _('صيغة الملف:') }}</strong> {{ _('.xlsx أو .xls فقط') }}
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- زر تحميل نموذج -->
+                    <div class="mt-4">
+                        <a href="{{ url_for('download_template') }}" class="btn btn-outline-success w-100 fw-bold">
+                            <i class="fas fa-download me-2"></i>{{ _('تحميل نموذج Excel') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.upload-area:hover {
+    background-color: #e8f5e9 !important;
+    border-color: #2E7D32 !important;
+}
+
+.upload-area.dragover {
+    background-color: #c8e6c9 !important;
+    border-color: #2E7D32 !important;
+    box-shadow: 0 0 20px rgba(46, 125, 50, 0.3) !important;
+}
+
+.table-responsive {
+    border-radius: 8px;
+    overflow: hidden;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const i18n = {
+        selectedFile: {{ _('الملف المختار:')|tojson }}
+    };
+
+    const uploadArea = document.getElementById('uploadArea');
+    const excelFile = document.getElementById('excelFile');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const uploadBtn = document.getElementById('uploadBtn');
+
+    // فتح نافذة الملفات عند النقر على المنطقة
+    uploadArea.addEventListener('click', () => excelFile.click());
+
+    // السحب والإفلات
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            excelFile.files = files;
+            handleFileSelect();
+        }
+    });
+
+    // تغيير الملف
+    excelFile.addEventListener('change', handleFileSelect);
+
+    function handleFileSelect() {
+        if (excelFile.files.length > 0) {
+            const file = excelFile.files[0];
+            fileName.textContent = `${i18n.selectedFile} ${file.name}`;
+            fileInfo.classList.remove('d-none');
+            uploadBtn.disabled = false;
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('التقارير المفصلة') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="text-primary">
+            <i class="fas fa-chart-bar me-2"></i>{{ _('التقارير المفصلة') }}
+        </h1>
+        <div>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-arrow-right me-1"></i>{{ _('العودة للرئيسية') }}
+            </a>
+            <a href="{{ url_for('total_camera_report') }}" class="btn btn-primary">
+                <i class="fas fa-file-excel me-1"></i>{{ _('سجل الكاميرات') }}
+            </a>
+        </div>
+    </div>
+
+    <!-- Search Box -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('enhanced_reports') }}" class="d-flex">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" 
+                                   name="search_branch" 
+                                   value="{{ request.args.get('search_branch', '') }}"
+                                   class="form-control" 
+                                   placeholder="{{ _('ابحث برقم الفرع أو اسم الفرع...') }}">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i>{{ _('بحث') }}
+                            </button>
+                            {% if request.args.get('search_branch') %}
+                            <a href="{{ url_for('enhanced_reports') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>{{ _('مسح البحث') }}
+                            </a>
+                            {% endif %}
+                        </div>
+                    </form>
+                    {% if request.args.get('search_branch') %}
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            {{ _('تم العثور على') }} {{ branches|length }} {{ _('فرع مطابق للبحث') }}
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Branch-wise Faults Summary -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="stat-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-building me-2"></i>{{ _('الأعطال حسب الفرع') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{{ _('الفرع') }}</th>
+                                    <th>{{ _('المنطقة') }}</th>
+                                    <th>{{ _('السلسلة') }}</th>
+                                    <th>{{ _('إجمالي الأعطال') }}</th>
+                                    <th>{{ _('الأعطال المفتوحة') }}</th>
+                                    <th>{{ _('الأعطال المغلقة') }}</th>
+                                    <th>{{ _('نسبة الإنجاز') }}</th>
+                                    <th>{{ _('إجراءات') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for branch in branches %}
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-store me-1"></i>{{ branch.name }}
+                                    </td>
+                                    <td>{{ branch.region.name if branch.region else _('غير محدد') }}</td>
+                                    <td>{{ branch.region.chain.name if branch.region and branch.region.chain else _('غير محدد') }}</td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ branch.total_faults or 0 }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-danger">{{ branch.open_faults or 0 }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">{{ branch.closed_faults or 0 }}</span>
+                                    </td>
+                                    <td>
+                                        {% set completion_rate = ((branch.closed_faults or 0) / (branch.total_faults or 1) * 100) %}
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-success" style="width: {{ completion_rate }}%">
+                                                {{ "%.1f"|format(completion_rate) }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('branch_faults', branch_id=branch.id) }}" class="btn btn-sm btn-info me-1" title="{{ _('عرض الأعطال') }}">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('branch_faults_excel', branch_id=branch.id) }}" class="btn btn-sm btn-success" title="{{ _('تنزيل تقرير') }}">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Excel Data Summary -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="stat-card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-excel me-2"></i>{{ _('بيانات ملف Excel') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if excel_data %}
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="stat-box text-center">
+                                <h3 class="text-primary">{{ excel_data|length }}</h3>
+                                <p class="mb-0">{{ _('إجمالي السجلات') }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-box text-center">
+                                <h3 class="text-info">{{ filename }}</h3>
+                                <p class="mb-0">{{ _('اسم الملف') }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-box text-center">
+                                <h3 class="text-warning">{{ excel_data|selectattr('status', 'equalto', 'offline')|list|length }}</h3>
+                                <p class="mb-0">{{ _('كاميرات معطلة') }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-box text-center">
+                                <h3 class="text-success">{{ excel_data|selectattr('status', 'equalto', 'online')|list|length }}</h3>
+                                <p class="mb-0">{{ _('كاميرات عاملة') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h6>{{ _('آخر تحديث:') }} {{ _('الآن') }}</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>{{ _('الاسم') }}</th>
+                                        <th>{{ _('العنوان') }}</th>
+                                        <th>{{ _('الحالة') }}</th>
+                                        <th>{{ _('الشبكة') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for camera in excel_data[:10] %}
+                                    <tr>
+                                        <td>{{ camera.Name }}</td>
+                                        <td>{{ camera.Address }}</td>
+                                        <td>
+                                            {% if camera.Status == 'offline' %}
+                                                <span class="badge bg-danger">{{ _('معطلة') }}</span>
+                                            {% else %}
+                                                <span class="badge bg-success">{{ _('عاملة') }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ camera['Network Status'] }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            {% if excel_data|length > 10 %}
+                            <p class="text-muted text-center mt-2">
+                                {{ _('و') }} {{ excel_data|length - 10 }} {{ _('سجل آخر...') }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-file-excel fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">{{ _('لا توجد بيانات Excel') }}</h5>
+                        <p class="text-muted">{{ _('قم برفع ملف Excel لعرض البيانات هنا') }}</p>
+                        <a href="{{ url_for('total_camera_report') }}" class="btn btn-primary">
+                            <i class="fas fa-upload me-1"></i>{{ _('رفع ملف Excel') }}
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="stat-card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>{{ _('إجراءات سريعة') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <a href="{{ url_for('camera_faults_report') }}" class="btn btn-primary w-100 mb-2">
+                                <i class="fas fa-camera me-2"></i>{{ _('تقرير أعطال الكاميرا') }}
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('camera_repaired_report') }}" class="btn btn-success w-100 mb-2">
+                                <i class="fas fa-check-circle me-2"></i>{{ _('تقرير الكاميرات التي تم إصلاحها') }}
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('device_faults_report') }}" class="btn btn-warning w-100 mb-2">
+                                <i class="fas fa-server me-2"></i>{{ _('تقرير أعطال الأجهزة') }}
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('all_faults_report') }}" class="btn btn-danger w-100 mb-2">
+                                <i class="fas fa-list-check me-2"></i>{{ _('تقرير جميع الأعطال') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stat-box {
+    padding: 20px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.stat-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.stat-box h3 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.stat-box p {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.progress {
+    background-color: #e9ecef;
+    border-radius: 10px;
+}
+
+.progress-bar {
+    border-radius: 10px;
+}
+</style>
+{% endblock %}

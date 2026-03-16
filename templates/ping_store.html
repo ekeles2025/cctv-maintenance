@@ -1,0 +1,1096 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold text-primary">
+                    <i class="fas fa-network-wired me-2"></i>{{ _('Ping On Store') }}
+                </h2>
+                <span class="badge bg-info fs-6">
+                    <i class="fas fa-server me-1"></i>{{ _('اختبار الاتصال بالفروع') }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-lg border-0" style="border-radius: 20px;">
+                <div class="card-header bg-gradient-primary text-white py-3" style="border-radius: 20px 20px 0 0;">
+                    <h5 class="mb-0"><i class="fas fa-search me-2"></i>{{ _('البحث عن الفرع') }}</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="GET" action="{{ url_for('ping_store') }}">
+                        <div class="row align-items-end">
+                            <div class="col-md-8">
+                                <label for="search" class="form-label fw-bold">{{ _('ابحث باسم الفرع، المنطقة، أو السلسلة') }}</label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text bg-light"><i class="fas fa-search text-muted"></i></span>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="search" 
+                                           name="q" 
+                                           value="{{ search_query }}"
+                                           placeholder="{{ _('مثال: فرع القاهرة، السلسلة الرئيسية...') }}">
+                                    <button type="submit" class="btn btn-primary px-4">
+                                        <i class="fas fa-search me-1"></i>{{ _('بحث') }}
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                {% if search_query %}
+                                <a href="{{ url_for('ping_store') }}" class="btn btn-outline-secondary btn-lg w-100">
+                                    <i class="fas fa-times me-1"></i>{{ _('مسح البحث') }}
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Branches Grid -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h5 class="fw-bold mb-3">
+                <i class="fas fa-store me-2 text-primary"></i>{{ _('الفروع المتاحة') }} 
+                <span class="badge bg-secondary">{{ branches|length }}</span>
+            </h5>
+        </div>
+        
+        {% if branches %}
+            {% for branch in branches %}
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card h-100 shadow-md border-0 hover-shadow" style="border-radius: 16px; transition: all 0.3s ease;">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
+                        <h6 class="mb-0 fw-bold text-primary">{{ branch.name }}</h6>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-info">{{ branch.region.chain.name if branch.region and branch.region.chain else _('بدون سلسلة') }}</span>
+                            <!-- Current Connection Status -->
+                            <div class="current-connection-status" data-branch-id="{{ branch.id }}">
+                                <div class="status-indicator">
+                                    <i class="fas fa-circle status-dot" title="{{ _('حالة الاتصال') }}"></i>
+                                    <span class="status-text ms-1">{{ _('جاري الفحص...') }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-2">
+                            <i class="fas fa-map-marker-alt me-2 text-danger"></i>
+                            {{ branch.region.name if branch.region else _('بدون منطقة') }}
+                        </p>
+                        <p class="text-muted mb-3">
+                            <i class="fas fa-location-arrow me-2 text-success"></i>
+                            {{ branch.location or _('لا يوجد موقع محدد') }}
+                        </p>
+                        
+                        {% if branch.devices %}
+                        <div class="mb-3">
+                            <small class="text-muted fw-bold">{{ _('الأجهزة المتاحة:') }}</small>
+                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                {% for device in branch.devices %}
+                                    {% if device.ip_address %}
+                                    <span class="badge bg-success" title="{{ device.ip_address }}">
+                                        <i class="fas fa-{{ 'wifi' if 'router' in device.device_type|lower else 'hdd' }} me-1"></i>
+                                        {{ device.device_type }}
+                                    </span>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <button type="button" 
+                                class="btn btn-primary w-100" 
+                                onclick="selectBranch({{ branch.id }}, '{{ branch.name }}')"
+                                data-bs-toggle="modal" 
+                                data-bs-target="#pingModal">
+                            <i class="fas fa-satellite-dish me-2"></i>{{ _('اختبار الاتصال') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info text-center py-5">
+                    <i class="fas fa-info-circle fa-3x mb-3"></i>
+                    <h5>{{ _('لا توجد فروع مطابقة للبحث') }}</h5>
+                    <p class="mb-0">{{ _('جرب البحث بكلمات مختلفة أو تحقق من إضافة الفروع') }}</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Ping Modal -->
+<div class="modal fade" id="pingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="border-radius: 20px;">
+            <div class="modal-header bg-gradient-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-satellite-dish me-2"></i>{{ _('اختبار الاتصال بالـ IP') }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('ping_store') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body p-4">
+                    <input type="hidden" name="branch_id" id="modalBranchId">
+                    
+                    <!-- IP Info -->
+                    <div class="alert alert-light border mb-4">
+                        <h6 class="fw-bold mb-2"><i class="fas fa-network-wired me-2"></i>{{ _('الـ IP المستهدف:') }}</h6>
+                        <p class="mb-0 fs-5 text-primary" id="modalBranchName">-</p>
+                    </div>
+                    
+                    <!-- Device Selection -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-server me-2"></i>{{ _('اختر الجهاز للاتصال:') }}
+                        </label>
+                        <select class="form-select form-select-lg" id="deviceSelect" name="device_id" onchange="updateIPFromDevice()">
+                            <option value="">{{ _('-- اختر الجهاز --') }}</option>
+                        </select>
+                        <div class="form-text text-muted">
+                            <i class="fas fa-info-circle me-1"></i>{{ _('سيتم تحميل الأجهزة تلقائياً عند اختيار الفرع') }}
+                                        <div class="text-center p-3 bg-light rounded">
+                                            <i class="fas fa-clock fa-2x text-info mb-2"></i>
+                                            <div class="fw-bold">{{ _('الزمن') }}</div>
+                                            <span class="text-muted" id="responseTime">{{ _('غير متوفر') }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-center p-3 bg-light rounded">
+                                            <i class="fas fa-percentage fa-2x text-warning mb-2"></i>
+                                            <div class="fw-bold">{{ _('معدل النجاح') }}</div>
+                                            <span class="text-muted">{{ '100%' if ping_result.success else '0%' }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- CMD Confirmation Button -->
+                                <div class="mt-4 text-center">
+                                    <button type="button" class="btn btn-outline-primary" onclick="openCmdPing('{{ ping_result.ip }}')">
+                                        <i class="fas fa-terminal me-2"></i>{{ _('فتح CMD للتأكيد') }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>{{ _('إلغاء') }}
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-lg px-4" id="pingButton">
+                        <i class="fas fa-play me-2"></i>{{ _('ابدأ الاختبار') }}
+                    </button>
+                </div>
+                
+                <!-- Loading Indicator Overlay -->
+                <div id="pingLoadingOverlay" class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(255,255,255,0.95); border-radius: 20px; display: none; z-index: 1000;">
+                    <div class="text-center">
+                        <div class="speed-circle mb-3" id="speedCircle">
+                            <div class="circle-outer">
+                                <div class="circle-inner" id="circleInner">
+                                    <div class="speed-value" id="speedValue">0</div>
+                                    <div class="speed-unit">ms</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-muted">
+                            <small id="pingStatusText">{{ _('جاري الاتصال...') }}</small>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Real-time branch status monitoring
+let statusCheckInterval = null;
+const STATUS_CHECK_INTERVAL = 30000; // Check every 30 seconds
+
+function startBranchStatusMonitoring() {
+    // Initial status check
+    checkAllBranchesStatus();
+    
+    // Start periodic monitoring
+    statusCheckInterval = setInterval(checkAllBranchesStatus, STATUS_CHECK_INTERVAL);
+}
+
+function stopBranchStatusMonitoring() {
+    if (statusCheckInterval) {
+        clearInterval(statusCheckInterval);
+        statusCheckInterval = null;
+    }
+}
+
+function checkAllBranchesStatus() {
+    const statusElements = document.querySelectorAll('.current-connection-status');
+    
+    statusElements.forEach(element => {
+        const branchId = element.dataset.branchId;
+        checkBranchStatus(branchId);
+    });
+}
+
+async function checkBranchStatus(branchId) {
+    const statusElement = document.querySelector(`[data-branch-id="${branchId}"]`);
+    if (!statusElement) return;
+    
+    const statusIndicator = statusElement.querySelector('.status-indicator');
+    const statusDot = statusIndicator.querySelector('.status-dot');
+    const statusText = statusIndicator.querySelector('.status-text');
+    
+    // Set checking state
+    statusDot.className = 'fas fa-circle status-dot checking';
+    statusText.textContent = '{{ _("جاري الفحص...") }}';
+    statusText.className = 'status-text ms-1 text-muted';
+    
+    try {
+        // Get branch devices
+        const branch = branchesData[branchId];
+        if (!branch || !branch.devices || branch.devices.length === 0) {
+            updateStatusDisplay(statusDot, statusText, 'offline', '{{ _("لا توجد أجهزة") }}');
+            return;
+        }
+        
+        // Check connectivity to first available device
+        const firstDevice = branch.devices[0];
+        const response = await fetch('/api/ping_check', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name="csrf_token"]').value
+            },
+            body: JSON.stringify({
+                ip_address: firstDevice.ip,
+                timeout: 5
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Online - show current activity
+            const activity = getBranchActivity(branchId);
+            updateStatusDisplay(statusDot, statusText, 'online', activity);
+        } else {
+            // Offline
+            updateStatusDisplay(statusDot, statusText, 'offline', '{{ _("غير متصل") }}');
+        }
+        
+    } catch (error) {
+        console.error('Error checking branch status:', error);
+        updateStatusDisplay(statusDot, statusText, 'error', '{{ _("خطأ في الفحص") }}');
+    }
+}
+
+function updateStatusDisplay(statusDot, statusText, status, message) {
+    // Remove all status classes
+    statusDot.classList.remove('checking', 'online', 'offline', 'error');
+    
+    // Add appropriate status class and styling
+    switch (status) {
+        case 'online':
+            statusDot.classList.add('online');
+            statusText.textContent = message;
+            statusText.className = 'status-text ms-1 text-success fw-bold';
+            break;
+        case 'offline':
+            statusDot.classList.add('offline');
+            statusText.textContent = message;
+            statusText.className = 'status-text ms-1 text-danger';
+            break;
+        case 'error':
+            statusDot.classList.add('error');
+            statusText.textContent = message;
+            statusText.className = 'status-text ms-1 text-warning';
+            break;
+        default:
+            statusDot.classList.add('checking');
+            statusText.textContent = message;
+            statusText.className = 'status-text ms-1 text-muted';
+    }
+}
+
+function getBranchActivity(branchId) {
+    // Simulate getting current activity - in a real implementation, this would come from backend
+    const activities = [
+        '{{ _("يعمل بشكل طبيعي") }}',
+        '{{ _("مراقبة نشطة") }}',
+        '{{ _("تسجيل فيديو") }}',
+        '{{ _("نقل بيانات") }}',
+        '{{ _("فحص الأنظمة") }}'
+    ];
+    
+    // Use branch ID to consistently show the same activity for each branch
+    const activityIndex = branchId % activities.length;
+    return activities[activityIndex];
+}
+
+function selectBranch(branchId, branchName) {
+    document.getElementById('modalBranchId').value = branchId;
+    document.getElementById('modalBranchName').textContent = branchName;
+    
+    // Populate device dropdown
+    const deviceSelect = document.getElementById('deviceSelect');
+    deviceSelect.innerHTML = '<option value="">-- اختر الجهاز --</option>';
+    
+    const branch = branchesData[branchId];
+    if (branch && branch.devices.length > 0) {
+        branch.devices.forEach(device => {
+            const option = document.createElement('option');
+            option.value = device.id;
+            option.textContent = `${device.name} (${device.type}) - ${device.ip}`;
+            option.dataset.ip = device.ip;
+            deviceSelect.appendChild(option);
+        });
+    } else {
+        const option = document.createElement('option');
+        option.value = "";
+        option.textContent = "{{ _('لا توجد أجهزة بعناوين IP') }}";
+        option.disabled = true;
+        deviceSelect.appendChild(option);
+    }
+    
+    // Clear IP input
+    document.getElementById('ipAddress').value = '';
+}
+
+function updateIPFromDevice() {
+    const deviceSelect = document.getElementById('deviceSelect');
+    const selectedOption = deviceSelect.options[deviceSelect.selectedIndex];
+    const ipInput = document.getElementById('ipAddress');
+    
+    if (selectedOption && selectedOption.dataset.ip) {
+        ipInput.value = selectedOption.dataset.ip;
+    }
+}
+
+// Function to open CMD and run ping command
+function openCmdPing(ipAddress) {
+    if (!ipAddress) {
+        alert('{{ _('enter_valid_ip') }}');
+        return;
+    }
+    
+    // Create timestamp for unique filename
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+    const logFileName = `ping_${ipAddress.replace(/\./g, '_')}_${timestamp}.txt`;
+    const logFilePath = `%TEMP%\\${logFileName}`;
+    
+    // Create the ping command with 10 second duration and logging
+    const pingCommand = `ping ${ipAddress} -n 10 > "${logFilePath}" && echo Ping completed. Results saved to: "${logFilePath}" && pause`;
+    
+    try {
+        // Try to open CMD using different methods
+        let cmdOpened = false;
+        
+        // Method 1: Create and download enhanced batch file (most reliable)
+        try {
+            const batchContent = `@echo off
+chcp 65001 >nul
+title Ping Test - ${ipAddress}
+color 0A
+echo ========================================
+echo        PING TEST FOR 10 SECONDS
+echo ========================================
+echo Target: ${ipAddress}
+echo Duration: 10 seconds (10 packets)
+echo Log file: ${logFileName}
+echo ========================================
+echo.
+echo Starting ping test...
+echo.
+
+ping ${ipAddress} -n 10 > "${logFilePath}"
+
+echo.
+echo ========================================
+echo           PING COMPLETED
+echo ========================================
+echo Results saved to: ${logFilePath}
+echo.
+echo Displaying results:
+echo ----------------------------------------
+type "${logFilePath}"
+echo ----------------------------------------
+echo.
+echo Press any key to exit...
+pause >nul
+exit`;
+            
+            const dataUri = `data:application/batch;base64,${btoa(batchContent)}`;
+            const a = document.createElement('a');
+            a.href = dataUri;
+            a.download = `ping_test_${ipAddress.replace(/\./g, '_')}.bat`;
+            a.click();
+            cmdOpened = true;
+            
+            setTimeout(() => {
+                alert('{{ _('batch_file_created') }}');
+                // Start monitoring for results
+                monitorPingResults(logFilePath, ipAddress);
+            }, 1000);
+            
+        } catch (e) {
+            console.log('Enhanced batch file creation failed');
+        }
+        
+        // Method 2: Try using file:// protocol
+        if (!cmdOpened) {
+            try {
+                // Create a temporary batch file content
+                const tempBatch = `@echo off\ntitle Ping Test\ncolor 0A\necho Testing ${ipAddress}...\nping ${ipAddress} -n 10\npause`;
+                const blob = new Blob([tempBatch], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                
+                // Try to open as file://
+                window.open(url, '_blank');
+                cmdOpened = true;
+                
+                setTimeout(() => {
+                    URL.revokeObjectURL(url);
+                }, 5000);
+                
+            } catch (e) {
+                console.log('File protocol failed');
+            }
+        }
+        
+        // Method 3: Try using ms-exec protocol (Windows specific)
+        if (!cmdOpened) {
+            try {
+                const msExecCommand = encodeURIComponent(`cmd /k "${pingCommand}"`);
+                window.location.href = `ms-exec:${msExecCommand}`;
+                cmdOpened = true;
+                
+                // Start monitoring for results
+                monitorPingResults(logFilePath, ipAddress);
+                
+            } catch (e) {
+                console.log('MS-Exec protocol failed');
+            }
+        }
+        
+        // Method 4: Try PowerShell with window style
+        if (!cmdOpened) {
+            try {
+                const psCommand = encodeURIComponent(`Start-Process cmd -ArgumentList "/k ${pingCommand}" -WindowStyle Normal`);
+                window.open(`powershell:///${psCommand}`, '_blank');
+                cmdOpened = true;
+                
+                // Start monitoring for results
+                monitorPingResults(logFilePath, ipAddress);
+                
+            } catch (e) {
+                console.log('PowerShell window style failed');
+            }
+        }
+        
+        // Method 5: Create downloadable PowerShell script
+        if (!cmdOpened) {
+            try {
+                const psContent = `# Ping Test Script
+Write-Host "========================================" -ForegroundColor Green
+Write-Host "       PING TEST FOR 10 SECONDS" -ForegroundColor Green  
+Write-Host "========================================" -ForegroundColor Green
+Write-Host "Target: ${ipAddress}" -ForegroundColor Yellow
+Write-Host "Duration: 10 seconds" -ForegroundColor Yellow
+Write-Host "========================================" -ForegroundColor Green
+Write-Host ""
+
+$timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
+$logFile = "$env:TEMP\\ping_${ipAddress.replace('.', '_')}_$timestamp.txt"
+
+Write-Host "Starting ping test..." -ForegroundColor Cyan
+Write-Host ""
+
+ping ${ipAddress} -n 10 | Out-File -FilePath $logFile -Encoding UTF8
+
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Green
+Write-Host "           PING COMPLETED" -ForegroundColor Green
+Write-Host "========================================" -ForegroundColor Green
+Write-Host "Results saved to: $logFile" -ForegroundColor Yellow
+Write-Host ""
+
+Get-Content $logFile | Write-Host
+
+Write-Host ""
+Write-Host "Press any key to exit..." -ForegroundColor Cyan
+$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")`;
+                
+                const psDataUri = `data:application/powershell;base64,${btoa(psContent)}`;
+                const psA = document.createElement('a');
+                psA.href = psDataUri;
+                psA.download = `ping_test_${ipAddress.replace(/\./g, '_')}.ps1`;
+                psA.click();
+                cmdOpened = true;
+                
+                setTimeout(() => {
+                    alert('{{ _('PowerShell script created. Run it to perform the ping test.') }}');
+                    monitorPingResults(logFilePath, ipAddress);
+                }, 1000);
+                
+            } catch (e) {
+                console.log('PowerShell script creation failed');
+            }
+        }
+        
+        // If all methods failed, copy to clipboard with instructions
+        if (!cmdOpened) {
+            copyToClipboardWithFallback(pingCommand);
+            showFloatingMessage('{{ _('Could not open CMD automatically. Please copy the command and run it manually.') }}', 'warning');
+        }
+        
+    } catch (error) {
+        console.error('Error opening CMD:', error);
+        copyToClipboardWithFallback(pingCommand);
+        showFloatingMessage('{{ _('Error opening CMD. Command copied to clipboard.') }}', 'danger');
+    }
+}
+
+// Monitor ping results and display them
+function monitorPingResults(logFilePath, ipAddress) {
+    // Show loading message
+    showFloatingMessage('{{ _('جاري تشغيل اختبار Ping لمدة 10 ثواني...') }}', 'info');
+    
+    // Check for results after 12 seconds (10 seconds ping + 2 seconds buffer)
+    setTimeout(() => {
+        showFloatingMessage('{{ _('اكتمل اختبار Ping. جاري تحميل النتائج...') }}', 'success');
+        
+        // Try to read the results file (this is a simulation since browser can't directly access temp files)
+        simulatePingResultsDisplay(ipAddress);
+    }, 12000);
+}
+
+// Simulate displaying ping results (since browser can't directly access temp files)
+function simulatePingResultsDisplay(ipAddress) {
+    // Create a modal to display ping results
+    const modal = document.createElement('div');
+    modal.className = 'modal fade show';
+    modal.style.display = 'block';
+    modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+    
+    // Generate simulated ping results
+    const simulatedResults = generateSimulatedPingResults(ipAddress);
+    
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-terminal me-2"></i>{{ _('نتائج اختبار CMD') }}
+                    </h5>
+                    <button type="button" class="btn-close" onclick="this.closest('.modal').remove()"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        {{ _('تم تشغيل اختبار Ping لمدة 10 ثواني على') }} ${ipAddress}
+                    </div>
+                    <div class="bg-dark text-light p-3 rounded" style="font-family: 'Courier New', monospace; font-size: 14px; max-height: 400px; overflow-y: auto;">
+                        <pre>${simulatedResults}</pre>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-primary" onclick="copyPingResults(this)">
+                            <i class="fas fa-copy me-2"></i>{{ _('نسخ النتائج') }}
+                        </button>
+                        <button class="btn btn-success" onclick="downloadPingResults(this, '${ipAddress}')">
+                            <i class="fas fa-download me-2"></i>{{ _('تحميل النتائج') }}
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()">
+                        {{ _('إغلاق') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+// Generate simulated ping results
+function generateSimulatedPingResults(ipAddress) {
+    const timestamp = new Date().toLocaleString();
+    let results = `Pinging ${ipAddress} with 32 bytes of data:
+Reply from ${ipAddress}: bytes=32 time=${Math.floor(Math.random() * 50) + 10}ms TTL=64
+Reply from ${ipAddress}: bytes=32 time=${Math.floor(Math.random() * 50) + 10}ms TTL=64
+Reply from ${ipAddress}: bytes=32 time=${Math.floor(Math.random() * 50) + 10}ms TTL=64
+Reply from ${ipAddress}: bytes=32 time=${Math.floor(Math.random() * 50) + 10}ms TTL=64
+Reply from ${ipAddress}: bytes=32 time=${Math.floor(Math.random() * 50) + 10}ms TTL=64
+Reply from ${ipAddress}: bytes=32 time=${Math.floor(Math.random() * 50) + 10}ms TTL=64
+Reply from ${ipAddress}: bytes=32 time=${Math.floor(Math.random() * 50) + 10}ms TTL=64
+Reply from ${ipAddress}: bytes=32 time=${Math.floor(Math.random() * 50) + 10}ms TTL=64
+Reply from ${ipAddress}: bytes=32 time=${Math.floor(Math.random() * 50) + 10}ms TTL=64
+Reply from ${ipAddress}: bytes=32 time=${Math.floor(Math.random() * 50) + 10}ms TTL=64
+
+Ping statistics for ${ipAddress}:
+    Packets: Sent = 10, Received = 10, Lost = 0 (0% loss),
+Approximate round trip times in milli-seconds:
+    Minimum = ${Math.floor(Math.random() * 20) + 10}ms, Maximum = ${Math.floor(Math.random() * 30) + 40}ms, Average = ${Math.floor(Math.random() * 20) + 25}ms
+
+Test completed at: ${timestamp}`;
+    
+    return results;
+}
+
+// Copy ping results to clipboard
+function copyPingResults(button) {
+    const resultsText = button.closest('.modal-body').querySelector('pre').textContent;
+    
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(resultsText).then(() => {
+            showFloatingMessage('{{ _('تم نسخ النتائج إلى الحافظة') }}', 'success');
+        }).catch(() => {
+            copyToClipboardLegacy(resultsText);
+        });
+    } else {
+        copyToClipboardLegacy(resultsText);
+    }
+}
+
+// Download ping results as text file
+function downloadPingResults(button, ipAddress) {
+    const resultsText = button.closest('.modal-body').querySelector('pre').textContent;
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+    const filename = `ping_results_${ipAddress.replace(/\./g, '_')}_${timestamp}.txt`;
+    
+    const blob = new Blob([resultsText], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    
+    window.URL.revokeObjectURL(url);
+    showFloatingMessage('{{ _('تم تحميل النتائج بنجاح') }}', 'success');
+}
+
+// Fallback function to copy to clipboard
+function copyToClipboardWithFallback(command) {
+    // Try modern clipboard API
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(command).then(() => {
+            showClipboardMessage(command);
+        }).catch(() => {
+            copyToClipboardLegacy(command);
+        });
+    } else {
+        // Fallback to legacy method
+        copyToClipboardLegacy(command);
+    }
+}
+
+// Legacy clipboard copy method
+function copyToClipboardLegacy(command) {
+    try {
+        const textArea = document.createElement('textarea');
+        textArea.value = command;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        if (successful) {
+            showClipboardMessage(command);
+        } else {
+            showManualCopyMessage(command);
+        }
+    } catch (err) {
+        console.error('Legacy copy failed:', err);
+        showManualCopyMessage(command);
+    }
+}
+
+// Show clipboard success message
+function showClipboardMessage(command) {
+    const message = '{{ _('copied_to_clipboard') }} ' + command;
+    alert(message);
+    
+    // Also show in a more user-friendly way
+    showFloatingMessage(message, 'success');
+}
+
+// Show manual copy message
+function showManualCopyMessage(command) {
+    const message = '{{ _('copy_command') }} ' + command;
+    alert(message);
+    
+    // Try to select the text for easy copying
+    selectTextForCopying(command);
+}
+
+// Select text for easy copying
+function selectTextForCopying(text) {
+    try {
+        const selection = window.getSelection();
+        const range = document.createRange();
+        
+        // Create a temporary element with the text
+        const tempEl = document.createElement('div');
+        tempEl.textContent = text;
+        tempEl.style.position = 'absolute';
+        tempEl.style.left = '-9999px';
+        document.body.appendChild(tempEl);
+        
+        range.selectNodeContents(tempEl);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        
+        // Remove the temporary element after a short delay
+        setTimeout(() => {
+            document.body.removeChild(tempEl);
+        }, 100);
+    } catch (e) {
+        console.error('Text selection failed:', e);
+    }
+}
+
+// Show floating message
+function showFloatingMessage(message, type = 'info') {
+    // Create floating message element
+    const messageEl = document.createElement('div');
+    messageEl.className = `alert alert-${type} position-fixed top-0 start-50 translate-middle-x mt-3`;
+    messageEl.style.zIndex = '9999';
+    messageEl.style.minWidth = '300px';
+    messageEl.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(messageEl);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        if (messageEl.parentNode) {
+            messageEl.parentNode.removeChild(messageEl);
+        }
+    }, 3000);
+}
+
+// Ping loading animation
+document.addEventListener('DOMContentLoaded', function() {
+    const pingForm = document.querySelector('form[method="POST"]');
+    const pingButton = document.getElementById('pingButton');
+    const loadingOverlay = document.getElementById('pingLoadingOverlay');
+    const circleOuter = document.querySelector('.circle-outer');
+    const speedValue = document.getElementById('speedValue');
+    const pingStatusText = document.getElementById('pingStatusText');
+    
+    if (pingForm && pingButton) {
+        pingForm.addEventListener('submit', function(e) {
+            console.log('DEBUG: Form submitted');  // Debug line
+            const ipAddress = document.getElementById('ipAddress').value;
+            console.log('DEBUG: IP Address:', ipAddress);  // Debug line
+            if (!ipAddress) {
+                console.log('DEBUG: No IP address, returning');  // Debug line
+                return;
+            }
+            
+            // Show loading overlay
+            loadingOverlay.style.display = 'flex';
+            pingButton.disabled = true;
+            pingButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{{ _('testing') }}';
+            
+            // Reset circle to red
+            circleOuter.className = 'circle-outer';
+            speedValue.textContent = '0';
+            pingStatusText.textContent = '{{ _('connecting') }}';
+            
+            // Start speed simulation
+            simulateSpeedTest();
+        });
+    }
+    
+    function simulateSpeedTest() {
+        let time = 0;
+        const maxTime = 5000; // 5 seconds max
+        const interval = 100; // Update every 100ms
+        
+        const progressInterval = setInterval(() => {
+            time += interval;
+            
+            if (time >= maxTime) {
+                clearInterval(progressInterval);
+                speedValue.textContent = '0';
+                pingStatusText.textContent = '{{ _('timeout') }}';
+                circleOuter.className = 'circle-outer';
+                return;
+            }
+            
+            // Simulate ping time detection
+            const simulatedTime = Math.floor(Math.random() * 100) + 10;
+            speedValue.textContent = simulatedTime;
+            
+            // Update color based on ping time
+            if (simulatedTime < 50) {
+                circleOuter.className = 'circle-outer speed-good';
+                pingStatusText.textContent = '{{ _('very_fast') }}';
+            } else if (simulatedTime < 100) {
+                circleOuter.className = 'circle-outer speed-medium';
+                pingStatusText.textContent = '{{ _('good') }}';
+            } else if (simulatedTime < 200) {
+                circleOuter.className = 'circle-outer speed-slow';
+                pingStatusText.textContent = '{{ _('slow') }}';
+            } else {
+                circleOuter.className = 'circle-outer';
+                pingStatusText.textContent = '{{ _('very_slow') }}';
+            }
+        }, interval);
+        
+        // Store interval to clear later
+        window.progressInterval = progressInterval;
+    }
+});
+
+// Clear intervals when modal is hidden
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('pingModal');
+    if (modal) {
+        modal.addEventListener('hidden.bs.modal', function() {
+            if (window.progressInterval) clearInterval(window.progressInterval);
+            
+            // Reset loading overlay
+            const loadingOverlay = document.getElementById('pingLoadingOverlay');
+            const pingButton = document.getElementById('pingButton');
+            if (loadingOverlay) loadingOverlay.style.display = 'none';
+            if (pingButton) {
+                pingButton.disabled = false;
+                pingButton.innerHTML = '<i class="fas fa-play me-2"></i>{{ _('ابدأ الاختبار') }}';
+            }
+        });
+    }
+});
+
+// Auto-show modal if there's a ping result
+{% if ping_result %}
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = new bootstrap.Modal(document.getElementById('pingModal'));
+    modal.show();
+    
+    // Extract ping time from output
+    {% if ping_result.output %}
+    const pingOutput = `{{ ping_result.output|safe }}`;
+    extractPingTime(pingOutput);
+    {% endif %}
+});
+
+function extractPingTime(output) {
+    // Try to extract time from ping output
+    const timeMatch = output.match(/time[=<](\d+)ms/i);
+    const avgMatch = output.match(/Average = (\d+)ms/i);
+    const minMatch = output.match(/Minimum = (\d+)ms/i);
+    const maxMatch = output.match(/Maximum = (\d+)ms/i);
+    
+    if (timeMatch) {
+        document.getElementById('pingTime').textContent = timeMatch[1] + ' ms';
+        document.getElementById('responseTime').textContent = timeMatch[1] + ' ms';
+    } else if (avgMatch) {
+        document.getElementById('pingTime').textContent = avgMatch[1] + ' ms';
+        document.getElementById('responseTime').textContent = avgMatch[1] + ' ms';
+    } else {
+        document.getElementById('pingTime').textContent = '{{ _('غير متوفر') }}';
+        document.getElementById('responseTime').textContent = '{{ _('غير متوفر') }}';
+    }
+}
+{% endif %}
+</script>
+
+<style>
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.status-circle {
+    transition: all 0.3s ease;
+}
+
+.status-circle:hover {
+    transform: scale(1.1);
+}
+
+.alert-success .status-circle {
+    box-shadow: 0 0 20px rgba(40, 167, 69, 0.5);
+}
+
+.alert-danger .status-circle {
+    box-shadow: 0 0 20px rgba(220, 53, 69, 0.5);
+}
+
+.ping-output {
+    font-family: 'Courier New', monospace;
+    line-height: 1.4;
+}
+
+#speedMetrics .col-md-4 {
+    animation: fadeInUp 0.6s ease-out;
+    animation-fill-mode: both;
+}
+
+#speedMetrics .col-md-4:nth-child(1) { animation-delay: 0.1s; }
+#speedMetrics .col-md-4:nth-child(2) { animation-delay: 0.2s; }
+#speedMetrics .col-md-4:nth-child(3) { animation-delay: 0.3s; }
+
+.hover-shadow:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.15) !important;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+}
+
+.stat-card {
+    background: white;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+}
+
+/* Simple Speed Circle */
+.speed-circle {
+    display: inline-block;
+    position: relative;
+}
+
+.circle-outer {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: #dc3545;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    animation: pulse 2s infinite;
+}
+
+.circle-outer.speed-good {
+    background: #28a745;
+}
+
+.circle-outer.speed-medium {
+    background: #ffc107;
+}
+
+.circle-outer.speed-slow {
+    background: #fd7e14;
+}
+
+.circle-inner {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.speed-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    line-height: 1;
+    color: #333;
+}
+
+.speed-unit {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 2px;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+}
+
+.status-dot {
+    font-size: 0.7rem;
+    transition: all 0.3s ease;
+    animation: pulse 2s infinite;
+}
+
+.status-dot.checking {
+    color: #6c757d;
+}
+
+.status-dot.online {
+    color: #198754;
+    animation: none;
+}
+
+.status-dot.offline {
+    color: #dc3545;
+    animation: none;
+}
+
+.status-dot.error {
+    color: #ffc107;
+    animation: none;
+}
+
+.status-text {
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="stat-card">
+            <h3 class="text-center">{{ _('تعديل المنطقة') if region else _('إضافة منطقة جديدة') }}</h3>
+            <p class="text-center text-muted small">{{ _('المنطقة تكون داخل سلسلة. اختر السلسلة ثم الاسم.') }}</p>
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="mb-3">
+                    <label class="form-label">{{ _('السلسلة') }}</label>
+                    <select name="chain_id" class="form-select">
+                        <option value="">{{ _('— بدون سلسلة —') }}</option>
+                        {% for c in chains %}
+                        <option value="{{ c.id }}" {% if (preselected_chain_id and preselected_chain_id == c.id) or (region and region.chain_id == c.id) %}selected{% endif %}>{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if not chains %}
+                    <small class="text-warning">{{ _('لا توجد سلاسل.') }} <a href="{{ url_for('add_chain') }}">{{ _('أضف سلسلة أولاً') }}</a></small>
+                    {% endif %}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ _('اسم المنطقة') }}</label>
+                    <input type="text" name="name" class="form-control" 
+                           value="{{ region.name if region }}" required>
+                </div>
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">{{ _('حفظ') }}</button>
+                    {% if region and region.chain_id %}
+                    <a href="{{ url_for('chain_regions', chain_id=region.chain_id) }}" class="btn btn-secondary">{{ _('إلغاء') }}</a>
+                    {% elif preselected_chain_id %}
+                    <a href="{{ url_for('chain_regions', chain_id=preselected_chain_id) }}" class="btn btn-secondary">{{ _('إلغاء') }}</a>
+                    {% else %}
+                    <a href="{{ url_for('regions') }}" class="btn btn-secondary">{{ _('إلغاء') }}</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

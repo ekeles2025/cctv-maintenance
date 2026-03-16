@@ -1,0 +1,912 @@
+{% extends "base.html" %}
+
+{% block head %}
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Hidden CSRF token for AJAX requests -->
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3">
+            <div class="stat-card">
+                <h5 class="text-primary-custom mb-3">
+                    <i class="fas fa-list me-2"></i>
+                    {{ t('جميع أعطال الكاميرات المسجلة') }}
+                </h5>
+                
+                <!-- Search -->
+                <div class="mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" 
+                               id="faultSearchInput" 
+                               class="form-control" 
+                               placeholder="{{ t('ابحث عن عطل...') }}"
+                               oninput="performSearch()">
+                    </div>
+                </div>
+
+                <!-- Filter by Status -->
+                <div class="mb-3">
+                    <label class="form-label">{{ t('حالة العطل') }}</label>
+                    <select class="form-select" id="statusFilter" onchange="filterByStatus()">
+                        <option value="all">{{ t('الكل') }}</option>
+                        <option value="open">{{ t('مفتوحة') }}</option>
+                        <option value="resolved">{{ t('مُصلحة') }}</option>
+                    </select>
+                </div>
+
+                <!-- Filter by Branch -->
+                <div class="mb-3">
+                    <label class="form-label">{{ t('الفرع') }}</label>
+                    <select class="form-select" id="branchFilter" onchange="filterByBranch()">
+                        <option value="all">{{ t('كل الفروع') }}</option>
+                        {% for branch in branches %}
+                        <option value="{{ branch.id }}">{{ branch.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Statistics -->
+                <div class="mt-4">
+                    <h6 class="text-muted">{{ t('إحصائيات سريعة') }}</h6>
+                    <div class="small">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>{{ t('الإجمالي:') }}</span>
+                            <span class="badge bg-primary" id="totalCount">0</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>{{ t('مفتوحة:') }}</span>
+                            <span class="badge bg-danger" id="openCount">0</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>{{ t('مُصلحة:') }}</span>
+                            <span class="badge bg-success" id="resolvedCount">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3>
+                        <i class="fas fa-tools me-2"></i>
+                        {{ t('إدارة جميع أعطال الكاميرات المسجلة') }}
+                    </h3>
+                    <div>
+                        <button class="btn btn-success btn-sm me-2" onclick="refreshFaults()">
+                            <i class="fas fa-sync-alt me-1"></i>{{ t('تحديث') }}
+                        </button>
+                        <button class="btn btn-info btn-sm me-2" onclick="downloadExcel()">
+                            <i class="fas fa-download me-1"></i>{{ t('تنزيل Excel') }}
+                        </button>
+                        {% if current_user.role == "admin" %}
+                        <button class="btn btn-danger btn-sm me-2" onclick="deleteAllFaults()">
+                            <i class="fas fa-trash-alt me-1"></i>{{ t('حذف جميع الأعطال') }}
+                        </button>
+                        <a href="{{ url_for('regions') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus-circle me-1"></i>{{ t('عطل جديد') }}
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Faults List -->
+                <div id="faultsList">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="faultsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>{{ t('الكاميرا') }}</th>
+                                    <th>{{ t('الفرع') }}</th>
+                                    <th>{{ t('نوع العطل') }}</th>
+                                    <th>{{ t('الوصف') }}</th>
+                                    <th>{{ t('الحالة') }}</th>
+                                    <th>{{ t('التاريخ') }}</th>
+                                    <th>{{ t('الإجراءات') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="faultsTableBody">
+                                <!-- Faults will be loaded here via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Loading Indicator -->
+                    <div id="loadingIndicator" class="text-center py-4" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">{{ t('جاري التحميل...') }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Empty State -->
+                    <div id="emptyState" class="text-center py-5" style="display: none;">
+                        <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
+                        <h4 class="text-muted">{{ t('لا توجد أعطال') }}</h4>
+                        <p class="text-muted">{{ t('لم يتم العثور على أي أعطال مطابقة للبحث') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ t('تعديل العطل') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <input type="hidden" name="fault_id" id="editFaultId">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">{{ t('نوع العطل') }}</label>
+                                <select class="form-select" name="fault_type" required>
+                                    <option value="">{{ t('اختر نوع العطل') }}</option>
+                                    <option value="كهرباء">{{ t('كهرباء') }}</option>
+                                    <option value="شبكة">{{ t('شبكة') }}</option>
+                                    <option value="جهاز">{{ t('جهاز') }}</option>
+                                    <option value="برمجيات">{{ t('برمجيات') }}</option>
+                                    <option value="كابل">{{ t('كابل') }}</option>
+                                    <option value="محروق">{{ t('محروق') }}</option>
+                                    <option value="Offline">Offline</option>
+                                    <option value="أخرى">{{ t('أخرى') }}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">{{ t('نوع الجهاز') }}</label>
+                                <select class="form-select" name="device_type" required>
+                                    <option value="">{{ t('اختر نوع الجهاز') }}</option>
+                                    <option value="NVR">NVR</option>
+                                    <option value="Switch">Switch</option>
+                                    <option value="Router">Router</option>
+                                    <option value="Up Link">Up Link</option>
+                                    <option value="Camera">{{ t('كاميرا') }}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">{{ t('الوصف') }}</label>
+                        <textarea class="form-control" name="description" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">{{ t('المبلغ') }}</label>
+                                <input type="text" class="form-control" name="reported_by" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">{{ t('الفني المسؤول') }}</label>
+                                <select class="form-select" name="technician_id">
+                                    <option value="">{{ t('لم يتم التعيين') }}</option>
+                                    {% for technician in technicians %}
+                                    <option value="{{ technician.id }}">{{ technician.username }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">{{ t('ملاحظات الإصلاح') }}</label>
+                        <textarea class="form-control" name="repair_notes" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('إلغاء') }}</button>
+                <button type="button" class="btn btn-primary" onclick="saveFault()">
+                    <i class="fas fa-save me-1"></i>{{ t('حفظ التعديلات') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete All Modal -->
+<div class="modal fade" id="deleteAllModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ t('تأكيد حذف جميع الأعطال') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>{{ t('تحذير:') }}</strong> {{ t('هذا الإجراء سيحذف جميع الأعطال المسجلة في النظام ولا يمكن التراجع عنه') }}
+                </div>
+                <p>{{ t('هل أنت متأكد من حذف جميع الأعطال؟') }}</p>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="confirmDeleteAll">
+                    <label class="form-check-label" for="confirmDeleteAll">
+                        {{ t('نعم، أنا متأكد من حذف جميع الأعطال') }}
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('إلغاء') }}</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteAllBtn" disabled onclick="confirmDeleteAllFaults()">
+                    <i class="fas fa-trash me-1"></i>{{ t('حذف جميع الأعطال') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resolve Modal -->
+<div class="modal fade" id="resolveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ t('تأكيد إصلاح العطل') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="resolveForm">
+                    <input type="hidden" name="fault_id" id="resolveFaultId">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <p>{{ t('هل أنت متأكد من إصلاح هذا العطل؟') }}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">{{ t('ملاحظات الإصلاح') }}</label>
+                        <textarea class="form-control" name="repair_notes" rows="3" placeholder="{{ t('اكتب هنا تفاصيل الإصلاح...') }}"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">{{ t('صورة الإصلاح (اختياري)') }}</label>
+                        <input type="file" class="form-control" name="repair_image" accept="image/*">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('إلغاء') }}</button>
+                <button type="button" class="btn btn-success" onclick="resolveFault()">
+                    <i class="fas fa-check me-1"></i>{{ t('تأكيد الإصلاح') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script id="camera-faults-script" data-version="{{ time.time() }}">
+// Force script reload if version changed
+const currentScript = document.currentScript;
+const scriptVersion = currentScript.getAttribute('data-version');
+const storedVersion = localStorage.getItem('camera-faults-script-version');
+if (storedVersion !== scriptVersion) {
+    localStorage.setItem('camera-faults-script-version', scriptVersion);
+}
+
+let allFaults = [];
+let filteredFaults = [];
+let currentEditingFault = null;
+
+// Translation helper function - unique name to avoid conflicts
+function cameraFaultsTranslate(text) {
+    try {
+        // Get current language from page
+        const langElement = document.documentElement.getAttribute('lang') || 'en';
+        const lang = langElement === 'ar' ? 'ar' : 'en';
+        
+        // Define translations for fault types
+        const translations = {
+            'ar': {
+                'كهرباء': 'كهرباء',
+                'شبكة': 'شبكة',
+                'جهاز': 'جهاز',
+                'برمجيات': 'برمجيات',
+                'كابل': 'كابل',
+                'محروق': 'محروق',
+                'أخرى': 'أخرى'
+            },
+            'en': {
+                'كهرباء': 'Electricity',
+                'شبكة': 'Network',
+                'جهاز': 'Device',
+                'برمجيات': 'Software',
+                'كابل': 'Cable',
+                'محروق': 'Burned',
+                'أخرى': 'Other'
+            }
+        };
+        
+        const result = translations[lang] && translations[lang][text] ? translations[lang][text] : text;
+        return result;
+    } catch (error) {
+        console.error('Translation error:', error);
+        return text; // Return original text if translation fails
+    }
+}
+
+// Load faults when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        // Check if required elements exist
+        const requiredElements = ['faultsTableBody', 'emptyState', 'loadingIndicator', 'faultsList'];
+        for (const elementId of requiredElements) {
+            if (!document.getElementById(elementId)) {
+                console.error(`Required element not found: ${elementId}`);
+                return;
+            }
+        }
+        
+        // Load initial data
+        loadFaults();
+        
+        // Setup event listeners
+        setupEventListeners();
+        
+    } catch (error) {
+        console.error('Error initializing page:', error);
+    }
+});
+
+// Load all faults from server
+function loadFaults() {
+    showLoading(true);
+    
+    // Add cache busting to prevent browser caching
+    const timestamp = new Date().getTime();
+    
+    fetch(`/api/all-camera-faults?t=${timestamp}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            allFaults = data.faults || [];
+            filteredFaults = [...allFaults];
+            
+            // Check if this is an empty data response (not an error)
+            if (allFaults.length === 0) {
+                // No faults found - showing empty state
+            }
+            
+            renderFaults();
+            updateStatistics();
+            showLoading(false);
+        })
+        .catch(error => {
+            console.error('Error loading faults:', error);
+            showLoading(false);
+            
+            // Only show error message if it's actually a network/server error
+            if (error.message && !error.message.includes('404')) {
+                showAlert(translations.errorLoadingFaults, 'danger');
+            }
+        });
+}
+
+// Get translations from template
+const translations = {
+    convertedToBPM: 'محول الي BPM',
+    resolved: 'مُصلح',
+    pending: 'قيد الانتظار',
+    edit: 'تعديل',
+    convertToBPM: 'تحويل إلى BPM',
+    repair: 'إصلاح',
+    view: 'عرض',
+    delete: 'حذف',
+    errorLoadingFaults: 'حدث خطأ في تحميل الأعطال',
+    faultUpdatedSuccess: 'تم تعديل العطل بنجاح',
+    errorOccurred: 'حدث خطأ',
+    errorSavingChanges: 'حدث خطأ في حفظ التعديلات',
+    faultRepairedSuccess: 'تم إصلاح العطل بنجاح',
+    errorRepairingFault: 'حدث خطأ في إصلاح العطل',
+    confirmConvertBPM: 'هل أنت متأكد من تحويل هذا العطل إلى BPM؟ سيتم نقله إلى قسم BPM ولن يظهر في قائمة الأعطال الرئيسية',
+    faultConvertedBPM: 'تم تحويل العطل إلى BPM بنجاح',
+    errorConvertingBPM: 'حدث خطأ في تحويل العطل إلى BPM',
+    confirmDelete: 'هل أنت متأكد من حذف هذا العطل؟ لا يمكن التراجع عن هذا الإجراء',
+    faultDeletedSuccess: 'تم حذف العطل بنجاح',
+    errorDeletingFault: 'حدث خطأ في حذف العطل'
+};
+
+// Render faults in table
+function renderFaults() {
+    const tbody = document.getElementById('faultsTableBody');
+    const emptyState = document.getElementById('emptyState');
+    
+    if (filteredFaults.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.style.display = 'block';
+        
+        // Update empty state message based on whether there are any branches/cameras
+        if (allFaults.length === 0) {
+            emptyState.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <h5 class="text-muted">لا توجد أعطال حالياً</h5>
+                    <p class="text-muted">جميع الكاميرات تعمل بشكل جيد</p>
+                </div>
+            `;
+        } else {
+            emptyState.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">لا توجد أعطال مطابقة للبحث</h5>
+                    <p class="text-muted">جرب تغيير معايير البحث</p>
+                </div>
+            `;
+        }
+        return;
+    }
+    
+    emptyState.style.display = 'none';
+    
+    let rowsHTML = '';
+    filteredFaults.forEach(fault => {
+        let faultTypeHTML = `<span class="badge bg-secondary">${fault.fault_type}</span>`;
+        
+        // Special styling for Offline faults
+        if (fault.fault_type === 'Offline') {
+            faultTypeHTML = `<span class="badge bg-secondary"><i class="fas fa-wifi-slash me-1"></i>Offline</span>`;
+        }
+        
+        const descriptionHTML = fault.description.substring(0, 50) + (fault.description.length > 50 ? '...' : '');
+        
+        let statusHTML = '';
+        if (fault.repair_notes && (fault.repair_notes.includes('تم النقل إلى قسم BBM') || fault.repair_notes.includes('Fault successfully converted to BBM'))) {
+            statusHTML = '<span class="badge bg-warning">' + translations.convertedToBPM + '</span>';
+        } else if (fault.resolved_at) {
+            statusHTML = '<span class="badge bg-success">' + translations.resolved + '</span>';
+        } else {
+            statusHTML = '<span class="badge bg-danger">' + translations.pending + '</span>';
+        }
+        
+        let actionButtonsHTML = '';
+        if (!fault.resolved_at) {
+            actionButtonsHTML = `
+                <button class="btn btn-warning btn-sm" onclick="convertToBPM(${fault.id})" title="${translations.convertToBPM}">
+                    <i class="fas fa-exchange-alt"></i>
+                </button>
+                <button class="btn btn-success btn-sm" onclick="showResolveModal(${fault.id})" title="${translations.repair}">
+                    <i class="fas fa-wrench"></i>
+                </button>`;
+        } else {
+            actionButtonsHTML = `
+                <button class="btn btn-info btn-sm" onclick="viewFault(${fault.id})" title="${translations.view}">
+                    <i class="fas fa-eye"></i>
+                </button>`;
+        }
+        
+        rowsHTML += `
+        <tr data-fault-id="${fault.id}" data-status="${fault.resolved_at ? 'resolved' : 'open'}">
+            <td><strong>#${fault.id}</strong></td>
+            <td>${fault.camera_name}</td>
+            <td>${fault.branch_name}</td>
+            <td>${faultTypeHTML}</td>
+            <td>${descriptionHTML}</td>
+            <td>${statusHTML}</td>
+            <td>${formatDate(fault.date_reported)}</td>
+            <td>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-primary btn-sm" onclick="editFault(${fault.id})" title="${translations.edit}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    ${actionButtonsHTML}
+                    <button class="btn btn-danger btn-sm" onclick="deleteFault(${fault.id})" title="${translations.delete}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>`;
+    });
+    
+    tbody.innerHTML = rowsHTML;
+}
+
+// Search functionality
+function performSearch() {
+    const searchTerm = document.getElementById('faultSearchInput').value.toLowerCase();
+    
+    if (searchTerm === '') {
+        filteredFaults = [...allFaults];
+    } else {
+        filteredFaults = allFaults.filter(fault => 
+            fault.camera_name.toLowerCase().includes(searchTerm) ||
+            fault.description.toLowerCase().includes(searchTerm) ||
+            fault.branch_name.toLowerCase().includes(searchTerm)
+        );
+    }
+    
+    renderFaults();
+    updateStatistics();
+}
+
+// Filter by status
+function filterByStatus() {
+    const status = document.getElementById('statusFilter').value;
+    
+    if (status === 'all') {
+        filteredFaults = [...allFaults];
+    } else {
+        filteredFaults = allFaults.filter(fault => 
+            status === 'resolved' ? fault.resolved_at : !fault.resolved_at
+        );
+    }
+    
+    renderFaults();
+    updateStatistics();
+}
+
+// Filter by branch
+function filterByBranch() {
+    const branchId = document.getElementById('branchFilter').value;
+    
+    if (branchId === 'all') {
+        filteredFaults = [...allFaults];
+    } else {
+        filteredFaults = allFaults.filter(fault => 
+            fault.branch_id == branchId
+        );
+    }
+    
+    renderFaults();
+    updateStatistics();
+}
+
+// Setup event listeners
+function setupEventListeners() {
+    try {
+        // Search input
+        const searchInput = document.getElementById('faultSearchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', performSearch);
+        }
+        
+        // Filters
+        const statusFilter = document.getElementById('statusFilter');
+        if (statusFilter) {
+            statusFilter.addEventListener('change', filterByStatus);
+        }
+        
+        const branchFilter = document.getElementById('branchFilter');
+        if (branchFilter) {
+            branchFilter.addEventListener('change', filterByBranch);
+        }
+        
+    } catch (error) {
+        console.error('Error setting up event listeners:', error);
+    }
+}
+
+// Update statistics
+function updateStatistics() {
+    const total = filteredFaults.length;
+    const open = filteredFaults.filter(f => !f.resolved_at).length;
+    const resolved = filteredFaults.filter(f => f.resolved_at).length;
+    
+    document.getElementById('totalCount').textContent = total;
+    document.getElementById('openCount').textContent = open;
+    document.getElementById('resolvedCount').textContent = resolved;
+}
+
+// Edit fault
+function editFault(faultId) {
+    const fault = allFaults.find(f => f.id === faultId);
+    if (!fault) return;
+    
+    currentEditingFault = fault;
+    
+    // Populate edit form
+    document.getElementById('editFaultId').value = fault.id;
+    document.querySelector('#editForm select[name="fault_type"]').value = fault.fault_type;
+    document.querySelector('#editForm select[name="device_type"]').value = fault.device_type;
+    document.querySelector('#editForm textarea[name="description"]').value = fault.description;
+    document.querySelector('#editForm input[name="reported_by"]').value = fault.reported_by;
+    document.querySelector('#editForm select[name="technician_id"]').value = fault.technician_id || '';
+    document.querySelector('#editForm textarea[name="repair_notes"]').value = fault.repair_notes || '';
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('editModal'));
+    modal.show();
+}
+
+// Show resolve modal
+function showResolveModal(faultId) {
+    const fault = allFaults.find(f => f.id === faultId);
+    if (!fault) return;
+    
+    document.getElementById('resolveFaultId').value = fault.id;
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('resolveModal'));
+    modal.show();
+}
+
+// Save fault (edit)
+function saveFault() {
+    const form = document.getElementById('editForm');
+    const formData = new FormData(form);
+    
+    fetch(`/faults/edit/${formData.get('fault_id')}`, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(translations.faultUpdatedSuccess, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+            loadFaults(); // Reload data
+        } else {
+            showAlert(data.message || translations.errorOccurred, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving fault:', error);
+        showAlert(translations.errorSavingChanges, 'danger');
+    });
+}
+
+// Resolve fault
+function resolveFault() {
+    const form = document.getElementById('resolveForm');
+    const formData = new FormData(form);
+    
+    fetch(`/faults/resolve/${formData.get('fault_id')}`, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(translations.faultRepairedSuccess, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('resolveModal')).hide();
+            loadFaults(); // Reload data
+        } else {
+            showAlert(data.message || translations.errorOccurred, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error resolving fault:', error);
+        showAlert(translations.errorRepairingFault, 'danger');
+    });
+}
+
+// Convert fault to BPM
+function convertToBPM(faultId) {
+    if (!confirm(translations.confirmConvertBPM)) {
+        return;
+    }
+    
+    fetch(`/convert-to-bbm/${faultId}`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(translations.faultConvertedBPM, 'success');
+            loadFaults(); // Reload data
+        } else {
+            showAlert(data.message || translations.errorOccurred, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error converting to BPM:', error);
+        showAlert(translations.errorConvertingBPM, 'danger');
+    });
+}
+
+// Delete fault
+function deleteFault(faultId) {
+    if (!confirm(translations.confirmDelete)) {
+        return;
+    }
+    
+    // Get CSRF token
+    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+    
+    fetch(`/faults/delete/${faultId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(translations.faultDeletedSuccess, 'success');
+            loadFaults(); // Reload data
+        } else {
+            showAlert(data.message || translations.errorOccurred, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting fault:', error);
+        showAlert(translations.errorDeletingFault, 'danger');
+    });
+}
+
+// Delete all faults
+function deleteAllFaults() {
+    // Show confirmation modal
+    const modal = new bootstrap.Modal(document.getElementById('deleteAllModal'));
+    modal.show();
+    
+    // Reset checkbox
+    document.getElementById('confirmDeleteAll').checked = false;
+    document.getElementById('confirmDeleteAllBtn').disabled = true;
+    
+    // Enable/disable confirm button based on checkbox
+    document.getElementById('confirmDeleteAll').addEventListener('change', function() {
+        document.getElementById('confirmDeleteAllBtn').disabled = !this.checked;
+    });
+}
+
+// Confirm delete all faults
+function confirmDeleteAllFaults() {
+    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+    
+    // Show loading state
+    const confirmBtn = document.getElementById('confirmDeleteAllBtn');
+    const originalText = confirmBtn.innerHTML;
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>جاري الحذف...';
+    confirmBtn.disabled = true;
+    
+    fetch('/faults/delete-all', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('تم حذف جميع الأعطال بنجاح: ' + data.deleted_count + ' عطل', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('deleteAllModal')).hide();
+            loadFaults(); // Reload data
+        } else {
+            showAlert(data.message || 'حدث خطأ في حذف الأعطال', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting all faults:', error);
+        showAlert('حدث خطأ في حذف الأعطال', 'danger');
+    })
+    .finally(() => {
+        // Restore button state
+        confirmBtn.innerHTML = originalText;
+        confirmBtn.disabled = false;
+    });
+}
+
+// Download faults as Excel
+function downloadExcel() {
+    // Get current filter values
+    const searchTerm = document.getElementById('faultSearchInput').value.trim();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const branchFilter = document.getElementById('branchFilter').value;
+    
+    // Build URL with parameters
+    let url = '/api/all-camera-faults/download-excel?';
+    const params = [];
+    
+    if (searchTerm) {
+        params.push(`search=${encodeURIComponent(searchTerm)}`);
+    }
+    
+    if (statusFilter !== 'all') {
+        params.push(`status=${encodeURIComponent(statusFilter)}`);
+    }
+    
+    if (branchFilter !== 'all') {
+        params.push(`branch=${encodeURIComponent(branchFilter)}`);
+    }
+    
+    if (params.length > 0) {
+        url += params.join('&');
+    }
+    
+    // Trigger download
+    window.location.href = url;
+}
+
+// View fault details
+function viewFault(faultId) {
+    // You can implement this to show fault details
+}
+
+// Refresh faults
+function refreshFaults() {
+    loadFaults();
+}
+
+// Show/hide loading
+function showLoading(show) {
+    document.getElementById('loadingIndicator').style.display = show ? 'block' : 'none';
+    document.getElementById('faultsList').style.display = show ? 'none' : 'block';
+}
+
+// Show alert
+function showAlert(message, type) {
+    // Create alert element
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Add to page
+    const container = document.querySelector('.container-fluid');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 3000);
+}
+
+// Format date
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    
+    try {
+        const date = new Date(dateString);
+        const langElement = document.documentElement.getAttribute('lang') || 'en';
+        const locale = langElement === 'ar' ? 'ar-SA' : 'en-US';
+        
+        return date.toLocaleDateString(locale, {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch (error) {
+        console.error('Error formatting date:', error);
+        return dateString;
+    }
+}
+</script>
+{% endblock %}
