@@ -7,6 +7,10 @@ from datetime import timedelta
 
 def _get_database_uri():
     """Get database URI with fallback to SQLite"""
+    # For Railway, use their DATABASE_URL directly
+    if 'RAILWAY_ENVIRONMENT' in os.environ:
+        return os.environ.get('DATABASE_URL', 'sqlite:///camera_system.db')
+    
     url = os.environ.get('DATABASE_URL') or 'sqlite:///camera_system.db'
     if url.startswith('postgresql') or url.startswith('postgres://'):
         try:

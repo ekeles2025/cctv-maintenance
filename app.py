@@ -1060,25 +1060,35 @@ def delete_chain(chain_id):
 def chain_regions(chain_id):
     chain = Chain.query.get_or_404(chain_id)
     
-    # Load regions with their branches and cameras to avoid lazy loading issues
-    regions_list = db.session.query(Region).filter_by(chain_id=chain_id).all()
+    # Pagination parameters
+    page = request.args.get('page', 1, type=int)
+    per_page = 50  # Limit to 50 regions per page
+    
+    # Load regions with pagination and eager loading
+    regions_query = db.session.query(Region).filter_by(chain_id=chain_id)
+    regions_pagination = regions_query.order_by(Region.id.asc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
     
     # Pre-load all related data to avoid lazy loading in template
-    for region in regions_list:
+    for region in regions_pagination.items:
         for branch in region.branches:
-            # Force load cameras and devices
-            _ = list(branch.cameras)
-            _ = list(branch.devices)
+            # Limit cameras and devices per branch to prevent timeout
+            branch.cameras.limit(20).all()  # Load max 20 cameras per branch
+            branch.devices.limit(10).all()  # Load max 10 devices per branch
     
     # Add sequential numbering
     regions_with_numbers = []
-    for index, region in enumerate(regions_list, 1):
+    for index, region in enumerate(regions_pagination.items, 1):
         regions_with_numbers.append({
             'region': region,
-            'row_number': index
+            'row_number': (page - 1) * per_page + index
         })
     
-    return render_template("regions.html", regions=regions_with_numbers, chain=chain)
+    return render_template("regions.html", 
+                         regions=regions_with_numbers, 
+                         chain=chain,
+                         pagination=regions_pagination)
 
 @app.route("/chains/<int:chain_id>/regions/delete-all", methods=["POST"])
 @login_required
