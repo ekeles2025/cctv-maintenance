@@ -68,9 +68,6 @@ def auto_init_database():
             db.create_all()
             
             # التحقق من وجود مستخدم admin
-            from app import User
-            from werkzeug.security import generate_password_hash
-            
             if not User.query.filter_by(username='admin').first():
                 admin_user = User(
                     username='admin',

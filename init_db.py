@@ -15,26 +15,26 @@ def init_database():
             print(f"Database URI: {db_uri}")
             
             if 'postgresql' in db_uri:
-                print("✅ Using PostgreSQL database")
+                print("Using PostgreSQL database")
             elif 'sqlite' in db_uri:
-                print("❌ WARNING: Using SQLite database!")
+                print("WARNING: Using SQLite database!")
             
             # اختبار الاتصال
-            print("🔗 Testing database connection...")
+            print("Testing database connection...")
             with db.engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
                 conn.commit()
-            print("✅ Database connection successful")
+            print("Database connection successful")
             
             # إنشاء جميع الجداول
-            print("🔧 Creating database tables...")
+            print("Creating database tables...")
             db.create_all()
-            print("✅ Tables created successfully!")
+            print("Tables created successfully!")
             
             # عرض الجداول المتاحة
             inspector = db.inspect(db.engine)
             tables = inspector.get_table_names()
-            print(f"📋 Available tables: {tables}")
+            print(f"Available tables: {tables}")
             
             # إضافة Admin افتراضي لو مش موجود
             admin_username = "admin"
@@ -44,7 +44,7 @@ def init_database():
             # التحقق إذا Admin موجود مسبقًا
             existing_admin = User.query.filter_by(username=admin_username).first()
             if not existing_admin:
-                print(f"👤 Creating admin user '{admin_username}'...")
+                print(f"Creating admin user '{admin_username}'...")
                 admin_user = User(
                     username=admin_username,
                     password=generate_password_hash(admin_password, method="sha256"),
@@ -52,14 +52,14 @@ def init_database():
                 )
                 db.session.add(admin_user)
                 db.session.commit()
-                print(f"✅ Admin user '{admin_username}' added successfully!")
+                print(f"Admin user '{admin_username}' added successfully!")
             else:
-                print(f"✅ Admin user '{admin_username}' already exists.")
+                print(f"Admin user '{admin_username}' already exists.")
                 
-            print("🎉 Database initialization completed successfully!")
+            print("Database initialization completed successfully!")
                 
         except Exception as e:
-            print(f"❌ Error: {e}")
+            print(f"Error: {e}")
             import traceback
             traceback.print_exc()
             db.session.rollback()
