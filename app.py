@@ -935,8 +935,18 @@ def add_chain():
         name = request.form['name']
         chain = Chain(name=name)
         db.session.add(chain)
+        db.session.commit()
+        flash(_("تم إضافة السلسلة بنجاح"), "success")
+        return redirect(url_for("chains"))
+    return render_template("add_edit_chain.html", chain=None)
+
+@app.route("/chains/import-excel", methods=["GET", "POST"])
+@login_required
 def import_chains_excel():
     """استيراد السلاسل من ملف Excel"""
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه استيراد السلاسل ❌"), "danger")
+        return redirect(url_for("chains"))
     
     if request.method == "POST":
         if 'file' not in request.files:
@@ -1018,6 +1028,36 @@ def import_chains_excel():
             return redirect(request.url)
     
     return render_template("import_chains_excel.html")
+
+@app.route("/chains/edit/<int:chain_id>", methods=["GET", "POST"])
+@login_required
+def edit_chain(chain_id):
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه تعديل السلاسل"), "danger")
+        return redirect(url_for("dashboard"))
+    chain = Chain.query.get_or_404(chain_id)
+    if request.method == "POST":
+        chain.name = request.form['name']
+        db.session.commit()
+        flash(_("تم تعديل السلسلة بنجاح"), "success")
+        return redirect(url_for("chains"))
+    return render_template("add_edit_chain.html", chain=chain)
+
+@app.route("/chains/delete/<int:chain_id>", methods=["POST"])
+@login_required
+def delete_chain(chain_id):
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه حذف السلاسل ❌"), "danger")
+        return redirect(url_for("chains"))
+    chain = Chain.query.get_or_404(chain_id)
+    db.session.delete(chain)
+    db.session.commit()
+    flash(_("تم حذف السلسلة بنجاح"), "success")
+    return redirect(url_for("chains"))
+
+@app.route("/chains/<int:chain_id>/regions")
+@login_required
+def chain_regions(chain_id):
     chain = Chain.query.get_or_404(chain_id)
     regions_list = Region.query.filter_by(chain_id=chain_id).all()
     
