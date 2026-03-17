@@ -59,32 +59,6 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
-# تهيئة قاعدة البيانات تلقائياً عند بدء التشغيل
-def auto_init_database():
-    """Initialize database automatically on startup"""
-    with app.app_context():
-        try:
-            # إنشاء الجداول إذا لم تكن موجودة
-            db.create_all()
-            
-            # التحقق من وجود مستخدم admin
-            if not User.query.filter_by(username='admin').first():
-                admin_user = User(
-                    username='admin',
-                    password=generate_password_hash('Mostafa@2025', method='sha256'),
-                    role='admin'
-                )
-                db.session.add(admin_user)
-                db.session.commit()
-                print("Admin user created successfully!")
-            
-        except Exception as e:
-            print(f"Database initialization error: {e}")
-            db.session.rollback()
-
-# تشغيل التهيئة التلقائية
-auto_init_database()
-
 SUPPORTED_LANGS = {"ar", "en"}
 
 TRANSLATIONS = {
@@ -5402,6 +5376,32 @@ def add_fault():
     except Exception as e:
         flash(f'خطأ في إضافة العطل: {str(e)}', 'danger')
         return redirect(request.referrer or url_for('home'))
+
+# تهيئة قاعدة البيانات تلقائياً عند بدء التشغيل
+def auto_init_database():
+    """Initialize database automatically on startup"""
+    with app.app_context():
+        try:
+            # إنشاء الجداول إذا لم تكن موجودة
+            db.create_all()
+            
+            # التحقق من وجود مستخدم admin
+            if not User.query.filter_by(username='admin').first():
+                admin_user = User(
+                    username='admin',
+                    password=generate_password_hash('Mostafa@2025', method='sha256'),
+                    role='admin'
+                )
+                db.session.add(admin_user)
+                db.session.commit()
+                print("Admin user created successfully!")
+            
+        except Exception as e:
+            print(f"Database initialization error: {e}")
+            db.session.rollback()
+
+# تشغيل التهيئة التلقائية بعد تعريف جميع النماذج
+auto_init_database()
 
 if __name__ == "__main__":
     try:
