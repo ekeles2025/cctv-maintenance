@@ -46,10 +46,15 @@ os.environ['SECRET_KEY'] = 'dev-secret-key-change-in-production'
 app = Flask(__name__)
 app.config.from_object(Config)
 
-# ربط التطبيق بالـ PostgreSQL على Railway
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:SOcgHFJDqcDrvUKzermleZkoMPbjmmxC@postgres-bvfp.railway.internal:5432/railway"
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# إعداد قاعدة بيانات SQLAlchemy حسب البيئة
+if os.environ.get('RAILWAY_ENVIRONMENT') or 'RAILWAY' in os.environ.get('DATABASE_URL', ''):
+    # على Railway استخدم PostgreSQL
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URL')
+else:
+    # للتطوير المحلي استخدم SQLite
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///camera_system.db"
 
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
 SUPPORTED_LANGS = {"ar", "en"}
