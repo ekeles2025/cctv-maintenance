@@ -40,16 +40,15 @@ from menu_config import load_menu_items, save_menu_items, update_menu_item
 
 # Set environment variables directly
 import os
-os.environ['DATABASE_URL'] = 'sqlite:///camera_system.db'
 os.environ['SECRET_KEY'] = 'dev-secret-key-change-in-production'
 
 # إنشاء التطبيق
 app = Flask(__name__)
 app.config.from_object(Config)
 
-# إعداد قاعدة بيانات SQLAlchemy
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+# ربط التطبيق بالـ PostgreSQL على Railway
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:SOcgHFJDqcDrvUKzermleZkoMPbjmmxC@postgres-bvfp.railway.internal:5432/railway"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
