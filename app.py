@@ -44,7 +44,18 @@ app = Flask(__name__)
 app.config.from_object(Config)
 
 # إعداد قاعدة بيانات PostgreSQL كأساسي دائماً - يتجاوز أي إعدادات في Config
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URL', 'postgresql://postgres:SOcgHFJDqcDrvUKzermleZkoMPbjmmxC@postgres-bvfp.railway.internal:5432/railway')
+database_url = os.environ.get('DATABASE_URL', 'postgresql://postgres:SOcgHFJDqcDrvUKzermleZkoMPbjmmxC@postgres-bvfp.railway.internal:5432/railway')
+
+# التحقق من توفر psycopg2 لـ PostgreSQL
+try:
+    import psycopg2
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+    print("✅ Using PostgreSQL database")
+except ImportError:
+    print("❌ psycopg2 not found, falling back to SQLite")
+    print("⚠️  Please add 'psycopg2-binary>=2.9.0' to requirements.txt")
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///camera_system.db"
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
@@ -5338,7 +5349,34 @@ def download_filtered_faults_excel():
 
 @app.route("/add_fault", methods=["POST"])
 def add_fault():
-    pass
+    try:
+        # الحصول على البيانات من النموذج
+        camera_name = request.form.get('camera_name', '')
+        problem = request.form.get('problem', '')
+        
+        if not camera_name or not problem:
+            flash('اسم الكاميرا والمشكلة مطلوبين', 'danger')
+            return redirect(request.referrer or url_for('home'))
+        
+        # إنشاء عطل جديد
+        fault = Fault(
+            camera_name=camera_name,
+            problem=problem,
+            description=f"عطل في كاميرا: {camera_name} - المشكلة: {problem}",
+            fault_type='أخرى',
+            device_type='كاميرا',
+            reported_by='System'
+        )
+        
+        db.session.add(fault)
+        db.session.commit()
+        
+        flash(f'تم إضافة العطل #{fault.id} بنجاح', 'success')
+        return redirect(request.referrer or url_for('home'))
+        
+    except Exception as e:
+        flash(f'خطأ في إضافة العطل: {str(e)}', 'danger')
+        return redirect(request.referrer or url_for('home'))
 
 if __name__ == "__main__":
     try:
