@@ -41,11 +41,11 @@ os.environ['SECRET_KEY'] = 'dev-secret-key-change-in-production'
 # إنشاء التطبيق
 app = Flask(__name__)
 
-# إعداد قاعدة بيانات PostgreSQL كأساسي دائماً
+app.config.from_object(Config)
+
+# إعداد قاعدة بيانات PostgreSQL كأساسي دائماً - يتجاوز أي إعدادات في Config
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URL', 'postgresql://postgres:SOcgHFJDqcDrvUKzermleZkoMPbjmmxC@postgres-bvfp.railway.internal:5432/railway')
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-app.config.from_object(Config)
 
 db = SQLAlchemy(app)
 
