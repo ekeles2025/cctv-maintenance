@@ -1059,7 +1059,10 @@ def delete_chain(chain_id):
 @login_required
 def chain_regions(chain_id):
     chain = Chain.query.get_or_404(chain_id)
-    regions_list = Region.query.filter_by(chain_id=chain_id).all()
+    regions_list = Region.query.filter_by(chain_id=chain_id).options(
+        db.joinedload(Region.branches).joinedload(Branch.cameras),
+        db.joinedload(Region.branches).joinedload(Branch.devices)
+    ).all()
     
     # Add sequential numbering
     regions_with_numbers = []
@@ -1108,10 +1111,16 @@ def regions():
         return redirect(url_for("dashboard"))
     chain_id = request.args.get("chain_id", type=int)
     if chain_id:
-        regions_list = Region.query.filter_by(chain_id=chain_id).all()
+        regions_list = Region.query.filter_by(chain_id=chain_id).options(
+            db.joinedload(Region.branches).joinedload(Branch.cameras),
+            db.joinedload(Region.branches).joinedload(Branch.devices)
+        ).all()
         chain = Chain.query.get(chain_id)
     else:
-        regions_list = Region.query.all()
+        regions_list = Region.query.options(
+            db.joinedload(Region.branches).joinedload(Branch.cameras),
+            db.joinedload(Region.branches).joinedload(Branch.devices)
+        ).all()
         chain = None
     
     # Add sequential numbering
