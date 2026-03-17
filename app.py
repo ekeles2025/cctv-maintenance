@@ -9,8 +9,6 @@ import subprocess
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 import pandas as pd
-import io
-from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file, session, g, make_response
@@ -18,7 +16,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.utils import secure_filename
 from werkzeug.exceptions import HTTPException
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, PatternFill, Alignment
@@ -39,22 +36,17 @@ from utils import utc_now, local_now, local_dt, allowed_upload_file, ensure_dire
 from menu_config import load_menu_items, save_menu_items, update_menu_item
 
 # Set environment variables directly
-import os
 os.environ['SECRET_KEY'] = 'dev-secret-key-change-in-production'
 
 # إنشاء التطبيق
 app = Flask(__name__)
+
+# إعداد قاعدة بيانات PostgreSQL كأساسي دائماً
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URL', 'postgresql://postgres:SOcgHFJDqcDrvUKzermleZkoMPbjmmxC@postgres-bvfp.railway.internal:5432/railway')
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
 app.config.from_object(Config)
 
-# إعداد قاعدة بيانات SQLAlchemy حسب البيئة
-if os.environ.get('RAILWAY_ENVIRONMENT') or 'RAILWAY' in os.environ.get('DATABASE_URL', ''):
-    # على Railway استخدم PostgreSQL
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URL')
-else:
-    # للتطوير المحلي استخدم SQLite
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///camera_system.db"
-
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
 SUPPORTED_LANGS = {"ar", "en"}
