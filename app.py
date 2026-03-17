@@ -1271,6 +1271,22 @@ def add_region(chain_id=None):
         return redirect(url_for("regions"))
     return render_template("add_edit_region.html", region=None, chain_id=chain_id)
 
+@app.route("/regions/<int:region_id>/delete", methods=["POST"])
+@login_required
+def delete_region(region_id):
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه حذف المناطق ❌"), "danger")
+        return redirect(url_for("regions"))
+    
+    region = Region.query.get_or_404(region_id)
+    
+    db.session.delete(region)
+    db.session.commit()
+    
+    flash(_("تم حذف المنطقة بنجاح ✅"), "success")
+    chain_id = region.chain_id
+    return redirect(url_for("chain_regions", chain_id=chain_id) if chain_id else url_for("regions"))
+
 @app.route("/branches/<int:region_id>", methods=["GET", "POST"])
 @login_required
 def branches(region_id):
