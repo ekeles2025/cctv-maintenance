@@ -3493,6 +3493,15 @@ def import_excel_faults():
                 
                 print(f"ROW {row_idx}: Camera='{camera_name}', IP='{camera_ip}', Branch='{branch_name}'")
                 
+                # Validate UTF-8 encoding for all string fields
+                try:
+                    camera_name.encode('utf-8').decode('utf-8')
+                    camera_ip.encode('utf-8').decode('utf-8')
+                    branch_name.encode('utf-8').decode('utf-8')
+                except UnicodeError:
+                    errors.append(f"Row {row_idx}: Invalid characters in text fields")
+                    continue
+                
                 if not camera_name or not branch_name:
                     errors.append(f"Row {row_idx}: Missing camera or branch name")
                     continue

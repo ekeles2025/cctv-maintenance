@@ -59,6 +59,19 @@ def import_excel_faults():
                         errors.append(f"الصف {row_idx}: بيانات ناقصة (Name, Address, Network Status إلزامية)")
                         continue
                     
+                    # التحقق من صحة ترميز UTF-8 للنصوص
+                    try:
+                        camera_name.encode('utf-8').decode('utf-8')
+                        address.encode('utf-8').decode('utf-8')
+                        network_status.encode('utf-8').decode('utf-8')
+                        if reported_by:
+                            reported_by.encode('utf-8').decode('utf-8')
+                        if technician_name:
+                            technician_name.encode('utf-8').decode('utf-8')
+                    except UnicodeError:
+                        errors.append(f"الصف {row_idx}: النص يحتوي على أحرف غير صالحة")
+                        continue
+                    
                     # تحويل Network Status إلى fault_type
                     if network_status.lower() in ['offline', 'معطلة', 'disconnected']:
                         fault_type = 'offline'
