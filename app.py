@@ -1265,15 +1265,22 @@ def add_region(chain_id=None):
         flash(_("فقط المدير يمكنه إضافة مناطق ❌"), "danger")
         return redirect(url_for("dashboard"))
     if request.method == "POST":
+        # Get chain_id from form, allow empty string for no chain
+        selected_chain_id = request.form.get('chain_id')
+        if selected_chain_id and selected_chain_id.isdigit():
+            selected_chain_id = int(selected_chain_id)
+        else:
+            selected_chain_id = None
+        
         region = Region(
             name=request.form['name'],
-            chain_id=chain_id
+            chain_id=selected_chain_id
         )
         db.session.add(region)
         db.session.commit()
         flash("تم إضافة المنطقة بنجاح ✅", "success")
         return redirect(url_for("regions"))
-    return render_template("add_edit_region.html", region=None, chain_id=chain_id)
+    return render_template("add_edit_region.html", region=None, preselected_chain_id=chain_id, chains=Chain.query.all())
 
 @app.route("/regions/<int:region_id>/delete", methods=["POST"])
 @login_required
