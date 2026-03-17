@@ -831,6 +831,7 @@ def logout():
 @app.route("/dashboard")
 @login_required
 def dashboard():
+    now = utc_now()
     # Optimized queries for 7000 cameras
     try:
         # Use count() instead of len() for better performance
