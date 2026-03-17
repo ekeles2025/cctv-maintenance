@@ -206,9 +206,6 @@
                                 <a href="{{ url_for('add_branch', region_id=item.region.id) }}" class="btn btn-success btn-sm">
                                     <i class="fas fa-plus me-1"></i>{{ _('إضافة فرع') }}
                                 </a>
-                                <a href="{{ url_for('edit_region', region_id=item.region.id) }}" class="btn btn-warning btn-sm">
-                                    <i class="fas fa-edit me-1"></i>{{ _('تعديل') }}
-                                </a>
                                 <form method="POST" action="{{ url_for('delete_region', region_id=item.region.id) }}" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف المنطقة {{ item.region.name }}؟ سيتم حذف جميع الفروع والكاميرات التابعة لها.');">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash me-1"></i>{{ _('حذف') }}</button>
