@@ -1265,6 +1265,23 @@ def add_region(chain_id=None):
         flash(_("فقط المدير يمكنه إضافة مناطق ❌"), "danger")
         return redirect(url_for("dashboard"))
     if request.method == "POST":
+        # Validate region name
+        name = request.form.get('name', '').strip()
+        if not name:
+            flash("يجب إدخال اسم المنطقة", "danger")
+            return redirect(url_for("regions"))
+        
+        if len(name) > 100:
+            flash("اسم المنطقة طويل جداً (أقصى 100 حرف)", "danger")
+            return redirect(url_for("regions"))
+        
+        try:
+            # Ensure the name is valid UTF-8
+            name.encode('utf-8').decode('utf-8')
+        except UnicodeError:
+            flash("اسم المنطقة يحتوي على أحرف غير صالحة", "danger")
+            return redirect(url_for("regions"))
+        
         # Get chain_id from form, allow empty string for no chain
         selected_chain_id = request.form.get('chain_id')
         if selected_chain_id and selected_chain_id.isdigit():
@@ -1273,7 +1290,7 @@ def add_region(chain_id=None):
             selected_chain_id = None
         
         region = Region(
-            name=request.form['name'],
+            name=name,
             chain_id=selected_chain_id
         )
         db.session.add(region)
