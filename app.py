@@ -879,6 +879,15 @@ def dashboard():
             Fault.resolved_at == None
         ).order_by(Fault.date_reported.asc()).limit(10).all()  # Get oldest 10 open faults
         
+        # Calculate durations for recent faults
+        recent_faults_with_duration = []
+        for fault in open_faults_list:
+            duration = calculate_time_diff(fault.date_reported, now)
+            recent_faults_with_duration.append({
+                'fault': fault,
+                'duration': duration
+            })
+        
         open_device_faults_list = db.session.query(DeviceFault).filter(
             DeviceFault.resolved_at == None
         ).order_by(DeviceFault.date_reported.asc()).limit(10).all()
