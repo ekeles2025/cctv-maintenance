@@ -23,6 +23,11 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     SQLALCHEMY_DATABASE_URI = _get_database_uri()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    # Flask URL building configuration
+    SERVER_NAME = os.environ.get('SERVER_NAME', 'localhost:8080')
+    APPLICATION_ROOT = '/'
+    PREFERRED_URL_SCHEME = 'http'
 
     BABEL_DEFAULT_LOCALE = 'en'
     BABEL_DEFAULT_TIMEZONE = 'UTC'
