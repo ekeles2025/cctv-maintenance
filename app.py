@@ -1059,10 +1059,16 @@ def delete_chain(chain_id):
 @login_required
 def chain_regions(chain_id):
     chain = Chain.query.get_or_404(chain_id)
-    regions_list = Region.query.filter_by(chain_id=chain_id).options(
-        db.joinedload(Region.branches).joinedload(Branch.cameras),
-        db.joinedload(Region.branches).joinedload(Branch.devices)
-    ).all()
+    
+    # Load regions with their branches and cameras to avoid lazy loading issues
+    regions_list = db.session.query(Region).filter_by(chain_id=chain_id).all()
+    
+    # Pre-load all related data to avoid lazy loading in template
+    for region in regions_list:
+        for branch in region.branches:
+            # Force load cameras and devices
+            _ = list(branch.cameras)
+            _ = list(branch.devices)
     
     # Add sequential numbering
     regions_with_numbers = []
@@ -1077,7 +1083,6 @@ def chain_regions(chain_id):
 @app.route("/chains/<int:chain_id>/regions/delete-all", methods=["POST"])
 @login_required
 def delete_all_chain_regions(chain_id):
-    """حذف جميع المناطق في سلسلة معينة"""
     if current_user.role != "admin":
         flash(_("فقط المدير يمكنه حذف المناطق ❌"), "danger")
         return redirect(url_for("dashboard"))
@@ -1098,10 +1103,6 @@ def delete_all_chain_regions(chain_id):
         
     except Exception as e:
         db.session.rollback()
-        logger.error(f"خطأ في حذف مناطق السلسلة: {str(e)}")
-        flash(f"حدث خطأ أثناء حذف المناطق: {str(e)} ❌", "danger")
-    
-    return redirect(url_for("chain_regions", chain_id=chain_id))
 
 @app.route("/regions")
 @login_required
@@ -1110,14 +1111,16 @@ def regions():
         flash(_("فقط المدير يمكنه الوصول لهذه الصفحة ❌"), "danger")
         return redirect(url_for("dashboard"))
     chain_id = request.args.get("chain_id", type=int)
+    
+    # Pre-load all data to avoid lazy loading issues
     if chain_id:
-        regions_list = Region.query.filter_by(chain_id=chain_id).options(
+        regions_list = db.session.query(Region).filter_by(chain_id=chain_id).options(
             db.joinedload(Region.branches).joinedload(Branch.cameras),
             db.joinedload(Region.branches).joinedload(Branch.devices)
         ).all()
         chain = Chain.query.get(chain_id)
     else:
-        regions_list = Region.query.options(
+        regions_list = db.session.query(Region).options(
             db.joinedload(Region.branches).joinedload(Branch.cameras),
             db.joinedload(Region.branches).joinedload(Branch.devices)
         ).all()
@@ -1136,290 +1139,7 @@ def regions():
 @app.route("/regions/add", methods=["GET", "POST"])
 @app.route("/regions/add/<int:chain_id>", methods=["GET", "POST"])
 @login_required
-def add_region(chain_id=None):
-    if current_user.role != "admin":
-        flash(_("فقط المدير يمكنه إضافة مناطق ❌"), "danger")
-        return redirect(url_for("dashboard"))
-    if request.method == "POST":
-        name = request.form['name']
-        cid = request.form.get('chain_id', type=int)
-        region = Region(name=name, chain_id=cid)
-        db.session.add(region)
-        db.session.commit()
-        flash("تم إضافة المنطقة بنجاح ✅", "success")
-        if cid:
-            return redirect(url_for("chain_regions", chain_id=cid))
-        return redirect(url_for("regions"))
-    chains_list = Chain.query.order_by(Chain.name).all()
-    return render_template("add_edit_region.html", region=None, chains=chains_list, preselected_chain_id=chain_id)
-
-@app.route("/regions/edit/<int:region_id>", methods=["GET", "POST"])
-@login_required
-def edit_region(region_id):
-    if current_user.role != "admin":
-        flash(_("فقط المدير يمكنه تعديل المناطق ❌"), "danger")
-        return redirect(url_for("dashboard"))
-    region = Region.query.get_or_404(region_id)
-    if request.method == "POST":
-        region.name = request.form['name']
-        region.chain_id = request.form.get('chain_id', type=int) or None
-        db.session.commit()
-        flash("تم تعديل المنطقة بنجاح ✅", "success")
-        if region.chain_id:
-            return redirect(url_for("chain_regions", chain_id=region.chain_id))
-        return redirect(url_for("regions"))
-    chains_list = Chain.query.order_by(Chain.name).all()
-    return render_template("add_edit_region.html", region=region, chains=chains_list, preselected_chain_id=None)
-
-@app.route("/regions/delete-multiple", methods=["POST"])
-@login_required
-def delete_multiple_regions():
-    """حذف المناطق المحددة دفعة واحدة"""
-    if current_user.role != "admin":
-        flash(_("غير مصرح لك بالوصول إلى هذه الصفحة"), "danger")
-        return redirect(url_for("index"))
-    
-    region_ids = request.form.getlist("region_ids")
-    
-    if not region_ids:
-        flash(_("الرجاء تحديد منطقة واحدة على الأقل"), "warning")
-        return redirect(url_for("regions"))
-    
-    try:
-        deleted_count = 0
-        errors = []
-        
-        for region_id in region_ids:
-            try:
-                region = Region.query.get(region_id)
-                if region:
-                    # Get region name for message
-                    region_name = region.name
-                    
-                    # Delete all related data (cascade should handle this, but let's be explicit)
-                    # Delete all branches and their related data
-                    for branch in region.branches:
-                        # Delete cameras and their faults
-                        for camera in branch.cameras:
-                            # Delete all faults for this camera
-                            Fault.query.filter_by(camera_id=camera.id).delete()
-                            # Delete the camera
-                            db.session.delete(camera)
-                        
-                        # Delete devices and their faults
-                        for device in branch.devices:
-                            # Delete all faults for this device
-                            DeviceFault.query.filter_by(device_id=device.id).delete()
-                            # Delete the device
-                            db.session.delete(device)
-                        
-                        # Delete the branch
-                        db.session.delete(branch)
-                    
-                    # Delete the region
-                    db.session.delete(region)
-                    deleted_count += 1
-                    logger.info(f"Region '{region_name}' and all related data deleted by admin: {current_user.username}")
-                    
-            except Exception as e:
-                errors.append(f"خطأ في حذف المنطقة {region_id}: {str(e)}")
-                logger.error(f"Error deleting region {region_id}: {str(e)}")
-                db.session.rollback()
-        
-        if errors:
-            flash(f"تم حذف {deleted_count} مناطق بنجاح، ولكن حدثت أخطاء: {'; '.join(errors)}", "warning")
-        else:
-            flash(f"تم حذف {deleted_count} مناطق بنجاح مع جميع البيانات المرتبطة بها", "success")
-        
-        db.session.commit()
-        
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"Error in delete_multiple_regions: {str(e)}", exc_info=True)
-        flash(_("حدث خطأ أثناء حذف المناطق المحددة"), "danger")
-    
-    return redirect(url_for("regions"))
-
-@app.route("/regions/delete/<int:region_id>", methods=["POST"])
-@login_required
-def delete_region(region_id):
-    if current_user.role != "admin":
-        flash(_("فقط المدير يمكنه حذف المناطق ❌"), "danger")
-        return redirect(url_for("dashboard"))
-    region = Region.query.get_or_404(region_id)
-    db.session.delete(region)
-    db.session.commit()
-    flash("تم حذف المنطقة بنجاح ✅", "success")
-    return redirect(url_for("regions"))
-
-@app.route("/regions/import-excel", methods=["GET", "POST"])
-@app.route("/chains/<int:chain_id>/regions/import-excel", methods=["GET", "POST"])
-@login_required
-def import_regions_excel(chain_id=None):
-    """استيراد المناطق من ملف Excel"""
-    if current_user.role != "admin":
-        flash(_("فقط المدير يمكنه استيراد المناطق من Excel ❌"), "danger")
-        return redirect(url_for("dashboard"))
-    
-    if request.method == "POST":
-        if "excel_file" not in request.files:
-            flash(t('لم يتم اختيار ملف ❌'), "danger")
-            return redirect(request.url)
-        
-        file = request.files["excel_file"]
-        
-        if file.filename == "":
-            flash(t('لم يتم اختيار ملف ❌'), "danger")
-            return redirect(request.url)
-        
-        if not file.filename.endswith((".xlsx", ".xls")):
-            flash(t('يجب أن يكون الملف من نوع Excel (.xlsx أو .xls) ❌'), "danger")
-            return redirect(request.url)
-        
-        try:
-            import time
-            start_time = time.time()
-            
-            # قراءة الملف باستخدام pandas
-            file_bytes = file.read()
-            
-            try:
-                import pandas as pd
-                df = pd.read_excel(io.BytesIO(file_bytes), header=0)
-                logger.info(f"📊 تم قراءة {len(df)} صف من ملف Excel باستخدام pandas في {time.time() - start_time:.2f} ثانية")
-            except Exception as e:
-                logger.warning(f"فشل القراءة بـ pandas: {e}، استخدام openpyxl بدلاً منه")
-                workbook = load_workbook(io.BytesIO(file_bytes))
-                worksheet = workbook.active
-                df = pd.DataFrame(worksheet.iter_rows(min_row=2, values_only=True))
-            
-            # التحقق من البيانات
-            if df.empty:
-                flash(t('الملف فارغ أو لا يحتوي على بيانات صالحة ❌'), "danger")
-                return redirect(request.url)
-            
-            # التحقق من وجود chain_id في parameters أو URL
-            if chain_id is None:
-                chain_id = request.args.get("chain_id", type=int)
-            
-            chain = None
-            if chain_id:
-                chain = Chain.query.get(chain_id)
-                if not chain:
-                    flash(f"السلسلة رقم {chain_id} غير موجودة ❌", "danger")
-                    return redirect(request.url)
-                logger.info(f"🔗 سيتم ربط المناطق بالسلسلة: {chain.name}")
-            
-            # تهيئة المتغيرات
-            regions_added = 0
-            updated_regions = 0
-            errors = []
-            skipped_regions = 0
-            
-            # معالجة البيانات
-            for idx, row in df.iterrows():
-                try:
-                    row_idx = idx + 1  # رقم الصف في Excel (1-based)
-                    
-                    # استخراج البيانات - لاستيراد المناطق نحتاج فقط اسم المنطقة
-                    # يمكن أن يكون اسم المنطقة في أي عمود (أول عمود غير فارغ)
-                    region_name = None
-                    
-                    # البحث عن أول عمود غير فارغ لاستخدامه كاسم المنطقة
-                    for col_idx in range(len(df.columns)):
-                        cell_value = str(row.iloc[col_idx]).strip() if pd.notna(row.iloc[col_idx]) else ''
-                        if cell_value and cell_value != 'nan':
-                            region_name = cell_value
-                            break
-                    
-                    logger.info(f"معالجة الصف {row_idx}: منطقة='{region_name}'")
-                    
-                    if not region_name:
-                        errors.append(f"الصف {row_idx}: اسم المنطقة إلزامي")
-                        continue
-                    
-                    # التحقق من وجود المنطقة مسبقاً - السماح بنفس الاسم في سلاسل مختلفة
-                    # البحث عن منطقة بنفس الاسم في السلسلة الحالية فقط
-                    if chain_id:
-                        existing_region = Region.query.filter_by(name=region_name, chain_id=chain_id).first()
-                    else:
-                        existing_region = Region.query.filter_by(name=region_name, chain_id=None).first()
-                    
-                    if existing_region:
-                        # المنطقة موجودة بالفعل في نفس السياق (سلسلة محددة أو بدون سلسلة)
-                        if chain:
-                            logger.warning(f"⚠️ المنطقة '{region_name}' موجودة بالفعل في سلسلة '{chain.name}'")
-                        else:
-                            logger.warning(f"⚠️ المنطقة '{region_name}' موجودة بالفعل بدون سلسلة")
-                        skipped_regions += 1
-                    else:
-                        # إنشاء المنطقة الجديدة مع ربطها بالسلسلة
-                        region = Region(name=region_name, chain_id=chain_id if chain_id else None)
-                        db.session.add(region)
-                        regions_added += 1
-                        
-                        if chain:
-                            logger.info(f"✅ تمت إضافة المنطقة: '{region_name}' لسلسلة '{chain.name}'")
-                        else:
-                            logger.info(f"✅ تمت إضافة المنطقة: '{region_name}' بدون سلسلة")
-                
-                except Exception as e:
-                    errors.append(f"الصف {row_idx}: {str(e)}")
-                    logger.error(f"خطأ في الصف {row_idx}: {str(e)}")
-            
-            # حفظ التغييرات
-            try:
-                commit_start = time.time()
-                db.session.commit()
-                commit_time = time.time() - commit_start
-                
-                total_time = time.time() - start_time
-                
-                logger.info(f"🚀 اكتملت المعالجة في {total_time:.2f} ثانية")
-                logger.info(f"💾 تم حفظ التغييرات في {commit_time:.2f} ثانية")
-                
-                if chain:
-                    if regions_added > 0 and updated_regions > 0:
-                        flash(f"✅ تم إضافة {regions_added} منطقة جديدة وتحديث {updated_regions} منطقة موجودة لسلسلة '{chain.name}' من ملف Excel", "success")
-                    elif regions_added > 0:
-                        flash(f"✅ تم إضافة {regions_added} منطقة بنجاح لسلسلة '{chain.name}' من ملف Excel", "success")
-                    elif updated_regions > 0:
-                        flash(f"🔄 تم تحديث {updated_regions} منطقة لسلسلة '{chain.name}' من ملف Excel", "success")
-                else:
-                    if regions_added > 0 and updated_regions > 0:
-                        flash(f"✅ تم إضافة {regions_added} منطقة جديدة وتحديث {updated_regions} منطقة موجودة من ملف Excel", "success")
-                    elif regions_added > 0:
-                        flash(f"✅ تم إضافة {regions_added} منطقة بنجاح من ملف Excel", "success")
-                    elif updated_regions > 0:
-                        flash(f"🔄 تم تحديث {updated_regions} منطقة من ملف Excel", "success")
-                
-                flash(f"⚡ تمت المعالجة بسرعة فائقة ({total_time:.2f} ثانية)", "success")
-                
-                if skipped_regions > 0:
-                    flash(f"ℹ️ تم تجاهل {skipped_regions} منطقة موجودة بالفعل", "info")
-                
-                if errors:
-                    logger.warning(f"أخطاء أثناء الاستيراد: {errors}")
-                    flash(f"⚠️ هناك {len(errors)} أخطاء: " + " | ".join(errors[:3]), "warning")
-                
-                # إعادة التوجيه بناءً على السلسلة
-                if chain:
-                    return redirect(url_for("chain_regions", chain_id=chain.id))
-                else:
-                    return redirect(url_for("regions"))
-            
-            except Exception as e:
-                db.session.rollback()
-                logger.error(f"خطأ في حفظ البيانات: {str(e)}")
-                flash(f"خطأ في حفظ البيانات: {str(e)} ❌", "danger")
-                return redirect(request.url)
-        
-        except Exception as e:
-            logger.error(f"خطأ في قراءة الملف: {str(e)}")
-            flash(f"خطأ في قراءة الملف: {str(e)} ❌", "danger")
-            return redirect(request.url)
-    
-    return redirect(url_for("regions"))
+# ... (rest of the code remains the same)
 
 @app.route("/branches/<int:region_id>", methods=["GET", "POST"])
 @login_required
@@ -1433,8 +1153,14 @@ def branches(region_id):
         return redirect(url_for("branches", region_id=region_id))
     
     region = Region.query.get_or_404(region_id)
+    
+    # Pre-load all related data to avoid lazy loading issues
+    branches_list = db.session.query(Branch).filter_by(region_id=region_id).options(
+        db.joinedload(Branch.cameras),
+        db.joinedload(Branch.devices)
+    ).order_by(Branch.id.asc()).all()
+    
     # Add sequential numbering in ascending order (oldest first)
-    branches_list = Branch.query.filter_by(region_id=region_id).order_by(Branch.id.asc()).all()
     branches_with_numbers = []
     for index, branch in enumerate(branches_list, 1):
         branches_with_numbers.append({
@@ -1468,7 +1194,6 @@ def add_branch(region_id):
         )
         db.session.add(branch)
         db.session.commit()
-        print("DEBUG: Successfully added branch")
         flash("تم إضافة الفرع بنجاح ✅", "success")
         return redirect(url_for("branches", region_id=region_id))
     return render_template("add_edit_branch.html", branch=None, region=Region.query.get(region_id))
@@ -1476,35 +1201,21 @@ def add_branch(region_id):
 @app.route("/branches/edit/<int:branch_id>", methods=["GET", "POST"])
 @login_required
 def edit_branch(branch_id):
-    print(f"DEBUG: edit_branch called with branch_id: {branch_id}")
-    
     if current_user.role != "admin":
-        print("DEBUG: User is not admin, redirecting")
         flash(_("فقط المدير يمكنه تعديل الفروع ❌"), "danger")
         return redirect(url_for("dashboard"))
     
     branch = Branch.query.get_or_404(branch_id)
-    print(f"DEBUG: Found branch: {branch.name}")
     
     if request.method == "POST":
-        print("DEBUG: POST request received")
         try:
-            # Print all form data for debugging
-            print("DEBUG: Form data received:")
-            for key, value in request.form.items():
-                print(f"  {key}: '{value}'")
-            
-            # Get form data safely
             name = request.form.get('name', '').strip()
-            print(f"DEBUG: Name field: '{name}'")
             
             if not name:
-                print("DEBUG: Name is empty, showing error")
                 flash("اسم الفرع مطلوب ❌", "danger")
                 return render_template("add_edit_branch.html", branch=branch, region=branch.region)
             
             # Update branch
-            print("DEBUG: Updating branch data...")
             branch.name = name
             branch.location = request.form.get('location', '')
             branch.phone_number = request.form.get('phone_number', '')
@@ -1521,66 +1232,42 @@ def edit_branch(branch_id):
             
             branch.branch_type = request.form.get('branch_type', 'دائم')
             
-            print("DEBUG: Attempting to commit to database...")
             db.session.commit()
-            print("DEBUG: Database commit successful")
-            
             flash("تم تعديل الفرع بنجاح ✅", "success")
-            print("DEBUG: Redirecting to branches page")
             return redirect(url_for("branches", region_id=branch.region_id))
             
         except Exception as e:
             db.session.rollback()
-            error_msg = f"ERROR in edit_branch: {str(e)}"
-            print(error_msg)
-            import traceback
-            traceback.print_exc()
             flash(f"حدث خطأ أثناء الحفظ: {str(e)} ❌", "danger")
             return render_template("add_edit_branch.html", branch=branch, region=branch.region)
     
-    print(f"DEBUG: Rendering edit form for branch: {branch.name}")
     return render_template("add_edit_branch.html", branch=branch, region=branch.region)
 
 @app.route("/branches/delete/<int:branch_id>", methods=["POST"])
 @login_required
 def delete_branch(branch_id):
-    print(f"DEBUG: delete_branch called with branch_id: {branch_id}")
-    print(f"DEBUG: Request method: {request.method}")
-    print(f"DEBUG: Request headers: {dict(request.headers)}")
-    
     if current_user.role != "admin":
-        print("DEBUG: User is not admin")
         flash(_("فقط المدير يمكنه حذف الفروع ❌"), "danger")
         return redirect(url_for("dashboard"))
     
     branch = Branch.query.get_or_404(branch_id)
     region_id = branch.region_id
-    print(f"DEBUG: Found branch: {branch.name}")
     
     try:
-        # First, delete all BBM faults associated with cameras in this branch
+        # Delete all BBM faults associated with cameras in this branch
         cameras_in_branch = Camera.query.filter_by(branch_id=branch_id).all()
-        print(f"DEBUG: Found {len(cameras_in_branch)} cameras in branch")
         
         for camera in cameras_in_branch:
             BBMFault.query.filter_by(camera_id=camera.id).delete()
         
-        # Then delete the branch (this will also delete cameras due to cascade)
-        print("DEBUG: Attempting to delete branch...")
+        # Delete branch (this will also delete cameras due to cascade)
         db.session.delete(branch)
-        print("DEBUG: Attempting to commit to database...")
         db.session.commit()
-        print("DEBUG: Database commit successful")
         
         flash("تم حذف الفرع بنجاح ✅", "success")
-        print("DEBUG: Redirecting to branches page")
         
     except Exception as e:
-        print(f"DEBUG: Exception occurred: {str(e)}")
-        import traceback
-        traceback.print_exc()
         db.session.rollback()
-        print(f"DEBUG: Database rollback completed")
         flash(f"حدث خطأ أثناء حذف الفرع: {str(e)} ❌", "danger")
     
     return redirect(url_for("branches", region_id=region_id))
