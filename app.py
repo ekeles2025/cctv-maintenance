@@ -40,7 +40,6 @@ os.environ['SECRET_KEY'] = 'dev-secret-key-change-in-production'
 
 # إنشاء التطبيق
 app = Flask(__name__)
-
 app.config.from_object(Config)
 
 # إعداد قاعدة بيانات PostgreSQL كأساسي دائماً - يتجاوز أي إعدادات في Config
@@ -50,15 +49,44 @@ database_url = os.environ.get('DATABASE_URL', 'postgresql://postgres:SOcgHFJDqcD
 try:
     import psycopg2
     app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-    print("✅ Using PostgreSQL database")
+    print("Using PostgreSQL database")
 except ImportError:
-    print("❌ psycopg2 not found, falling back to SQLite")
-    print("⚠️  Please add 'psycopg2-binary>=2.9.0' to requirements.txt")
+    print("psycopg2 not found, falling back to SQLite")
+    print("Please add 'psycopg2-binary>=2.9.0' to requirements.txt")
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///camera_system.db"
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
+
+# تهيئة قاعدة البيانات تلقائياً عند بدء التشغيل
+def auto_init_database():
+    """Initialize database automatically on startup"""
+    with app.app_context():
+        try:
+            # إنشاء الجداول إذا لم تكن موجودة
+            db.create_all()
+            
+            # التحقق من وجود مستخدم admin
+            from app import User
+            from werkzeug.security import generate_password_hash
+            
+            if not User.query.filter_by(username='admin').first():
+                admin_user = User(
+                    username='admin',
+                    password=generate_password_hash('Mostafa@2025', method='sha256'),
+                    role='admin'
+                )
+                db.session.add(admin_user)
+                db.session.commit()
+                print("Admin user created successfully!")
+            
+        except Exception as e:
+            print(f"Database initialization error: {e}")
+            db.session.rollback()
+
+# تشغيل التهيئة التلقائية
+auto_init_database()
 
 SUPPORTED_LANGS = {"ar", "en"}
 
