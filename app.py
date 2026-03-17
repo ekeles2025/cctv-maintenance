@@ -460,6 +460,10 @@ def review_redirect():
     """Redirect /review to /settings to fix 404 errors"""
     return redirect(url_for("settings"))
 
+@app.route("/favicon.ico")
+def favicon():
+    return '', 204
+
 @app.route("/set-language/<lang>")
 def set_language(lang):
     if lang not in SUPPORTED_LANGS:
