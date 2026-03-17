@@ -1064,18 +1064,14 @@ def chain_regions(chain_id):
     page = request.args.get('page', 1, type=int)
     per_page = 50  # Limit to 50 regions per page
     
-    # Load regions with pagination and eager loading
-    regions_query = db.session.query(Region).filter_by(chain_id=chain_id)
+    # Load regions with pagination and proper eager loading
+    regions_query = db.session.query(Region).filter_by(chain_id=chain_id).options(
+        db.joinedload(Region.branches).joinedload(Branch.cameras).joinedload(Camera.faults),
+        db.joinedload(Region.branches).joinedload(Branch.devices).joinedload(Device.faults)
+    )
     regions_pagination = regions_query.order_by(Region.id.asc()).paginate(
         page=page, per_page=per_page, error_out=False
     )
-    
-    # Pre-load all related data to avoid lazy loading in template
-    for region in regions_pagination.items:
-        for branch in region.branches:
-            # Load cameras and devices with limits to prevent timeout
-            cameras = db.session.query(Camera).filter_by(branch_id=branch.id).limit(20).all()
-            devices = db.session.query(Device).filter_by(branch_id=branch.id).limit(10).all()
     
     # Add sequential numbering
     regions_with_numbers = []
