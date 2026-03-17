@@ -49,6 +49,9 @@ app.config.from_object(Config)
 
 # إعداد قاعدة بيانات SQLAlchemy
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db = SQLAlchemy(app)
 
 SUPPORTED_LANGS = {"ar", "en"}
 
@@ -481,9 +484,6 @@ logger = logging.getLogger(__name__)
 # Create directories and initialize paths
 ensure_directories(app.config['UPLOAD_FOLDER'], app.config['LOGO_FOLDER'])
 
-# Initialize database
-db = SQLAlchemy(app)
-
 # Import menu model after db is initialized
 from menu_model import MenuItem
 login_manager = LoginManager()
@@ -627,6 +627,10 @@ class Fault(db.Model):
     repair_notes = db.Column(db.String(300), nullable=True)
     repair_image = db.Column(db.String(200), nullable=True)
     camera_id = db.Column(db.Integer, db.ForeignKey('camera.id'))
+    
+    # الحقول الجديدة
+    camera_name = db.Column(db.String(100))
+    problem = db.Column(db.String(200))
 
 class Device(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -5395,67 +5399,20 @@ def download_filtered_faults_excel():
         flash(f"خطأ في تنزيل تقرير الأعطال: {str(e)}", "danger")
         return redirect(url_for("camera_faults_sidebar"))
 
-# Initialize database tables when app starts
-with app.app_context():
-    try:
-        # Create all database tables
-        db.create_all()
-        print("All database tables created")
-        
-        # Add missing sequence_number columns if they don't exist
-        try:
-            # Check if sequence_number column exists in branch table
-            result = db.session.execute(db.text("PRAGMA table_info(branch)"))
-            columns = [row[1] for row in result.fetchall()]
-            if 'sequence_number' not in columns:
-                db.session.execute(db.text("ALTER TABLE branch ADD COLUMN sequence_number INTEGER DEFAULT 0"))
-                db.session.commit()
-                print("Added sequence_number column to branch table")
-            else:
-                print("Branch sequence_number column already exists")
-        except Exception as e:
-            print(f"Error checking/adding branch sequence_number column: {e}")
-            db.session.rollback()
-        
-        try:
-            # Check if sequence_number column exists in camera table
-            result = db.session.execute(db.text("PRAGMA table_info(camera)"))
-            columns = [row[1] for row in result.fetchall()]
-            if 'sequence_number' not in columns:
-                db.session.execute(db.text("ALTER TABLE camera ADD COLUMN sequence_number INTEGER DEFAULT 0"))
-                db.session.commit()
-                print("Added sequence_number column to camera table")
-            else:
-                print("Camera sequence_number column already exists")
-        except Exception as e:
-            print(f"Error checking/adding camera sequence_number column: {e}")
-            db.session.rollback()
-        
-        print("Database tables created/verified")
-        
-        # Create initial admin user if not exists
-        try:
-            # Check if admin user already exists
-            existing_admin = User.query.filter_by(username="admin").first()
-            if not existing_admin:
-                admin = User(username="admin", password=generate_password_hash("admin123"), role="admin")
-                db.session.add(admin)
-                db.session.commit()
-                print("✅ Admin user created: admin / admin123")
-                
-                # Create technicians
-                tech1 = User(username="فني1", password=generate_password_hash("tech123"), role="technician")
-                tech2 = User(username="فني2", password=generate_password_hash("tech123"), role="technician")
-                db.session.add_all([tech1, tech2])
-                db.session.commit()
-                print("✅ Technician users created: فني1 / tech123, فني2 / tech123")
-            else:
-                print("✅ Admin user already exists")
-        except Exception as e:
-            print(f"Error creating default users: {str(e)}")
-            db.session.rollback()
-    except Exception as e:
-        print(f"Error initializing database: {str(e)}")
+@app.route("/add_fault", methods=["POST"])
+def add_fault():
+    camera_name = request.form.get("camera_name")
+    problem = request.form.get("problem")
+
+    new_fault = Fault(
+        camera_name=camera_name,
+        problem=problem
+    )
+
+    db.session.add(new_fault)
+    db.session.commit()
+
+    return "Saved successfully"
 
 if __name__ == "__main__":
     try:
