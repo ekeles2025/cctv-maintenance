@@ -831,65 +831,76 @@ def logout():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    now = local_now()
-    total_cameras = Camera.query.count()  # Count all cameras, not just those in branches
-    total_devices = Device.query.count()
-    
-    # Count actual fault records
-    open_faults = Fault.query.filter(Fault.resolved_at == None).count()
-    closed_faults = Fault.query.filter(Fault.resolved_at != None).count()
-    open_device_faults = DeviceFault.query.filter(DeviceFault.resolved_at == None).count()
-    closed_device_faults = DeviceFault.query.filter(DeviceFault.resolved_at != None).count()
-    
-    # Count branches
-    total_branches = Branch.query.count()
-    closed_branches = Branch.query.filter(Branch.closed == True).count()
-    open_branches = total_branches - closed_branches
-    
-    # Count unique cameras/devices with faults (from actual fault records)
-    faulty_cameras = db.session.query(Fault.camera_id).filter(
-        Fault.resolved_at == None
-    ).distinct().count()
-    faulty_devices = db.session.query(DeviceFault.device_id).filter(
-        DeviceFault.resolved_at == None
-    ).distinct().count()
-    
-    # Debug logging
-    logger.info(f"Dashboard stats - Total cameras: {total_cameras}, Total devices: {total_devices}")
-    logger.info(f"Faults - Open: {open_faults}, Closed: {closed_faults}, Faulty cameras: {faulty_cameras}, Faulty devices: {faulty_devices}")
-    logger.info(f"Device faults - Open: {open_device_faults}, Closed: {closed_device_faults}")
-    
-    working_cameras = total_cameras - faulty_cameras
-
-    open_faults_list = Fault.query.filter(
-        Fault.resolved_at == None
-    ).order_by(Fault.date_reported.asc()).limit(10).all()  # Get oldest 10 open faults
-    
-    # Calculate durations for recent faults
-    recent_faults_with_duration = []
-    for fault in open_faults_list:
-        duration = calculate_time_diff(fault.date_reported, now)
-        recent_faults_with_duration.append({
-            'fault': fault,
-            'duration': duration
-        })
-    
-    open_device_faults_list = DeviceFault.query.filter(
-        DeviceFault.resolved_at == None
-    ).order_by(DeviceFault.date_reported.asc()).limit(10).all()
-
-    my_faults = []
-    my_device_faults = []
-    if current_user.role == "technician":
-        my_faults = Fault.query.filter(
-            Fault.technician_id == current_user.id,
-            Fault.resolved_at == None
-        ).order_by(Fault.date_reported.asc()).all()
+    # Optimized queries for 7000 cameras
+    try:
+        # Use count() instead of len() for better performance
+        total_cameras = db.session.query(Camera).count()
+        total_devices = db.session.query(Device).count()
+        total_branches = db.session.query(Branch).count()
+        total_regions = db.session.query(Region).count()
+        total_chains = db.session.query(Chain).count()
         
-        my_device_faults = DeviceFault.query.filter(
-            DeviceFault.technician_id == current_user.id,
+        # Count unique cameras/devices with faults (optimized)
+        faulty_cameras = db.session.query(Fault.camera_id).filter(
+            Fault.resolved_at == None
+        ).distinct().count()
+        faulty_devices = db.session.query(DeviceFault.device_id).filter(
             DeviceFault.resolved_at == None
-        ).order_by(DeviceFault.date_reported.asc()).all()
+        ).distinct().count()
+        
+        # Optimized fault queries with limits
+        open_faults_count = db.session.query(Fault).filter(
+            Fault.resolved_at == None
+        ).count()
+        closed_faults_count = db.session.query(Fault).filter(
+            Fault.resolved_at != None
+        ).count()
+        
+        open_device_faults_count = db.session.query(DeviceFault).filter(
+            DeviceFault.resolved_at == None
+        ).count()
+        closed_device_faults_count = db.session.query(DeviceFault).filter(
+            DeviceFault.resolved_at != None
+        ).count()
+        
+        # Count closed branches efficiently
+        closed_branches = db.session.query(Branch).filter(Branch.closed == True).count()
+        open_branches = total_branches - closed_branches
+        
+        # Debug logging
+        logger.info(f"Dashboard stats - Total cameras: {total_cameras}, Total devices: {total_devices}")
+        logger.info(f"Faults - Open: {open_faults_count}, Closed: {closed_faults_count}, Faulty cameras: {faulty_cameras}, Faulty devices: {faulty_devices}")
+        logger.info(f"Device faults - Open: {open_device_faults_count}, Closed: {closed_device_faults_count}")
+        
+        working_cameras = total_cameras - faulty_cameras
+
+        # Limited recent faults for performance
+        open_faults_list = db.session.query(Fault).filter(
+            Fault.resolved_at == None
+        ).order_by(Fault.date_reported.asc()).limit(10).all()  # Get oldest 10 open faults
+        
+        open_device_faults_list = db.session.query(DeviceFault).filter(
+            DeviceFault.resolved_at == None
+        ).order_by(DeviceFault.date_reported.asc()).limit(10).all()
+
+        # Optimized technician queries
+        my_faults = []
+        my_device_faults = []
+        if current_user.role == "technician":
+            my_faults = db.session.query(Fault).filter(
+                Fault.technician_id == current_user.id,
+                Fault.resolved_at == None
+            ).order_by(Fault.date_reported.asc()).limit(20).all()  # Limit for performance
+            
+            my_device_faults = db.session.query(DeviceFault).filter(
+                DeviceFault.technician_id == current_user.id,
+                DeviceFault.resolved_at == None
+            ).order_by(DeviceFault.date_reported.asc()).limit(20).all()  # Limit for performance
+
+    except Exception as e:
+        logger.error(f"Failed to load dashboard: {str(e)}")
+        flash("Failed to load dashboard", "danger")
+        return redirect(url_for("login"))
 
     return render_template("dashboard.html",
                            total_cameras=total_cameras,
@@ -1085,6 +1096,121 @@ def chain_regions(chain_id):
                          regions=regions_with_numbers, 
                          chain=chain,
                          pagination=regions_pagination)
+
+@app.route("/delete_all_cameras/<int:branch_id>", methods=["POST"])
+@login_required
+def delete_all_cameras(branch_id):
+    """حذف جميع الكاميرات في فرع معين"""
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه حذف الكاميرات ❌"), "danger")
+        return redirect(url_for("dashboard"))
+    
+    branch = Branch.query.get_or_404(branch_id)
+    
+    try:
+        # Count cameras before deletion
+        cameras_count = Camera.query.filter_by(branch_id=branch_id).count()
+        
+        # Delete all faults associated with cameras in this branch
+        Camera.query.filter_by(branch_id=branch_id).update({'fault_id': None})
+        
+        # Delete all cameras
+        Camera.query.filter_by(branch_id=branch_id).delete()
+        
+        db.session.commit()
+        flash(f"✅ تم حذف {cameras_count} كاميرا من فرع '{branch.name}' بنجاح", "success")
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f"حدث خطأ أثناء حذف الكاميرات: {str(e)} ❌", "danger")
+    
+    return redirect(url_for("cameras", branch_id=branch_id))
+
+@app.route("/delete_all_devices/<int:branch_id>", methods=["POST"])
+@login_required
+def delete_all_devices(branch_id):
+    """حذف جميع الأجهزة في فرع معين"""
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه حذف الأجهزة ❌"), "danger")
+        return redirect(url_for("dashboard"))
+    
+    branch = Branch.query.get_or_404(branch_id)
+    
+    try:
+        # Count devices before deletion
+        devices_count = Device.query.filter_by(branch_id=branch_id).count()
+        
+        # Delete all device faults associated with devices in this branch
+        Device.query.filter_by(branch_id=branch_id).update({'fault_id': None})
+        
+        # Delete all devices
+        Device.query.filter_by(branch_id=branch_id).delete()
+        
+        db.session.commit()
+        flash(f"✅ تم حذف {devices_count} جهاز من فرع '{branch.name}' بنجاح", "success")
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f"حدث خطأ أثناء حذف الأجهزة: {str(e)} ❌", "danger")
+    
+    return redirect(url_for("devices", branch_id=branch_id))
+
+@app.route("/delete_technician/<int:tech_id>", methods=["POST"])
+@login_required
+def delete_technician(tech_id):
+    """حذف فني"""
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه حذف الفنيين ❌"), "danger")
+        return redirect(url_for("dashboard"))
+    
+    technician = User.query.get_or_404(tech_id)
+    
+    try:
+        # Reassign faults to None before deleting technician
+        Fault.query.filter_by(technician_id=tech_id).update({'technician_id': None})
+        DeviceFault.query.filter_by(technician_id=tech_id).update({'technician_id': None})
+        
+        # Delete technician
+        db.session.delete(technician)
+        db.session.commit()
+        
+        flash(f"✅ تم حذف الفني '{technician.username}' بنجاح", "success")
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f"حدث خطأ أثناء حذف الفني: {str(e)} ❌", "danger")
+    
+    return redirect(url_for("technicians"))
+
+@app.route("/regions/delete-multiple", methods=["POST"])
+@login_required
+def delete_multiple_regions():
+    """حذف multiple regions"""
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه حذف المناطق ❌"), "danger")
+        return redirect(url_for("dashboard"))
+    
+    region_ids = request.form.getlist("region_ids")
+    if not region_ids:
+        flash("لم يتم اختيار أي مناطق لحذفها ⚠️", "warning")
+        return redirect(url_for("regions"))
+    
+    try:
+        deleted_count = 0
+        for region_id in region_ids:
+            region = Region.query.get(region_id)
+            if region:
+                db.session.delete(region)
+                deleted_count += 1
+        
+        db.session.commit()
+        flash(f"✅ تم حذف {deleted_count} منطقة بنجاح", "success")
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f"حدث خطأ أثناء حذف المناطق: {str(e)} ❌", "danger")
+    
+    return redirect(url_for("regions"))
 
 @app.route("/chains/<int:chain_id>/regions/delete-all", methods=["POST"])
 @login_required

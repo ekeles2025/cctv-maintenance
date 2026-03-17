@@ -28,6 +28,15 @@ class Config:
     SQLALCHEMY_DATABASE_URI = _get_database_uri()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
+    # Performance optimizations for 7000 cameras
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_size': 20,
+        'pool_recycle': 3600,
+        'pool_pre_ping': True,
+        'pool_timeout': 30,
+        'max_overflow': 30
+    }
+    
     # Flask URL building configuration
     SERVER_NAME = os.environ.get('SERVER_NAME', 'respectful-empathy-production-c573.up.railway.app')
     APPLICATION_ROOT = '/'
