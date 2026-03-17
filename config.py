@@ -25,9 +25,9 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Flask URL building configuration
-    SERVER_NAME = os.environ.get('SERVER_NAME', 'localhost:8080')
+    SERVER_NAME = os.environ.get('SERVER_NAME', 'respectful-empathy-production-c573.up.railway.app')
     APPLICATION_ROOT = '/'
-    PREFERRED_URL_SCHEME = 'http'
+    PREFERRED_URL_SCHEME = 'https'
 
     BABEL_DEFAULT_LOCALE = 'en'
     BABEL_DEFAULT_TIMEZONE = 'UTC'
