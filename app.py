@@ -3063,65 +3063,6 @@ def faults(camera_id):
 
     return render_template("faults.html", faults=faults_list, camera=camera, technicians=technicians, now=now, avg_days=avg_days)
 
-@app.route("/faults/add/<int:camera_id>", methods=["GET", "POST"])
-@login_required
-def add_fault(camera_id):
-    if current_user.role != "admin":
-        flash("فقط المدير يمكنه إضافة أعطال ❌", "danger")
-        return redirect(url_for("all_faults"))
-
-    camera = Camera.query.get_or_404(camera_id)
-    technicians = User.query.filter_by(role='technician').all()
-
-    if request.method == "POST":
-        try:
-            technician_id = request.form.get('technician_id')
-            technician_id = int(technician_id) if technician_id else None
-            
-            # Create new fault
-            fault = Fault(
-                description=request.form['description'],
-                fault_type=request.form['fault_type'],
-                device_type=request.form['device_type'],
-                reported_by=request.form['reported_by'],
-                technician_id=technician_id,
-                camera_id=camera_id
-            )
-            
-            # Validate required fields
-            if not fault.fault_type:
-                flash('نوع العطل مطلوب', 'danger')
-                return render_template("add_edit_fault.html", fault=fault, camera=camera, technicians=technicians)
-            
-            if not fault.device_type:
-                flash('نوع الجهاز مطلوب', 'danger')
-                return render_template("add_edit_fault.html", fault=fault, camera=camera, technicians=technicians)
-            
-            if not fault.description:
-                flash('وصف العطل مطلوب', 'danger')
-                return render_template("add_edit_fault.html", fault=fault, camera=camera, technicians=technicians)
-            
-            if not fault.reported_by:
-                flash('اسم المبلغ مطلوب', 'danger')
-                return render_template("add_edit_fault.html", fault=fault, camera=camera, technicians=technicians)
-            
-            # Add fault to database
-            db.session.add(fault)
-            db.session.commit()
-            db.session.refresh(fault)  # Refresh to get latest data
-            print(f"DEBUG: New fault created with ID: {fault.id}")
-            print(f"DEBUG: Fault details - Camera: {fault.camera_id}, Type: {fault.fault_type}, Description: {fault.description[:50]}")
-            db.session.expire_all()  # Force refresh all cached objects
-            print(f"DEBUG: Database committed and session expired")
-            flash(f"تم إضافة العطل #{fault.id} بنجاح ✅ - سيظهر في صفحة جميع الأعطال فوراً", "success")
-            return redirect(url_for("all_faults"))
-            
-        except Exception as e:
-            db.session.rollback()
-            flash(f"خطأ في إضافة العطل: {str(e)} ❌", "danger")
-    
-    return render_template("add_edit_fault.html", fault=None, camera=camera, technicians=technicians)
-
 @app.route("/convert-to-bbm/<int:fault_id>", methods=["POST"])
 @login_required
 def convert_to_bbm(fault_id):
@@ -5401,18 +5342,7 @@ def download_filtered_faults_excel():
 
 @app.route("/add_fault", methods=["POST"])
 def add_fault():
-    camera_name = request.form.get("camera_name")
-    problem = request.form.get("problem")
-
-    new_fault = Fault(
-        camera_name=camera_name,
-        problem=problem
-    )
-
-    db.session.add(new_fault)
-    db.session.commit()
-
-    return "Saved successfully"
+    pass
 
 if __name__ == "__main__":
     try:
