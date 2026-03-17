@@ -1319,9 +1319,6 @@ def delete_all_branches(region_id):
         flash(f"✅ تم حذف {branches_count} فرع من منطقة '{region.name}' بنجاح", "success")
         
     except Exception as e:
-        print(f"DEBUG: Exception occurred: {str(e)}")
-        import traceback
-        traceback.print_exc()
         db.session.rollback()
         flash(f"حدث خطأ في حذف الفروع: {str(e)} ❌", "danger")
 
@@ -1334,13 +1331,7 @@ def close_branch(branch_id):
     is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
              request.content_type and 'application/json' in request.content_type
     
-    print(f"DEBUG: close_branch called with branch_id: {branch_id}")
-    print(f"DEBUG: Request method: {request.method}")
-    print(f"DEBUG: Headers: {dict(request.headers)}")
-    print(f"DEBUG: Is AJAX: {is_ajax}")
-    
     if current_user.role != "admin":
-        print("DEBUG: User is not admin")
         if is_ajax:
             return jsonify({"success": False, "message": t("غير مصرح لك بهذا الإجراء")})
         else:
@@ -1350,7 +1341,6 @@ def close_branch(branch_id):
     try:
         branch = Branch.query.get(branch_id)
         if not branch:
-            print(f"DEBUG: Branch {branch_id} not found")
             if is_ajax:
                 return jsonify({"success": False, "message": t("الفرع غير موجود")})
             else:
@@ -1358,7 +1348,6 @@ def close_branch(branch_id):
                 return redirect(url_for("dashboard"))
         
         if branch.closed:
-            print(f"DEBUG: Branch {branch_id} is already closed")
             if is_ajax:
                 return jsonify({"success": False, "message": t("الفرع مغلق بالفعل")})
             else:
@@ -1369,10 +1358,7 @@ def close_branch(branch_id):
         closure_reason = request.form.get('closure_reason', '').strip()
         reporter_name = request.form.get('reporter_name', '').strip()
         
-        print(f"DEBUG: Form data - closure_reason: '{closure_reason}', reporter_name: '{reporter_name}'")
-        
         if not closure_reason or not reporter_name:
-            print("DEBUG: Missing closure_reason or reporter_name")
             if is_ajax:
                 return jsonify({"success": False, "message": t("يجب إدخال سبب الإغلاق واسم المبلغ")})
             else:
@@ -1395,9 +1381,7 @@ def close_branch(branch_id):
         )
         db.session.add(history_entry)
         
-        print("DEBUG: Attempting to commit to database...")
         db.session.commit()
-        print("DEBUG: Database commit successful")
         
         logger.info(f"Branch '{branch.name}' (ID: {branch_id}) closed by {reporter_name}. Reason: {closure_reason}")
         
@@ -1405,15 +1389,11 @@ def close_branch(branch_id):
             "success": True, 
             "message": t("تم إغلاق الفرع بنجاح")
         }
-        print(f"DEBUG: Returning response: {response_data}")
         response = jsonify(response_data)
         response.headers['Content-Type'] = 'application/json'
         return response
         
     except Exception as e:
-        print(f"DEBUG: Exception occurred: {str(e)}")
-        import traceback
-        traceback.print_exc()
         logger.error(f"Error closing branch {branch_id}: {e}")
         db.session.rollback()
         
@@ -1421,7 +1401,6 @@ def close_branch(branch_id):
             "success": False, 
             "message": t("حدث خطأ في إغلاق الفرع")
         }
-        print(f"DEBUG: Returning error response: {error_response}")
         response = jsonify(error_response)
         response.headers['Content-Type'] = 'application/json'
         return response
@@ -1430,7 +1409,6 @@ def close_branch(branch_id):
 @login_required
 @csrf.exempt
 def reopen_branch(branch_id):
-    print(f"DEBUG: reopen_branch called with branch_id: {branch_id}")
     if current_user.role != "admin":
         return jsonify({"success": False, "message": t("غير مصرح لك بهذا الإجراء")})
     
@@ -1491,6 +1469,175 @@ def closed_branches():
         })
     
     return render_template("closed_branches.html", branches=closed_branches)
+
+@app.route("/regions/import-excel", methods=["GET", "POST"])
+@app.route("/chains/<int:chain_id>/regions/import-excel", methods=["GET", "POST"])
+@login_required
+def import_regions_excel(chain_id=None):
+    """استيراد المناطق من ملف Excel"""
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه استيراد المناطق من Excel ❌"), "danger")
+        return redirect(url_for("dashboard"))
+    
+    if request.method == "POST":
+        if "excel_file" not in request.files:
+            flash(t('لم يتم اختيار ملف ❌'), "danger")
+            return redirect(request.url)
+        
+        file = request.files["excel_file"]
+        
+        if file.filename == "":
+            flash(t('لم يتم اختيار ملف ❌'), "danger")
+            return redirect(request.url)
+        
+        if not file.filename.endswith((".xlsx", ".xls")):
+            flash(t('يجب أن يكون الملف من نوع Excel (.xlsx أو .xls) ❌'), "danger")
+            return redirect(request.url)
+        
+        try:
+            import time
+            start_time = time.time()
+            
+            # قراءة الملف باستخدام pandas
+            file_bytes = file.read()
+            
+            try:
+                import pandas as pd
+                df = pd.read_excel(io.BytesIO(file_bytes), header=0)
+                logger.info(f"📊 تم قراءة {len(df)} صف من ملف Excel باستخدام pandas في {time.time() - start_time:.2f} ثانية")
+            except Exception as e:
+                logger.warning(f"فشل القراءة بـ pandas: {e}، استخدام openpyxl بدلاً منه")
+                workbook = load_workbook(io.BytesIO(file_bytes))
+                worksheet = workbook.active
+                df = pd.DataFrame(worksheet.iter_rows(min_row=2, values_only=True))
+            
+            # التحقق من البيانات
+            if df.empty:
+                flash(t('الملف فارغ أو لا يحتوي على بيانات صالحة ❌'), "danger")
+                return redirect(request.url)
+            
+            # التحقق من وجود chain_id في parameters أو URL
+            if chain_id is None:
+                chain_id = request.args.get("chain_id", type=int)
+            
+            chain = None
+            if chain_id:
+                chain = Chain.query.get(chain_id)
+                if not chain:
+                    flash(f"السلسلة رقم {chain_id} غير موجودة ❌", "danger")
+                    return redirect(request.url)
+                logger.info(f"🔗 سيتم ربط المناطق بالسلسلة: {chain.name}")
+            
+            # تهيئة المتغيرات
+            regions_added = 0
+            updated_regions = 0
+            errors = []
+            skipped_regions = 0
+            
+            # معالجة البيانات
+            for idx, row in df.iterrows():
+                try:
+                    row_idx = idx + 1  # رقم الصف في Excel (1-based)
+                    
+                    # استخراج البيانات - لاستيراد المناطق نحتاج فقط اسم المنطقة
+                    # يمكن أن يكون اسم المنطقة في أي عمود (أول عمود غير فارغ)
+                    region_name = None
+                    
+                    # البحث عن أول عمود غير فارغ لاستخدامه كاسم المنطقة
+                    for col_idx in range(len(df.columns)):
+                        cell_value = str(row.iloc[col_idx]).strip() if pd.notna(row.iloc[col_idx]) else ''
+                        if cell_value and cell_value != 'nan':
+                            region_name = cell_value
+                            break
+                    
+                    logger.info(f"معالجة الصف {row_idx}: منطقة='{region_name}'")
+                    
+                    if not region_name:
+                        errors.append(f"الصف {row_idx}: اسم المنطقة إلزامي")
+                        continue
+                    
+                    # التحقق من وجود المنطقة مسبقاً - السماح بنفس الاسم في سلاسل مختلفة
+                    # البحث عن منطقة بنفس الاسم في السلسلة الحالية فقط
+                    if chain_id:
+                        existing_region = Region.query.filter_by(name=region_name, chain_id=chain_id).first()
+                    else:
+                        existing_region = Region.query.filter_by(name=region_name, chain_id=None).first()
+                    
+                    if existing_region:
+                        # المنطقة موجودة بالفعل في نفس السياق (سلسلة محددة أو بدون سلسلة)
+                        if chain:
+                            logger.warning(f"⚠️ المنطقة '{region_name}' موجودة بالفعل في سلسلة '{chain.name}'")
+                        else:
+                            logger.warning(f"⚠️ المنطقة '{region_name}' موجودة بالفعل بدون سلسلة")
+                        skipped_regions += 1
+                    else:
+                        # إنشاء المنطقة الجديدة مع ربطها بالسلسلة
+                        region = Region(name=region_name, chain_id=chain_id if chain_id else None)
+                        db.session.add(region)
+                        regions_added += 1
+                        
+                        if chain:
+                            logger.info(f"✅ تمت إضافة المنطقة: '{region_name}' لسلسلة '{chain.name}'")
+                        else:
+                            logger.info(f"✅ تمت إضافة المنطقة: '{region_name}' بدون سلسلة")
+                
+                except Exception as e:
+                    errors.append(f"الصف {row_idx}: {str(e)}")
+                    logger.error(f"خطأ في الصف {row_idx}: {str(e)}")
+            
+            # حفظ التغييرات
+            try:
+                commit_start = time.time()
+                db.session.commit()
+                commit_time = time.time() - commit_start
+                
+                total_time = time.time() - start_time
+                
+                logger.info(f"🚀 اكتملت المعالجة في {total_time:.2f} ثانية")
+                logger.info(f"💾 تم حفظ التغييرات في {commit_time:.2f} ثانية")
+                
+                if chain:
+                    if regions_added > 0 and updated_regions > 0:
+                        flash(f"✅ تم إضافة {regions_added} منطقة جديدة وتحديث {updated_regions} منطقة موجودة لسلسلة '{chain.name}' من ملف Excel", "success")
+                    elif regions_added > 0:
+                        flash(f"✅ تم إضافة {regions_added} منطقة بنجاح لسلسلة '{chain.name}' من ملف Excel", "success")
+                    elif updated_regions > 0:
+                        flash(f"🔄 تم تحديث {updated_regions} منطقة لسلسلة '{chain.name}' من ملف Excel", "success")
+                else:
+                    if regions_added > 0 and updated_regions > 0:
+                        flash(f"✅ تم إضافة {regions_added} منطقة جديدة وتحديث {updated_regions} منطقة موجودة من ملف Excel", "success")
+                    elif regions_added > 0:
+                        flash(f"✅ تم إضافة {regions_added} منطقة بنجاح من ملف Excel", "success")
+                    elif updated_regions > 0:
+                        flash(f"🔄 تم تحديث {updated_regions} منطقة من ملف Excel", "success")
+                
+                flash(f"⚡ تمت المعالجة بسرعة فائقة ({total_time:.2f} ثانية)", "success")
+                
+                if skipped_regions > 0:
+                    flash(f"ℹ️ تم تجاهل {skipped_regions} منطقة موجودة بالفعل", "info")
+                
+                if errors:
+                    logger.warning(f"أخطاء أثناء الاستيراد: {errors}")
+                    flash(f"⚠️ هناك {len(errors)} أخطاء: " + " | ".join(errors[:3]), "warning")
+                
+                # إعادة التوجيه بناءً على السلسلة
+                if chain:
+                    return redirect(url_for("chain_regions", chain_id=chain.id))
+                else:
+                    return redirect(url_for("regions"))
+            
+            except Exception as e:
+                db.session.rollback()
+                logger.error(f"خطأ في حفظ البيانات: {str(e)}")
+                flash(f"خطأ في حفظ البيانات: {str(e)} ❌", "danger")
+                return redirect(request.url)
+        
+        except Exception as e:
+            logger.error(f"خطأ في قراءة الملف: {str(e)}")
+            flash(f"خطأ في قراءة الملف: {str(e)} ❌", "danger")
+            return redirect(request.url)
+    
+    return redirect(url_for("regions"))
 
 @app.route("/branches/import-excel/<int:region_id>", methods=["GET", "POST"])
 @login_required
