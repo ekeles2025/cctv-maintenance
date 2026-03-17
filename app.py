@@ -1103,6 +1103,10 @@ def delete_all_chain_regions(chain_id):
         
     except Exception as e:
         db.session.rollback()
+        logger.error(f"خطأ في حذف مناطق السلسلة: {str(e)}")
+        flash(f"حدث خطأ أثناء حذف المناطق: {str(e)} ❌", "danger")
+    
+    return redirect(url_for("chain_regions", chain_id=chain_id))
 
 @app.route("/regions")
 @login_required
@@ -1139,7 +1143,20 @@ def regions():
 @app.route("/regions/add", methods=["GET", "POST"])
 @app.route("/regions/add/<int:chain_id>", methods=["GET", "POST"])
 @login_required
-# ... (rest of the code remains the same)
+def add_region(chain_id=None):
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه إضافة مناطق ❌"), "danger")
+        return redirect(url_for("dashboard"))
+    if request.method == "POST":
+        region = Region(
+            name=request.form['name'],
+            chain_id=chain_id
+        )
+        db.session.add(region)
+        db.session.commit()
+        flash("تم إضافة المنطقة بنجاح ✅", "success")
+        return redirect(url_for("regions"))
+    return render_template("add_edit_region.html", region=None, chain_id=chain_id)
 
 @app.route("/branches/<int:region_id>", methods=["GET", "POST"])
 @login_required
