@@ -7,8 +7,8 @@ from datetime import timedelta
 
 def _get_database_uri():
     """Get database URI with fallback to SQLite"""
-    # For Railway, use their DATABASE_URL directly
-    if 'RAILWAY_ENVIRONMENT' in os.environ:
+    # Check if we're in Railway environment
+    if 'RAILWAY_ENVIRONMENT' in os.environ or 'RAILWAY_SERVICE_NAME' in os.environ:
         return os.environ.get('DATABASE_URL', 'sqlite:///camera_system.db')
     
     url = os.environ.get('DATABASE_URL') or 'sqlite:///camera_system.db'
