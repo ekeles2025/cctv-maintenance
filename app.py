@@ -1074,11 +1074,8 @@ def chain_regions(chain_id):
     for region in regions_pagination.items:
         for branch in region.branches:
             # Load cameras and devices with limits to prevent timeout
-            cameras_query = branch.cameras.statement.instance_with_session(db.session)
-            cameras = db.session.execute(cameras_query.limit(20)).scalars().all()
-            
-            devices_query = branch.devices.statement.instance_with_session(db.session)
-            devices = db.session.execute(devices_query.limit(10)).scalars().all()
+            cameras = db.session.query(Camera).filter_by(branch_id=branch.id).limit(20).all()
+            devices = db.session.query(Device).filter_by(branch_id=branch.id).limit(10).all()
     
     # Add sequential numbering
     regions_with_numbers = []
