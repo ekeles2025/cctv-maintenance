@@ -1233,22 +1233,30 @@ def import_regions_excel(chain_id=None):
                         errors.append(f"الصف {row_idx}: اسم المنطقة إلزامي")
                         continue
                     
-                    # التحقق من وجود المنطقة مسبقاً في نفس السلسلة فقط
-                    existing_region = Region.query.filter_by(name=region_name, chain_id=chain_id if chain else None).first()
+                    # التحقق من وجود المنطقة مسبقاً - السماح بنفس الاسم في سلاسل مختلفة
+                    # البحث عن منطقة بنفس الاسم في السلسلة الحالية فقط
+                    if chain_id:
+                        existing_region = Region.query.filter_by(name=region_name, chain_id=chain_id).first()
+                    else:
+                        existing_region = Region.query.filter_by(name=region_name, chain_id=None).first()
+                    
                     if existing_region:
-                        # المنطقة موجودة بالفعل في نفس السلسلة
-                        logger.warning(f"⚠️ المنطقة '{region_name}' موجودة بالفعل في السلسلة {'(' + chain.name + ')' if chain else '(بدون سلسلة)'}")
+                        # المنطقة موجودة بالفعل في نفس السياق (سلسلة محددة أو بدون سلسلة)
+                        if chain:
+                            logger.warning(f"⚠️ المنطقة '{region_name}' موجودة بالفعل في سلسلة '{chain.name}'")
+                        else:
+                            logger.warning(f"⚠️ المنطقة '{region_name}' موجودة بالفعل بدون سلسلة")
                         skipped_regions += 1
                     else:
                         # إنشاء المنطقة الجديدة مع ربطها بالسلسلة
-                        region = Region(name=region_name, chain_id=chain_id if chain else None)
+                        region = Region(name=region_name, chain_id=chain_id if chain_id else None)
                         db.session.add(region)
                         regions_added += 1
                         
                         if chain:
-                            logger.info(f"✅ تمت إضافة المنطقة: '{region_name}' وربطها بالسلسلة '{chain.name}'")
+                            logger.info(f"✅ تمت إضافة المنطقة: '{region_name}' لسلسلة '{chain.name}'")
                         else:
-                            logger.info(f"✅ تمت إضافة المنطقة: '{region_name}' (بدون سلسلة)")
+                            logger.info(f"✅ تمت إضافة المنطقة: '{region_name}' بدون سلسلة")
                 
                 except Exception as e:
                     errors.append(f"الصف {row_idx}: {str(e)}")
