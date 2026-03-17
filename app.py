@@ -1097,35 +1097,6 @@ def chain_regions(chain_id):
                          chain=chain,
                          pagination=regions_pagination)
 
-@app.route("/delete_all_cameras/<int:branch_id>", methods=["POST"])
-@login_required
-def delete_all_cameras(branch_id):
-    """حذف جميع الكاميرات في فرع معين"""
-    if current_user.role != "admin":
-        flash(_("فقط المدير يمكنه حذف الكاميرات ❌"), "danger")
-        return redirect(url_for("dashboard"))
-    
-    branch = Branch.query.get_or_404(branch_id)
-    
-    try:
-        # Count cameras before deletion
-        cameras_count = Camera.query.filter_by(branch_id=branch_id).count()
-        
-        # Delete all faults associated with cameras in this branch
-        Camera.query.filter_by(branch_id=branch_id).update({'fault_id': None})
-        
-        # Delete all cameras
-        Camera.query.filter_by(branch_id=branch_id).delete()
-        
-        db.session.commit()
-        flash(f"✅ تم حذف {cameras_count} كاميرا من فرع '{branch.name}' بنجاح", "success")
-        
-    except Exception as e:
-        db.session.rollback()
-        flash(f"حدث خطأ أثناء حذف الكاميرات: {str(e)} ❌", "danger")
-    
-    return redirect(url_for("cameras", branch_id=branch_id))
-
 @app.route("/delete_all_devices/<int:branch_id>", methods=["POST"])
 @login_required
 def delete_all_devices(branch_id):
@@ -2818,27 +2789,9 @@ def add_technician():
         user = User(username=username, password=password, role="technician")
         db.session.add(user)
         db.session.commit()
-        flash("تم إضافة الفني بنجاح ✅", "success")
+        flash("تم إضافة الفني بنجاح ", "success")
         return redirect(url_for("technicians"))
     return render_template("add_technician.html")
-
-@app.route("/technicians/delete/<int:tech_id>", methods=["POST"])
-@login_required
-def delete_technician(tech_id):
-    if current_user.role != "admin":
-        flash("فقط المدير يمكنه حذف فنيين ❌", "danger")
-        return redirect(url_for("dashboard"))
-
-    tech = User.query.get_or_404(tech_id)
-    technician_faults = Fault.query.filter_by(technician_id=tech_id).count()
-    if technician_faults > 0:
-        flash(f"لا يمكن حذف الفني لأنه لديه {technician_faults} عطل مسند إليه ❌", "danger")
-        return redirect(url_for("technicians"))
-
-    db.session.delete(tech)
-    db.session.commit()
-    flash("تم حذف الفني بنجاح ✅", "success")
-    return redirect(url_for("technicians"))
 
 @app.route("/all-faults")
 @login_required
