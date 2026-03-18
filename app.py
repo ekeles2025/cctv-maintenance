@@ -3527,7 +3527,7 @@ def import_excel_faults():
                     print(f"  -> Available branches: {available_branches}")
                     continue
                 
-                print(f"  -> Branch found: Type='{branch.branch_type}', Region='{branch.region.name if branch.region else 'None'}")
+                print(f"  -> Branch found: Type={repr(branch.branch_type)}, Region={repr(branch.region.name if branch.region else 'None')}")
                 
                 # Find camera
                 camera = Camera.query.filter_by(name=camera_name, branch_id=branch.id).first()
@@ -3538,13 +3538,20 @@ def import_excel_faults():
                 
                 # Check if seasonal - ONLY North Coast regions are seasonal
                 is_seasonal = False
-                if branch.region and 'North Coast' in branch.region.name:
-                    is_seasonal = True
-                    print(f"  -> SEASONAL: North Coast region - {branch.region.name}")
-                else:
-                    print(f"  -> PERMANENT: Not North Coast region ({branch.region.name if branch.region else 'No region'})")
+                try:
+                    if branch.region and 'North Coast' in branch.region.name:
+                        is_seasonal = True
+                except:
+                    # If region name has encoding issues, assume not seasonal
+                    is_seasonal = False
+                    print(f"  -> REGION ENCODING ISSUE: Assuming not seasonal")
                 
                 if is_seasonal:
+                    try:
+                        print(f"  -> SEASONAL: North Coast region - {repr(branch.region.name)}")
+                    except:
+                        print(f"  -> SEASONAL: North Coast region - [ENCODING ISSUE]")
+                    
                     # Add to seasonal list
                     seasonal_fault_data = {
                         'row_idx': row_idx,
@@ -3556,10 +3563,20 @@ def import_excel_faults():
                         'camera_id': camera.id
                     }
                     seasonal_faults_data.append(seasonal_fault_data)
-                    if branch.name not in seasonal_branches_to_confirm:
-                        seasonal_branches_to_confirm.append(branch.name)
-                    print(f"  -> Added to seasonal list. Total: {len(seasonal_faults_data)}")
+                    try:
+                        if branch.name not in seasonal_branches_to_confirm:
+                            seasonal_branches_to_confirm.append(branch.name)
+                        print(f"  -> Added to seasonal list. Total: {len(seasonal_faults_data)}")
+                    except Exception as seasonal_error:
+                        print(f"  -> ERROR adding to seasonal list: {str(seasonal_error)}")
+                        errors.append(f"Row {row_idx}: Failed to process seasonal branch - {str(seasonal_error)}")
+                        continue
                 else:
+                    try:
+                        print(f"  -> PERMANENT: Not North Coast region ({repr(branch.region.name) if branch.region else 'No region'})")
+                    except:
+                        print(f"  -> PERMANENT: Not North Coast region ([ENCODING ISSUE])")
+                    
                     # Check for existing fault
                     existing_fault = Fault.query.filter_by(
                         camera_id=camera.id,
@@ -3572,17 +3589,22 @@ def import_excel_faults():
                         continue
                     
                     # Create fault for permanent branch
-                    fault = Fault(
-                        camera_id=camera.id,
-                        description=f"Camera '{camera_name}' reported offline",
-                        fault_type="offline",
-                        device_type="Camera",
-                        reported_by=current_user.username,
-                        technician_id=None
-                    )
-                    db.session.add(fault)
-                    faults_added += 1
-                    print(f"  -> Created fault for permanent branch")
+                    try:
+                        fault = Fault(
+                            camera_id=camera.id,
+                            description=f"Camera '{camera_name}' reported offline",
+                            fault_type="offline",
+                            device_type="Camera",
+                            reported_by=current_user.username,
+                            technician_id=None
+                        )
+                        db.session.add(fault)
+                        faults_added += 1
+                        print(f"  -> Created fault for permanent branch")
+                    except Exception as fault_error:
+                        errors.append(f"Row {row_idx}: Failed to create fault - {str(fault_error)}")
+                        print(f"  -> ERROR creating fault: {str(fault_error)}")
+                        continue
             
             print(f"=== SUMMARY ===")
             print(f"Permanent faults added: {faults_added}")
@@ -3613,17 +3635,19 @@ def import_excel_faults():
                                      errors=errors)
             else:
                 print("=== NO SEASONAL BRANCHES - DIRECT SAVE ===")
-                db.session.commit()
-                
-                if faults_added > 0:
-                    flash(f"تم إضافة {faults_added} عطل بنجاح ✅", "success")
-                else:
-                    flash("لم يتم إضافة أي أعطال", "warning")
-                
-                if errors:
-                    flash(f"هناك {len(errors)} أخطاء: " + " | ".join(errors[:3]), "warning")
-                
-                return redirect(url_for("all_faults"))
+                try:
+                    db.session.commit()
+                    if faults_added > 0:
+                        flash(f"تم إضافة {faults_added} عطل بنجاح ✅", "success")
+                    else:
+                        flash("لم يتم إضافة أي أعطال", "warning")
+                except Exception as commit_error:
+                    db.session.rollback()
+                    print(f"ERROR committing faults: {str(commit_error)}")
+                    flash(f"خطأ في حفظ الأعطال: {str(commit_error)} ❌", "danger")
+                    if errors:
+                        flash(f"هناك {len(errors)} أخطاء: " + " | ".join(errors[:3]), "warning")
+                    return redirect(request.url)
         
         except Exception as e:
             db.session.rollback()
