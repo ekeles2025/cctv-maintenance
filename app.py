@@ -4288,6 +4288,11 @@ def sum_column_filter(data, column_name, default=0):
     return total
 
 
+@app.template_filter('local_dt')
+def local_dt_filter(dt, format_str='%Y-%m-%d %H:%M:%S'):
+    return local_dt(dt, format_str)
+
+
 @app.route("/total-camera")
 @login_required
 def total_camera_report():
