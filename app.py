@@ -3469,8 +3469,15 @@ def import_excel_faults():
         
         try:
             import pandas as pd
-            df = pd.read_excel(file, header=None, skiprows=1)
-            print(f"Excel loaded: {len(df)} rows, {len(df.columns)} columns")
+            
+            # Try to read the Excel file with better error handling
+            try:
+                df = pd.read_excel(file, header=None, skiprows=1)
+                print(f"Excel loaded: {len(df)} rows, {len(df.columns)} columns")
+            except Exception as excel_error:
+                print(f"Error reading Excel file: {str(excel_error)}")
+                flash(f"خطأ في قراءة ملف Excel: {str(excel_error)} ❌", "danger")
+                return redirect(request.url)
             
             if df.empty:
                 flash(t('الملف فارغ أو لا يحتوي على بيانات صالحة'), "danger")
