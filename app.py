@@ -3493,118 +3493,124 @@ def import_excel_faults():
             for idx, row in df.iterrows():
                 row_idx = idx + 2
                 
-                # Extract data
-                camera_name = str(row.iloc[0]).strip() if len(df.columns) >= 1 and pd.notna(row.iloc[0]) else ''
-                camera_ip = str(row.iloc[1]).strip() if len(df.columns) >= 2 and pd.notna(row.iloc[1]) else ''
-                branch_name = str(row.iloc[2]).strip() if len(df.columns) >= 3 and pd.notna(row.iloc[2]) else ''
-                
-                print(f"ROW {row_idx}: Camera='{camera_name}', IP='{camera_ip}', Branch='{branch_name}'")
-                
-                # Validate UTF-8 encoding for all string fields
                 try:
-                    camera_name.encode('utf-8').decode('utf-8')
-                    camera_ip.encode('utf-8').decode('utf-8')
-                    branch_name.encode('utf-8').decode('utf-8')
-                except UnicodeError:
-                    errors.append(f"Row {row_idx}: Invalid characters in text fields")
-                    continue
-                
-                if not camera_name or not branch_name:
-                    errors.append(f"Row {row_idx}: Missing camera or branch name")
-                    continue
-                
-                # Find branch
-                branch = Branch.query.filter_by(name=branch_name).first()
-                if not branch:
-                    # Get all available branches for better error message
-                    all_branches = Branch.query.with_entities(Branch.name).all()
-                    available_branches = [b.name for b in all_branches[:10]]  # Show first 10 branches
-                    error_msg = f"Row {row_idx}: Branch '{branch_name}' not found. Available branches: {', '.join(available_branches)}"
-                    if len(all_branches) > 10:
-                        error_msg += f" (and {len(all_branches) - 10} more)"
-                    errors.append(error_msg)
-                    print(f"  -> Branch NOT found: '{branch_name}'")
-                    print(f"  -> Available branches: {available_branches}")
-                    continue
-                
-                print(f"  -> Branch found: Type={repr(branch.branch_type)}, Region={repr(branch.region.name if branch.region else 'None')}")
-                
-                # Find camera
-                camera = Camera.query.filter_by(name=camera_name, branch_id=branch.id).first()
-                if not camera:
-                    errors.append(f"Row {row_idx}: Camera '{camera_name}' not found in branch '{branch_name}'")
-                    print(f"  -> Camera NOT found")
-                    continue
-                
-                # Check if seasonal - ONLY North Coast regions are seasonal
-                is_seasonal = False
-                try:
-                    if branch.region and 'North Coast' in branch.region.name:
-                        is_seasonal = True
-                except:
-                    # If region name has encoding issues, assume not seasonal
+                    # Extract data
+                    camera_name = str(row.iloc[0]).strip() if len(df.columns) >= 1 and pd.notna(row.iloc[0]) else ''
+                    camera_ip = str(row.iloc[1]).strip() if len(df.columns) >= 2 and pd.notna(row.iloc[1]) else ''
+                    branch_name = str(row.iloc[2]).strip() if len(df.columns) >= 3 and pd.notna(row.iloc[2]) else ''
+                    
+                    print(f"ROW {row_idx}: Camera='{camera_name}', IP='{camera_ip}', Branch='{branch_name}'")
+                    
+                    # Validate UTF-8 encoding for all string fields
+                    try:
+                        camera_name.encode('utf-8').decode('utf-8')
+                        camera_ip.encode('utf-8').decode('utf-8')
+                        branch_name.encode('utf-8').decode('utf-8')
+                    except UnicodeError:
+                        errors.append(f"Row {row_idx}: Invalid characters in text fields")
+                        continue
+                    
+                    if not camera_name or not branch_name:
+                        errors.append(f"Row {row_idx}: Missing camera or branch name")
+                        continue
+                    
+                    # Find branch
+                    branch = Branch.query.filter_by(name=branch_name).first()
+                    if not branch:
+                        # Get all available branches for better error message
+                        all_branches = Branch.query.with_entities(Branch.name).all()
+                        available_branches = [b.name for b in all_branches[:10]]  # Show first 10 branches
+                        error_msg = f"Row {row_idx}: Branch '{branch_name}' not found. Available branches: {', '.join(available_branches)}"
+                        if len(all_branches) > 10:
+                            error_msg += f" (and {len(all_branches) - 10} more)"
+                        errors.append(error_msg)
+                        print(f"  -> Branch NOT found: '{branch_name}'")
+                        print(f"  -> Available branches: {available_branches}")
+                        continue
+                    
+                    print(f"  -> Branch found: Type={repr(branch.branch_type)}, Region={repr(branch.region.name if branch.region else 'None')}")
+                    
+                    # Find camera
+                    camera = Camera.query.filter_by(name=camera_name, branch_id=branch.id).first()
+                    if not camera:
+                        errors.append(f"Row {row_idx}: Camera '{camera_name}' not found in branch '{branch_name}'")
+                        print(f"  -> Camera NOT found")
+                        continue
+                    
+                    # Check if seasonal - ONLY North Coast regions are seasonal
                     is_seasonal = False
-                    print(f"  -> REGION ENCODING ISSUE: Assuming not seasonal")
-                
-                if is_seasonal:
                     try:
-                        print(f"  -> SEASONAL: North Coast region - {repr(branch.region.name)}")
+                        if branch.region and 'North Coast' in branch.region.name:
+                            is_seasonal = True
                     except:
-                        print(f"  -> SEASONAL: North Coast region - [ENCODING ISSUE]")
+                        # If region name has encoding issues, assume not seasonal
+                        is_seasonal = False
+                        print(f"  -> REGION ENCODING ISSUE: Assuming not seasonal")
                     
-                    # Add to seasonal list
-                    seasonal_fault_data = {
-                        'row_idx': row_idx,
-                        'camera_name': camera_name,
-                        'branch_name': branch_name,
-                        'address': branch.location or '',
-                        'reported_by': current_user.username,
-                        'technician_id': None,
-                        'camera_id': camera.id
-                    }
-                    seasonal_faults_data.append(seasonal_fault_data)
-                    try:
-                        if branch.name not in seasonal_branches_to_confirm:
-                            seasonal_branches_to_confirm.append(branch.name)
-                        print(f"  -> Added to seasonal list. Total: {len(seasonal_faults_data)}")
-                    except Exception as seasonal_error:
-                        print(f"  -> ERROR adding to seasonal list: {str(seasonal_error)}")
-                        errors.append(f"Row {row_idx}: Failed to process seasonal branch - {str(seasonal_error)}")
-                        continue
-                else:
-                    try:
-                        print(f"  -> PERMANENT: Not North Coast region ({repr(branch.region.name) if branch.region else 'No region'})")
-                    except:
-                        print(f"  -> PERMANENT: Not North Coast region ([ENCODING ISSUE])")
-                    
-                    # Check for existing fault
-                    existing_fault = Fault.query.filter_by(
-                        camera_id=camera.id,
-                        resolved_at=None
-                    ).first()
-                    
-                    if existing_fault:
-                        errors.append(f"Row {row_idx}: Camera '{camera_name}' already has an open fault")
-                        print(f"  -> Already has open fault")
-                        continue
-                    
-                    # Create fault for permanent branch
-                    try:
-                        fault = Fault(
+                    if is_seasonal:
+                        try:
+                            print(f"  -> SEASONAL: North Coast region - {repr(branch.region.name)}")
+                        except:
+                            print(f"  -> SEASONAL: North Coast region - [ENCODING ISSUE]")
+                        
+                        # Add to seasonal list
+                        seasonal_fault_data = {
+                            'row_idx': row_idx,
+                            'camera_name': camera_name,
+                            'branch_name': branch_name,
+                            'address': branch.location or '',
+                            'reported_by': current_user.username,
+                            'technician_id': None,
+                            'camera_id': camera.id
+                        }
+                        seasonal_faults_data.append(seasonal_fault_data)
+                        try:
+                            if branch.name not in seasonal_branches_to_confirm:
+                                seasonal_branches_to_confirm.append(branch.name)
+                            print(f"  -> Added to seasonal list. Total: {len(seasonal_faults_data)}")
+                        except Exception as seasonal_error:
+                            print(f"  -> ERROR adding to seasonal list: {str(seasonal_error)}")
+                            errors.append(f"Row {row_idx}: Failed to process seasonal branch - {str(seasonal_error)}")
+                            continue
+                    else:
+                        try:
+                            print(f"  -> PERMANENT: Not North Coast region ({repr(branch.region.name) if branch.region else 'No region'})")
+                        except:
+                            print(f"  -> PERMANENT: Not North Coast region ([ENCODING ISSUE])")
+                        
+                        # Check for existing fault
+                        existing_fault = Fault.query.filter_by(
                             camera_id=camera.id,
-                            description=f"Camera '{camera_name}' reported offline",
-                            fault_type="offline",
-                            device_type="Camera",
-                            reported_by=current_user.username,
-                            technician_id=None
-                        )
-                        db.session.add(fault)
-                        faults_added += 1
-                        print(f"  -> Created fault for permanent branch")
-                    except Exception as fault_error:
-                        errors.append(f"Row {row_idx}: Failed to create fault - {str(fault_error)}")
-                        print(f"  -> ERROR creating fault: {str(fault_error)}")
-                        continue
+                            resolved_at=None
+                        ).first()
+                        
+                        if existing_fault:
+                            errors.append(f"Row {row_idx}: Camera '{camera_name}' already has an open fault")
+                            print(f"  -> Already has open fault")
+                            continue
+                        
+                        # Create fault for permanent branch
+                        try:
+                            fault = Fault(
+                                camera_id=camera.id,
+                                description=f"Camera '{camera_name}' reported offline",
+                                fault_type="offline",
+                                device_type="Camera",
+                                reported_by=current_user.username,
+                                technician_id=None
+                            )
+                            db.session.add(fault)
+                            faults_added += 1
+                            print(f"  -> Created fault for permanent branch")
+                        except Exception as fault_error:
+                            errors.append(f"Row {row_idx}: Failed to create fault - {str(fault_error)}")
+                            print(f"  -> ERROR creating fault: {str(fault_error)}")
+                            continue
+                
+                except Exception as row_error:
+                    print(f"ERROR processing row {row_idx}: {str(row_error)}")
+                    errors.append(f"Row {row_idx}: Unexpected error - {str(row_error)}")
+                    continue
             
             print(f"=== SUMMARY ===")
             print(f"Permanent faults added: {faults_added}")
