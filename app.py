@@ -5505,13 +5505,6 @@ def add_fault():
         
         db.session.add(fault)
         db.session.commit()
-        
-        flash(f'تم إضافة العطل #{fault.id} بنجاح', 'success')
-        return redirect(request.referrer or url_for('home'))
-        
-    except Exception as e:
-        flash(f'خطأ في إضافة العطل: {str(e)}', 'danger')
-        return redirect(request.referrer or url_for('home'))
 
 # تهيئة قاعدة البيانات تلقائياً عند بدء التشغيل
 def auto_init_database():

@@ -8,3 +8,6 @@ CREATE INDEX IF NOT EXISTS idx_bbmfault_camera_id ON bbmfault (camera_id);
 CREATE INDEX IF NOT EXISTS idx_bbmfault_branch_id ON bbmfault (branch_id);
 CREATE INDEX IF NOT EXISTS idx_camera_ip_address ON camera (ip_address);
 CREATE INDEX IF NOT EXISTS idx_branch_closed ON branch (closed);
+CREATE INDEX IF NOT EXISTS idx_camera_name ON camera (name);
+CREATE INDEX IF NOT EXISTS idx_camera_name_branch_id ON camera (name, branch_id);
+
