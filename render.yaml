@@ -1,0 +1,35 @@
+services:
+  # Web Service
+  - type: web
+    name: cctv-maintenance
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        value: sqlite:///camera_system.db
+      - key: COMPANY_NAME
+        value: CCTV Portal EG
+      - key: LOGO_SIZE
+        value: 50
+      - key: MAX_CONTENT_LENGTH
+        value: 16777216
+    disk:
+      name: cctv-storage
+      mountPath: /app/static/uploads
+      sizeGB: 1
+    healthCheck:
+      path: /
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3

@@ -5450,7 +5450,10 @@ with app.app_context():
         print(f"Error initializing database: {str(e)}")
 
 if __name__ == "__main__":
-    try:
-        app.run(debug=True, host='0.0.0.0', port=5001)
-    except Exception as e:
-        print(f"Failed to start server: {str(e)}")
+    # Check if running on Render
+    if os.environ.get('RENDER'):
+        port = int(os.environ.get('PORT', 10000))
+        app.run(host='0.0.0.0', port=port)
+    else:
+        # Local development
+        app.run(debug=True, host='0.0.0.0', port=5000)
