@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}{% if device %}{{ _('تعديل جهاز') }}{% else %}{{ _('إضافة جهاز') }}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{% if device %}{{ _('تعديل جهاز') }}{% else %}{{ _('إضافة جهاز جديد') }}{% endif %}</h1>
+</div>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('chains') }}">{{ _('السلاسل') }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('chain_regions', chain_id=branch.region.chain.id) }}">{{ branch.region.chain.name }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('branches', region_id=branch.region.id) }}">{{ branch.region.name }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('branches', region_id=branch.region.id) }}">{{ branch.name }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('devices', branch_id=branch.id) }}">{{ _('الأجهزة') }}</a></li>
+        <li class="breadcrumb-item active">{% if device %}{{ _('تعديل') }}{% else %}{{ _('إضافة') }}{% endif %}</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">{{ _('اسم الجهاز') }} *</label>
+                        <input type="text" class="form-control" id="name" name="name" 
+                               value="{{ device.name if device else '' }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="device_type" class="form-label">{{ _('نوع الجهاز') }} *</label>
+                        <select class="form-select" id="device_type" name="device_type" required>
+                            <option value="">{{ _('اختر نوع الجهاز') }}</option>
+                            <option value="NVR" {% if device and device.device_type == 'NVR' %}selected{% endif %}>NVR</option>
+                            <option value="Switch" {% if device and device.device_type == 'Switch' %}selected{% endif %}>Switch</option>
+                            <option value="Router" {% if device and device.device_type == 'Router' %}selected{% endif %}>Router</option>
+                            <option value="UP Link" {% if device and device.device_type == 'UP Link' %}selected{% endif %}>UP Link</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="ip_address" class="form-label">{{ _('عنوان IP') }}</label>
+                        <input type="text" class="form-control" id="ip_address" name="ip_address" 
+                               value="{{ device.ip_address if device else '' }}" 
+                               pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$" 
+                               placeholder="192.168.1.100">
+                        <div class="form-text">{{ _('مثال: 192.168.1.100') }}</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="location" class="form-label">{{ _('الموقع') }}</label>
+                        <input type="text" class="form-control" id="location" name="location" 
+                               value="{{ device.location if device else '' }}" 
+                               placeholder="{{ _('غرفة الخوادم، الطابق الأول') }}">
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            {% if device %}{{ _('حفظ التعديلات') }}{% else %}{{ _('إضافة الجهاز') }}{% endif %}
+                        </button>
+                        <a href="{{ url_for('devices', branch_id=branch.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> {{ _('إلغاء') }}
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">{{ _('معلومات الفرع') }}</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>{{ _('الفرع:') }}</strong> {{ branch.name }}</p>
+                <p><strong>{{ _('الموقع:') }}</strong> {{ branch.location or _('غير محدد') }}</p>
+                <p><strong>{{ _('المنطقة:') }}</strong> {{ branch.region.name }}</p>
+                <p><strong>{{ _('السلسلة:') }}</strong> {{ branch.region.chain.name }}</p>
+            </div>
+        </div>
+        
+        {% if device %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">{{ _('إحصائيات الجهاز') }}</h6>
+            </div>
+            <div class="card-body">
+                {% set open_faults = device.faults | selectattr('resolved_at', 'equalto', none) | list %}
+                {% set closed_faults = device.faults | selectattr('resolved_at', 'ne', none) | list %}
+                
+                <p><strong>{{ _('الأعطال المفتوحة:') }}</strong> 
+                    <span class="badge bg-danger">{{ open_faults | length }}</span>
+                </p>
+                <p><strong>{{ _('الأعطال المغلقة:') }}</strong> 
+                    <span class="badge bg-success">{{ closed_faults | length }}</span>
+                </p>
+                <p><strong>{{ _('إجمالي الأعطال:') }}</strong> {{ device.faults | length }}</p>
+                
+                <a href="{{ url_for('device_faults', device_id=device.id) }}" class="btn btn-sm btn-outline-primary mt-2">
+                    <i class="fas fa-tools"></i> {{ _('عرض الأعطال') }}
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

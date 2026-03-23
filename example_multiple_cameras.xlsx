@@ -1,0 +1,31 @@
+This is a placeholder file. To create an actual Excel example, create a file with following structure:
+
+Column A: Camera Name (optional - will create ALL cameras for each branch)
+Column B: IP Address (optional - used for both branch and camera)  
+Column C: Branch Name (required)
+Column D: Phone Number (optional)
+
+Example data showing MULTIPLE cameras per branch:
+| A         | B             | C     | D           |
+|-----------|---------------|-------|-------------|
+| كاميرا مدخل | 192.168.1.1   | فرع 1 | 01234567890 |
+| كاميرا خزينة | 192.168.1.2   | فرع 1 | 01234567890 |
+| كاميرا خارجية | 192.168.1.3   | فرع 1 | 01234567890 |
+| كاميرا رئيسية | 192.168.2.1   | فرع 2 | 01123456789 |
+| كاميرا فرعية | 192.168.2.2   | فرع 2 | 01123456789 |
+| كاميرا مخزن | 192.168.3.1   | فرع 3 | 01098765432 |
+| كاميرا موقف | 192.168.3.2   | فرع 3 | 01098765432 |
+
+NEW FEATURES:
+- Multiple cameras per branch support
+- All cameras with same branch name will be grouped together
+- Creates branch once with ALL its cameras
+- Updates existing branches and adds missing cameras
+- Prevents duplicate cameras by name within same branch
+
+RESULT:
+- فرع 1: 3 cameras
+- فرع 2: 2 cameras  
+- فرع 3: 2 cameras
+
+Total: 3 branches + 7 cameras

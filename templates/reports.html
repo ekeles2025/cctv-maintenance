@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('التقارير') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="text-primary">
+            <i class="fas fa-chart-bar me-2"></i>{{ _('التقارير') }}
+        </h1>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-right me-1"></i>{{ _('العودة للرئيسية') }}
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Camera Faults Report -->
+        <div class="col-md-4 mb-4">
+            <div class="stat-card">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-camera fa-3x text-primary"></i>
+                    </div>
+                    <h5 class="card-title">{{ _('تقارير أعطال الكاميرا') }}</h5>
+                    <p class="text-muted">{{ _('تنزيل تقارير مفصلة عن أعطال الكاميرا') }}</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('camera_faults_report') }}" class="btn btn-primary">
+                            <i class="fas fa-download me-2"></i>{{ _('الكاميرات المعطلة') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Camera Repaired Report -->
+        <div class="col-md-4 mb-4">
+            <div class="stat-card">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-camera fa-3x text-success"></i>
+                    </div>
+                    <h5 class="card-title">{{ _('تقارير الكاميرات التي تم إصلاحها') }}</h5>
+                    <p class="text-muted">{{ _('تنزيل تقارير الكاميرات التي تم إصلاحها') }}</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('camera_repaired_report') }}" class="btn btn-success">
+                            <i class="fas fa-check-circle me-2"></i>{{ _('الكاميرات التي تم إصلاحها') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Device Faults Report -->
+        <div class="col-md-4 mb-4">
+            <div class="stat-card">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-server fa-3x text-warning"></i>
+                    </div>
+                    <h5 class="card-title">{{ _('تقارير أعطال الأجهزة') }}</h5>
+                    <p class="text-muted">{{ _('تنزيل تقارير مفصلة عن أعطال الأجهزة') }}</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('device_faults_report') }}" class="btn btn-warning">
+                            <i class="fas fa-download me-2"></i>{{ _('الأجهزة المعطلة') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Device Repaired Report -->
+        <div class="col-md-4 mb-4">
+            <div class="stat-card">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-server fa-3x text-info"></i>
+                    </div>
+                    <h5 class="card-title">{{ _('تقارير الأجهزة التي تم إصلاحها') }}</h5>
+                    <p class="text-muted">{{ _('تنزيل تقارير الأجهزة التي تم إصلاحها') }}</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('device_repaired_report') }}" class="btn btn-info">
+                            <i class="fas fa-check-circle me-2"></i>{{ _('الأجهزة التي تم إصلاحها') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- All Faults Report -->
+        <div class="col-md-4 mb-4">
+            <div class="stat-card">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-list-check fa-3x text-danger"></i>
+                    </div>
+                    <h5 class="card-title">{{ _('تقارير جميع الأعطال') }}</h5>
+                    <p class="text-muted">{{ _('تنزيل تقارير شاملة عن جميع الأعطال') }}</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('all_faults_report') }}" class="btn btn-danger">
+                            <i class="fas fa-download me-2"></i>{{ _('تقرير جميع الأعطال') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Branch Closure Report -->
+        <div class="col-md-4 mb-4">
+            <div class="stat-card">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-lock fa-3x text-secondary"></i>
+                    </div>
+                    <h5 class="card-title">{{ _('تقارير فتح وإغلاق الفروع') }}</h5>
+                    <p class="text-muted">{{ _('تنزيل تقارير بيانات فتح وإغلاق الفروع') }}</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('branch_closure_report') }}" class="btn btn-secondary">
+                            <i class="fas fa-download me-2"></i>{{ _('تقرير فتح وإغلاق الفروع') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Summary -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="stat-card">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">
+                        <i class="fas fa-chart-pie me-2"></i>{{ _('إحصائيات سريعة') }}
+                    </h5>
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="stat-box">
+                                <h3 class="text-primary">{{ camera_faults_count }}</h3>
+                                <p class="mb-0">{{ _('إجمالي أعطال الكاميرا') }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-box">
+                                <h3 class="text-success">{{ device_faults_count }}</h3>
+                                <p class="mb-0">{{ _('إجمالي أعطال الأجهزة') }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-box">
+                                <h3 class="text-warning">{{ total_faults_count }}</h3>
+                                <p class="mb-0">{{ _('إجمالي جميع الأعطال') }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-box">
+                                <h3 class="text-info">{{ resolved_faults_count }}</h3>
+                                <p class="mb-0">{{ _('الأعطال المغلقة') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stat-box {
+    padding: 20px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.stat-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.stat-box h3 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.stat-box p {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+</style>
+{% endblock %}

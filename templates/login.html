@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang }}" dir="{{ current_dir }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('تسجيل الدخول') }} - {{ _('نظام إدارة الكاميرات') }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1e3a8a;
+            --secondary-color: #3b82f6;
+            --accent-color: #60a5fa;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.5; }
+            50% { transform: scale(1.1) rotate(180deg); opacity: 0.8; }
+        }
+
+        .login-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 48px 40px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: slideIn 0.6s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .lang-switch {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 16px;
+        }
+
+        .lang-switch a {
+            flex: 1;
+            max-width: 120px;
+        }
+
+        .logo-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--accent-color) 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .logo-icon i {
+            font-size: 40px;
+            color: white;
+        }
+
+        .login-header h2 {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 8px;
+            font-size: 28px;
+        }
+
+        .login-header p {
+            color: #64748b;
+            font-size: 15px;
+            margin: 0;
+        }
+
+        .form-label {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .form-control {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px 18px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-control:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+            outline: none;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+        .input-icon {
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control {
+            padding-right: 50px;
+        }
+
+        [dir="ltr"] .input-icon {
+            right: auto;
+            left: 18px;
+        }
+
+        [dir="ltr"] .form-control {
+            padding-right: 0;
+            padding-left: 50px;
+        }
+
+        [dir="ltr"] body::before {
+            right: auto;
+            left: -50%;
+        }
+
+        [dir="ltr"] .account-item i {
+            margin-left: 0;
+            margin-right: 10px;
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--accent-color) 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            font-weight: 700;
+            font-size: 16px;
+            color: white;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-login::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn-login:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 32px 0;
+            color: #94a3b8;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, #e2e8f0 50%, transparent 100%);
+        }
+
+        .divider span {
+            padding: 0 16px;
+            font-size: 13px;
+        }
+
+        .default-accounts {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(96, 165, 250, 0.05) 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 24px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .default-accounts h6 {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .account-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .account-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .account-item i {
+            margin-left: 10px;
+            color: var(--secondary-color);
+        }
+
+        .alert {
+            border-radius: 12px;
+            border: none;
+            padding: 14px 18px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 576px) {
+            .login-card {
+                padding: 32px 24px;
+            }
+
+            .logo-icon {
+                width: 70px;
+                height: 70px;
+            }
+
+            .logo-icon i {
+                font-size: 35px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo-icon" style="width: {{ logo_size + 30 }}px; height: {{ logo_size + 30 }}px;">
+                    {% if logo_exists %}
+                        <img src="{{ url_for('static', filename='logo/company_logo.png') }}?v={{ range(1000, 9999) | random }}" 
+                             alt="Company Logo" 
+                             style="width: {{ logo_size }}px; height: {{ logo_size }}px; object-fit: contain; border-radius: 12px;">
+                    {% else %}
+                        <i class="fas fa-video"></i>
+                    {% endif %}
+                </div>
+                <h2>{{ company_name }}</h2>
+                <p>{{ _('نظام إدارة الكاميرات') }}</p>
+
+                <div class="lang-switch">
+                    <a href="{{ url_for('set_language', lang='ar', next=request.full_path) }}" class="btn btn-sm {% if current_lang == 'ar' %}btn-primary{% else %}btn-outline-secondary{% endif %}">AR</a>
+                    <a href="{{ url_for('set_language', lang='en', next=request.full_path) }}" class="btn btn-sm {% if current_lang == 'en' %}btn-primary{% else %}btn-outline-secondary{% endif %}">EN</a>
+                </div>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' }} me-2"></i>
+                            {{ _(message) }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="input-group">
+                    <i class="fas fa-user input-icon"></i>
+                    <label class="form-label">{{ _('اسم المستخدم') }}</label>
+                    <input type="text" name="username" class="form-control" placeholder="{{ _('أدخل اسم المستخدم') }}" required autofocus>
+                </div>
+
+                <div class="input-group">
+                    <i class="fas fa-lock input-icon"></i>
+                    <label class="form-label">{{ _('كلمة المرور') }}</label>
+                    <input type="password" name="password" class="form-control" placeholder="{{ _('أدخل كلمة المرور') }}" required>
+                </div>
+
+                <button type="submit" class="btn btn-login">
+                    <i class="fas fa-sign-in-alt me-2"></i>
+                    {{ _('تسجيل الدخول') }}
+                </button>
+            </form>
+
+            <div class="divider">
+                <span>{{ t('default_accounts') }}</span>
+            </div>
+
+            <div class="default-accounts">
+                <h6><i class="fas fa-info-circle me-2"></i>{{ t('login_information') }}</h6>
+                <div class="account-item">
+                    <i class="fas fa-crown"></i>
+                    <span><strong>{{ t('admin_colon') }}</strong> admin / admin123</span>
+                </div>
+                <div class="account-item">
+                    <i class="fas fa-wrench"></i>
+                    <span><strong>{{ t('technician_colon') }}</strong> tech1 / tech123</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Add loading state to form
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const btn = this.querySelector('.btn-login');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{{ t('signing_in') }}';
+            btn.disabled = true;
+        });
+
+        // Add focus animations
+        document.querySelectorAll('.form-control').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.querySelector('.input-icon').style.color = 'var(--secondary-color)';
+            });
+            input.addEventListener('blur', function() {
+                if (!this.value) {
+                    this.parentElement.querySelector('.input-icon').style.color = '#94a3b8';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

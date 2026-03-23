@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="stat-card">
+            <h3 class="text-center">
+                <i class="fas fa-tools me-2"></i>
+                {{ _('تعديل العطل') if fault else _('تسجيل عطل جديد') }}
+            </h3>
+            <p class="text-center text-muted">{{ _('الكاميرا:') }} {{ camera.name }} - {{ _('الفرع:') }} {{ camera.branch.name }}</p>
+            
+            <form method="POST" action="{% if fault %}{{ url_for('edit_fault', fault_id=fault.id) }}{% else %}{{ url_for('add_fault', camera_id=camera.id) }}{% endif %}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">{{ _('نوع العطل') }}</label>
+                            <select name="fault_type" class="form-select" required>
+                                <option value="">{{ _('اختر نوع العطل') }}</option>
+                                <option value="كهرباء" {% if fault and fault.fault_type == 'كهرباء' %}selected{% endif %}>{{ _('مشكلة كهرباء') }}</option>
+                                <option value="شبكة" {% if fault and fault.fault_type == 'شبكة' %}selected{% endif %}>{{ _('مشكلة شبكة') }}</option>
+                                <option value="جهاز" {% if fault and fault.fault_type == 'جهاز' %}selected{% endif %}>{{ _('عطل في الجهاز') }}</option>
+                                <option value="برمجيات" {% if fault and fault.fault_type == 'برمجيات' %}selected{% endif %}>{{ _('مشكلة برمجية') }}</option>
+                                <option value="كابل" {% if fault and fault.fault_type == 'كابل' %}selected{% endif %}>{{ _('عطل في الكابلات') }}</option>
+                                <option value="محروق" {% if fault and fault.fault_type == 'محروق' %}selected{% endif %}>{{ _('محروق') }}</option>
+                                <option value="Offline" {% if fault and fault.fault_type == 'Offline' %}selected{% endif %}>Offline</option>
+                                <option value="أخرى" {% if fault and fault.fault_type == 'أخرى' %}selected{% endif %}>{{ _('أخرى') }}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">{{ _('نوع الجهاز المعطل') }}</label>
+                            <select name="device_type" class="form-select" required>
+                                <option value="NVR Burnet" {% if fault and fault.device_type == 'NVR Burnet' %}selected{% endif %}>NVR Burnet</option>
+                                <option value="NRV Not Recording" {% if fault and fault.device_type == 'NRV Not Recording' %}selected{% endif %}>NRV Not Recording</option>
+                                <option value="Router Burnet" {% if fault and fault.device_type == 'Router Burnet' %}selected{% endif %}>Router Burnet</option>
+                                <option value="Switch Burnet" {% if fault and fault.device_type == 'Switch Burnet' %}selected{% endif %}>Switch Burnet</option>
+                                <option value="HDD Not Recording" {% if fault and fault.device_type == 'HDD Not Recording' %}selected{% endif %}>HDD Not Recording</option>
+                                <option value="Camera Offline" {% if fault and fault.device_type == 'Camera Offline' %}selected{% endif %}>Camera Offline</option>
+                                <option value="محروق" {% if fault and fault.device_type == 'محروق' %}selected{% endif %}>محروق</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">{{ _('اسم المبلغ') }}</label>
+                            <input type="text" name="reported_by" class="form-control" 
+                                   value="{{ fault.reported_by if fault else (current_user.username if current_user) }}" required>
+                        </div>
+                    </div>
+
+                <div class="mb-3">
+                    <label class="form-label">{{ _('الفني المسؤول') }}</label>
+                    <select name="technician_id" class="form-select">
+                        <option value="">{{ _('اختر الفني') }}</option>
+                        {% for tech in technicians %}
+                        <option value="{{ tech.id }}" {% if fault and fault.technician_id == tech.id %}selected{% endif %}>{{ tech.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">{{ _('وصف العطل') }}</label>
+                    <textarea name="description" class="form-control" rows="4" 
+                              placeholder="{{ _('وصف مفصل للعطل...') }}" required>{% if fault %}{{ fault.description }}{% endif %}</textarea>
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>{{ _('ملاحظة:') }}</strong> {{ _('مهلة إصلاح العطل هي 7 أيام من تاريخ التسجيل') }}
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{{ url_for('faults', camera_id=camera.id) }}" class="btn btn-secondary me-md-2">
+                        <i class="fas fa-arrow-right me-1"></i>{{ _('إلغاء') }}
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>{{ _('حفظ التعديلات') if fault else _('تسجيل العطل') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

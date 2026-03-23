@@ -1,0 +1,663 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Header -->
+    <div class="stat-card mb-4 fade-in-down" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(96, 165, 250, 0.05) 100%); border-left: 4px solid var(--secondary-color);">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-2 text-primary-custom" style="font-weight: 700;">
+                    <i class="fas fa-user-circle me-2"></i>
+                    {{ _('مرحباً') }} {{ current_user.username }}
+                </h2>
+                <p class="mb-0 text-muted" style="font-size: 16px;">
+                    {% if current_user.role == "admin" %}
+                        <i class="fas fa-crown me-2" style="color: var(--warning-color);"></i>
+                        {{ _('أنت مسجل كمشرف على النظام. يمكنك إدارة جميع المناطق والفروع والكاميرات والأعطال.') }}
+                    {% else %}
+                        <i class="fas fa-wrench me-2" style="color: var(--info-color);"></i>
+                        {{ _('أنت مسجل كفني. يمكنك عرض الأعطال المسندة إليك وإصلاحها.') }}
+                    {% endif %}
+                </p>
+            </div>
+            <div class="text-end">
+                <div class="text-muted small mb-1">{{ _('آخر تحديث') }}</div>
+                <div class="fw-bold text-secondary-custom">
+                    <i class="fas fa-clock me-1"></i>
+                    {{ now|local_dt('%Y-%m-%d %H:%M') }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reports - Excel Download -->
+    <div class="stat-card mb-4 fade-in-up" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(52, 211, 153, 0.04) 100%); border-left: 4px solid var(--success-color);">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h4 class="text-primary-custom mb-1" style="font-weight: 700;">
+                    <i class="fas fa-file-excel me-2" style="color: #217346;"></i>
+                    {{ _('التقارير') }}
+                </h4>
+                <p class="text-muted mb-0 small">{{ _('تنزيل تقرير الأعطال بصيغة Excel (سلسلة، منطقة، فرع، كاميرا، نوع العطل، الحالة، الفني، التواريخ).') }}</p>
+            </div>
+            <a href="{{ url_for('report_excel') }}" class="btn btn-success" style="border-radius: 10px;">
+                <i class="fas fa-download me-2"></i>{{ _('تنزيل تقرير Excel') }}
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions fade-in-up stagger-1">
+        <h4 class="mb-4 text-primary-custom" style="font-weight: 700;">
+            <i class="fas fa-bolt me-2" style="color: var(--warning-color);"></i>
+            {{ _('إجراءات سريعة') }}
+        </h4>
+        <div class="row g-3">
+            {% if current_user.role == "admin" %}
+            <div class="col-lg-2 col-md-4 col-6 fade-in-left stagger-1">
+                <a href="{{ url_for('chains') }}" class="action-btn bg-primary-custom">
+                    <i class="fas fa-link"></i>
+                    <div style="font-size: 14px; margin-top: 8px; font-weight: 600;">{{ _('السلاسل والمناطق') }}</div>
+                </a>
+            </div>
+            <div class="col-lg-2 col-md-4 col-6 fade-in-left stagger-2">
+                <a href="{{ url_for('add_chain') }}" class="action-btn bg-info-custom">
+                    <i class="fas fa-plus-circle"></i>
+                    <div style="font-size: 14px; margin-top: 8px; font-weight: 600;">{{ _('إضافة سلسلة') }}</div>
+                </a>
+            </div>
+            <div class="col-lg-2 col-md-4 col-6 fade-in-left stagger-3">
+                <a href="{{ url_for('technicians') }}" class="action-btn bg-success-custom">
+                    <i class="fas fa-user-plus"></i>
+                    <div style="font-size: 14px; margin-top: 8px; font-weight: 600;">{{ _('إضافة فني') }}</div>
+                </a>
+            </div>
+            {% endif %}
+            <div class="col-lg-2 col-md-4 col-6 fade-in-left {% if current_user.role == 'admin' %}stagger-4{% else %}stagger-1{% endif %}">
+                <a href="{{ url_for('camera_faults_sidebar') }}" class="action-btn bg-warning-custom">
+                    <i class="fas fa-list-check"></i>
+                    <div style="font-size: 14px; margin-top: 8px; font-weight: 600;">{{ _('جميع الأعطال') }}</div>
+                </a>
+            </div>
+            <div class="col-lg-2 col-md-4 col-6 fade-in-left {% if current_user.role == 'admin' %}stagger-5{% else %}stagger-2{% endif %}">
+                <a href="{{ url_for('all_device_faults') }}" class="action-btn" style="background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);">
+                    <i class="fas fa-server"></i>
+                    <div style="font-size: 14px; margin-top: 8px; font-weight: 600;">{{ _('أعطال الأجهزة') }}</div>
+                </a>
+            </div>
+            {% if current_user.role == "admin" %}
+            <div class="col-lg-2 col-md-4 col-6 fade-in-left stagger-6">
+                <a href="{{ url_for('regions') }}" class="action-btn bg-danger-custom">
+                    <i class="fas fa-video"></i>
+                    <div style="font-size: 14px; margin-top: 8px; font-weight: 600;">{{ _('إضافة كاميرا') }}</div>
+                </a>
+            </div>
+            <div class="col-lg-2 col-md-4 col-6 fade-in-left stagger-7">
+                <a href="{{ url_for('regions') }}" class="action-btn" style="background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div style="font-size: 14px; margin-top: 8px; font-weight: 600;">{{ _('تسجيل عطل') }}</div>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-2 col-md-4">
+            <div class="stat-card text-center">
+                <div class="icon-circle bg-gradient-primary mx-auto">
+                    <i class="fas fa-video"></i>
+                </div>
+                <div class="stat-number" style="font-size: 2rem; font-weight: bold;">{{ total_cameras }}</div>
+                <div class="text-muted fw-semibold" style="font-size: 14px;">{{ _('إجمالي الكاميرات') }}</div>
+                <small class="text-muted" style="font-size: 11px;">{{ _('في قاعدة البيانات') }}</small>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4">
+            <div class="stat-card text-center">
+                <div class="icon-circle bg-gradient-info mx-auto">
+                    <i class="fas fa-hdd"></i>
+                </div>
+                <div class="stat-number" style="font-size: 2rem; font-weight: bold;">{{ total_devices }}</div>
+                <div class="text-muted fw-semibold" style="font-size: 14px;">{{ _('إجمالي الأجهزة') }}</div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4">
+            <div class="stat-card text-center">
+                <div class="icon-circle bg-gradient-warning mx-auto">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stat-number" style="font-size: 2rem; font-weight: bold;">{{ faulty_cameras }}</div>
+                <div class="text-muted fw-semibold" style="font-size: 14px;">{{ _('كاميرات معطلة') }}</div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4">
+            <div class="stat-card text-center">
+                <div class="icon-circle bg-gradient-danger mx-auto">
+                    <i class="fas fa-server"></i>
+                </div>
+                <div class="stat-number" style="font-size: 2rem; font-weight: bold;">{{ faulty_devices }}</div>
+                <div class="text-muted fw-semibold" style="font-size: 14px;">{{ _('أجهزة معطلة') }}</div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4">
+            <div class="stat-card text-center">
+                <div class="icon-circle bg-gradient-danger mx-auto">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <div class="stat-number" style="font-size: 2rem; font-weight: bold;">{{ open_faults }}</div>
+                <div class="text-muted fw-semibold" style="font-size: 14px;">{{ _('أعطال مفتوحة') }}</div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4">
+            <div class="stat-card text-center">
+                <div class="icon-circle bg-gradient-success mx-auto">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-number" style="font-size: 2rem; font-weight: bold;">{{ closed_faults }}</div>
+                <div class="text-muted fw-semibold" style="font-size: 14px;">{{ _('أعطال مغلقة') }}</div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4">
+            <div class="stat-card text-center">
+                <div class="icon-circle bg-gradient-warning mx-auto">
+                    <i class="fas fa-store-slash"></i>
+                </div>
+                <div class="stat-number" style="font-size: 2rem; font-weight: bold;">{{ closed_branches }}</div>
+                <div class="text-muted fw-semibold" style="font-size: 14px;">{{ _('فروع مغلقة') }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics and Notifications -->
+    <div class="row g-4 mb-4">
+        <!-- Quick Statistics -->
+        <div class="col-lg-6 fade-in-up stagger-1">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="text-primary-custom" style="font-weight: 700;">
+                        <i class="fas fa-chart-line me-2 text-secondary-custom"></i>
+                        {{ _('إحصائيات سريعة') }}
+                    </h4>
+                    <span class="badge bg-success-custom" style="padding: 8px 16px; border-radius: 20px;">
+                        <i class="fas fa-circle me-1" style="font-size: 8px;"></i>{{ _('حية') }}
+                    </span>
+                </div>
+                
+                <div class="row g-3 text-center mb-4">
+                    <div class="col-md-3 fade-in scale-in stagger-1">
+                        <div class="p-3 rounded" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(96, 165, 250, 0.05) 100%); border: 2px solid rgba(59, 130, 246, 0.2);">
+                            <div class="h4 mb-1 text-secondary-custom" style="font-weight: 700;">{{ total_cameras }}</div>
+                            <small class="text-muted fw-semibold">{{ _('إجمالي الكاميرات') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 fade-in scale-in stagger-2">
+                        <div class="p-3 rounded" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(251, 191, 36, 0.05) 100%); border: 2px solid rgba(245, 158, 11, 0.2);">
+                            <div class="h4 mb-1 text-warning-custom" style="font-weight: 700;">{{ faulty_cameras }}</div>
+                            <small class="text-muted fw-semibold">{{ _('كاميرات معطلة') }}</small>
+                            <small class="text-muted" style="font-size: 11px;">{{ _('من قائمة الأعطال') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 fade-in scale-in stagger-3">
+                        <div class="p-3 rounded" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(52, 211, 153, 0.05) 100%); border: 2px solid rgba(16, 185, 129, 0.2);">
+                            <div class="h4 mb-1 text-success-custom" style="font-weight: 700;">{{ open_branches }}</div>
+                            <small class="text-muted fw-semibold">{{ _('فروع مفتوحة') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 fade-in scale-in stagger-4">
+                        <div class="p-3 rounded" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(248, 113, 113, 0.05) 100%); border: 2px solid rgba(239, 68, 68, 0.2);">
+                            <div class="h4 mb-1 text-danger-custom" style="font-weight: 700;">{{ closed_branches }}</div>
+                            <small class="text-muted fw-semibold">{{ _('فروع مغلقة') }}</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="progress mb-3 fade-in stagger-4" style="height: 30px; border-radius: 15px; background: rgba(226, 232, 240, 0.5);">
+                    <div class="progress-bar" role="progressbar" data-open="{{ open_faults }}" data-closed="{{ closed_faults }}" 
+                         style="background: linear-gradient(90deg, var(--success-color) 0%, var(--success-light) 100%); border-radius: 15px; display: flex; align-items: center; justify-content: center; font-weight: 600; color: white; transition: width 1s ease;"
+                         aria-valuemin="0" aria-valuemax="100">
+                        {% if (open_faults + closed_faults) > 0 %}
+                            {{ "%.1f"|format((closed_faults/(open_faults + closed_faults)*100)) }}% {{ _('مكتمل') }}
+                        {% else %}
+                            0% {{ _('مكتمل') }}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Chart -->
+                <div class="mt-4 fade-in stagger-5">
+                    <canvas id="statsChart" style="max-height: 300px;" data-open="{{ open_faults }}" data-closed="{{ closed_faults }}" data-total="{{ total_cameras }}" data-faulty="{{ faulty_cameras }}"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Faults (for technicians) or Notifications (for admin) -->
+        {% if current_user.role == "technician" and (my_faults or my_device_faults) %}
+        <div class="col-lg-6 fade-in-up stagger-2">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="text-primary-custom" style="font-weight: 700;">
+                        <i class="fas fa-tasks me-2 text-secondary-custom"></i>
+                        {{ _('أعطالي المسندة') }}
+                    </h4>
+                    <span class="badge bg-primary-custom" style="padding: 8px 16px; border-radius: 20px;">
+                        {{ my_faults|length + my_device_faults|length }}
+                    </span>
+                </div>
+                
+                <!-- Camera Faults -->
+                {% if my_faults %}
+                <h6 class="text-muted mb-3">{{ _('أعطال الكاميرات') }}</h6>
+                <div class="list-group mb-4" style="max-height: 160px; overflow-y: auto;">
+                    {% for fault in my_faults %}
+                    <div class="list-group-item border-0 mb-2 rounded" style="background: rgba(59, 130, 246, 0.05); border-left: 4px solid var(--secondary-color) !important;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1 fw-bold" style="color: var(--primary-color);">{{ fault.camera.name }}</h6>
+                                <p class="mb-1 text-muted small">{{ fault.description[:40] }}{% if fault.description|length > 40 %}...{% endif %}</p>
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    {{ fault.date_reported|local_dt('%Y-%m-%d') }}
+                                </small>
+                            </div>
+                            <a href="{{ url_for('resolve_fault', fault_id=fault.id) }}" 
+                               class="btn btn-sm bg-success-custom" style="color: white; border: none; border-radius: 8px; padding: 8px 16px;">
+                                <i class="fas fa-wrench me-1"></i>{{ _('إصلاح') }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <!-- Device Faults -->
+                {% if my_device_faults %}
+                <h6 class="text-muted mb-3">{{ _('أعطال الأجهزة') }}</h6>
+                <div class="list-group" style="max-height: 160px; overflow-y: auto;">
+                    {% for fault in my_device_faults %}
+                    <div class="list-group-item border-0 mb-2 rounded" style="background: rgba(99, 102, 241, 0.05); border-left: 4px solid #6366f1 !important;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1 fw-bold" style="color: #6366f1;">{{ fault.device.name }}</h6>
+                                <p class="mb-1 text-muted small">{{ fault.description[:40] }}{% if fault.description|length > 40 %}...{% endif %}</p>
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    {{ fault.date_reported|local_dt('%Y-%m-%d') }}
+                                </small>
+                            </div>
+                            <a href="{{ url_for('resolve_device_fault', fault_id=fault.id) }}" 
+                               class="btn btn-sm" style="background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%); color: white; border: none; border-radius: 8px; padding: 8px 16px;">
+                                <i class="fas fa-wrench me-1"></i>{{ _('إصلاح') }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <!-- Notifications for Admin -->
+        <div class="col-lg-6 fade-in-up stagger-2">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="text-primary-custom" style="font-weight: 700;">
+                        <i class="fas fa-bell me-2 text-warning-custom"></i>
+                        {{ _('الإشعارات') }}
+                    </h4>
+                    <span class="badge bg-warning-custom" style="padding: 8px 16px; border-radius: 20px;">
+                        {{ _('جديدة') }}
+                    </span>
+                </div>
+                
+                {% if open_faults > 0 or open_device_faults > 0 %}
+                <div class="alert alert-warning border-0 mb-3 fade-in stagger-1" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(251, 191, 36, 0.05) 100%); border-left: 4px solid var(--warning-color) !important;">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>{{ _('تنبيه:') }}</strong> {{ _('يوجد') }} {{ open_faults }} {{ _('عطل كاميرا و') }} {{ open_device_faults }} {{ _('عطل جهاز يحتاجان للإصلاح') }}
+                </div>
+                {% else %}
+                <div class="alert alert-success border-0 mb-3 fade-in stagger-1" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(52, 211, 153, 0.05) 100%); border-left: 4px solid var(--success-color) !important;">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>{{ _('ممتاز:') }}</strong> {{ _('جميع الأعطال تم إصلاحها') }}
+                </div>
+                {% endif %}
+                
+                {% if current_user.role == "admin" %}
+                <div class="alert alert-info border-0 fade-in stagger-2" style="background: linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(34, 211, 238, 0.05) 100%); border-left: 4px solid var(--info-color) !important;">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>{{ _('معلومات:') }}</strong> {{ _('إجمالي الكاميرات النشطة') }} {{ total_cameras - faulty_cameras }} {{ _('من') }} {{ total_cameras }}، {{ _('وإجمالي الأجهزة النشطة') }} {{ total_devices - faulty_devices }} {{ _('من') }} {{ total_devices }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Recent Faults Table -->
+    <div class="row">
+        <div class="col-12 fade-in-up stagger-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="text-primary-custom" style="font-weight: 700;">
+                        <i class="fas fa-clock me-2 text-warning-custom"></i>
+                        {{ _('أقدم 10 أعطال مفتوحة') }}
+                    </h4>
+                    <a href="{{ url_for('camera_faults_sidebar') }}" class="btn bg-primary-custom" style="color: white; border: none; border-radius: 10px;">
+                        <i class="fas fa-list me-1"></i>{{ _('عرض جميع الأعطال') }}
+                    </a>
+                </div>
+                
+                <!-- Summary Info -->
+                <div class="alert alert-info mb-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <div>
+                            <strong>{{ _('معلومات سريعة:') }}</strong>
+                            <span class="ms-2">{{ _('يتم عرض أقدم 10 أعطال مفتوحة من إجمالي') }} <span class="badge bg-primary">{{ open_faults }}</span> {{ _('عطل مفتوح في النظام') }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Faults Table -->
+                {% if recent_faults_with_duration %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>{{ _('الكاميرا') }}</th>
+                                <th>{{ _('نوع العطل') }}</th>
+                                <th>{{ _('الوصف') }}</th>
+                                <th>{{ _('الفني المسؤول') }}</th>
+                                <th>{{ _('تاريخ الإبلاغ') }}</th>
+                                <th>{{ _('مدة العطل') }}</th>
+                                <th>{{ _('الحالة') }}</th>
+                                <th>{{ _('الإجراء') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set row_num = 1 %}
+                            {% for fault_data in recent_faults_with_duration %}
+                            {% set fault = fault_data.fault %}
+                            {% set duration = fault_data.duration %}
+                            <tr>
+                                <td style="color: var(--primary-color);">#{{ row_num }}</strong></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-video me-2 text-secondary-custom"></i>
+                                        <div>
+                                            <strong>{{ fault.camera.name }}</strong>
+                                            <br>
+                                            <small class="text-muted">{% if fault.camera and fault.camera.branch %}{{ fault.camera.branch.name }}{% else %}No Branch{% endif %}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                    <span class="badge px-3 py-2 rounded-pill fault-type-badge" 
+                        data-fault-type="{{ fault.fault_type }}" style="background-color: #fff; border: 1px solid #ddd; padding: 5px 10px; border-radius: 5px;">
+                        {{ _(fault.fault_type) }}
+                    </span>
+                                </td>
+                                <td>
+                                    <span class="d-inline-block text-truncate" style="max-width: 200px;" 
+                                          title="{{ fault.description }}" style="background-color: #fff; border: 1px solid #ddd; padding: 5px 10px; border-radius: 5px;">
+                                        {{ fault.description }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if fault.technician %}
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-user-circle me-2 text-success-custom"></i>
+                                            {{ fault.technician.username }}
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted">
+                                            <i class="fas fa-user-slash me-1"></i>{{ _('لم يتم التعيين') }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small class="fw-semibold">{{ fault.date_reported|local_dt('%Y-%m-%d %H:%M') }}</small>
+                                </td>
+                                <td>
+                                    {% if fault.resolved_at %}
+                                        <span class="badge px-3 py-2 rounded-pill bg-success-custom">
+                                            <i class="fas fa-check me-1"></i>{{ _('مُصلح') }}
+                                        </span>
+                                    {% else %}
+                                        {% if duration.days > 0 %}
+                                            <span class="badge px-3 py-2 rounded-pill bg-danger-custom">
+                                                <i class="fas fa-clock me-1"></i>{{ duration.days }} {{ _('يوم') }}
+                                            </span>
+                                        {% elif duration.hours > 0 %}
+                                            <span class="badge px-3 py-2 rounded-pill bg-warning-custom">
+                                                <i class="fas fa-clock me-1"></i>{{ duration.hours }} {{ _('ساعة') }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge px-3 py-2 rounded-pill bg-info-custom">
+                                                <i class="fas fa-clock me-1"></i>{{ _('أقل من ساعة') }}
+                                            </span>
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if fault.resolved_at %}
+                                        <span class="badge px-3 py-2 rounded-pill bg-success-custom">
+                                            <i class="fas fa-check me-1"></i>{{ _('مُصلح') }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge px-3 py-2 rounded-pill bg-danger-custom">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>{{ _('قيد الانتظار') }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if not fault.resolved_at %}
+                                        {% if current_user.role == "admin" or fault.technician_id == current_user.id %}
+                                        <a href="{{ url_for('resolve_fault', fault_id=fault.id) }}" 
+                                           class="btn btn-sm bg-success-custom" style="color: white; border: none; border-radius: 8px;">
+                                            <i class="fas fa-wrench me-1"></i>{{ _('إصلاح') }}
+                                        </a>
+                                        {% else %}
+                                        <span class="text-muted">{{ _('غير مسموح') }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <a href="{{ url_for('fault_details', fault_id=fault.id) }}" 
+                                           class="btn btn-sm bg-info-custom" style="color: white; border: none; border-radius: 8px;">
+                                            <i class="fas fa-eye me-1"></i>{{ _('عرض') }}
+                                        </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% set row_num = row_num + 1 %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-check-circle" style="font-size: 64px; color: var(--success-color); margin-bottom: 16px;"></i>
+                    <h5 class="text-muted fw-bold">{{ _('لا توجد أعطال مفتوحة') }}</h5>
+                    <p class="text-muted">{{ _('جميع الأعطال تم إصلاحها بنجاح') }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Chart initialization
+let statsChart = null;
+
+function initChart() {
+    try {
+        const ctx = document.getElementById('statsChart');
+        if (!ctx) return;
+        
+        const openFaults = parseInt(ctx.dataset.open) || 0;
+        const closedFaults = parseInt(ctx.dataset.closed) || 0;
+        const totalCameras = parseInt(ctx.dataset.total) || 0;
+        const faultyCameras = parseInt(ctx.dataset.faulty) || 0;
+        
+        if (statsChart) {
+            statsChart.destroy();
+        }
+        
+        const chartLabels = ['أعطال مفتوحة', 'أعطال مغلقة', 'كاميرات سليمة', 'كاميرات معطلة'];
+
+        statsChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    data: [openFaults, closedFaults, totalCameras - faultyCameras, faultyCameras],
+                    backgroundColor: [
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(245, 158, 11, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgb(239, 68, 68)',
+                        'rgb(16, 185, 129)',
+                        'rgb(59, 130, 246)',
+                        'rgb(245, 158, 11)'
+                    ],
+                    borderWidth: 2,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            font: {
+                                size: 13,
+                                weight: '600',
+                                family: 'Cairo, sans-serif'
+                            },
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            textDirection: 'rtl'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: {
+                            size: 14,
+                            weight: '600',
+                            family: 'Cairo, sans-serif'
+                        },
+                        bodyFont: {
+                            size: 13,
+                            family: 'Cairo, sans-serif'
+                        },
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += context.parsed;
+                                return label;
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    animateRotate: true,
+                    animateScale: true,
+                    duration: 1500
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error initializing chart:', error);
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        setTimeout(initChart, 800);
+        
+        // Set progress bar width and aria
+        const progressBar = document.querySelector('.progress-bar');
+        if (progressBar) {
+            const openF = parseInt(progressBar.dataset.open) || 0;
+            const closedF = parseInt(progressBar.dataset.closed) || 0;
+            const total = openF + closedF;
+            const percentage = total > 0 ? (closedF / total * 100) : 0;
+            progressBar.style.width = percentage + '%';
+            progressBar.setAttribute('aria-valuenow', Math.round(percentage));
+        }
+    } catch (error) {
+        console.error('Error initializing dashboard:', error);
+    }
+});
+</script>
+
+<style>
+/* Fault Type Badge Styles */
+.fault-type-badge {
+    transition: all 0.3s ease;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.fault-type-badge[data-fault-type="كهرباء"] {
+    background: linear-gradient(135deg, var(--danger-color) 0%, var(--danger-light) 100%);
+    color: white;
+}
+
+.fault-type-badge[data-fault-type="شبكة"] {
+    background: linear-gradient(135deg, var(--info-color) 0%, var(--info-light) 100%);
+    color: white;
+}
+
+.fault-type-badge[data-fault-type="جهاز"] {
+    background: linear-gradient(135deg, var(--warning-color) 0%, var(--warning-light) 100%);
+    color: white;
+}
+
+.fault-type-badge[data-fault-type="برمجيات"] {
+    background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-400) 100%);
+    color: white;
+}
+
+.fault-type-badge[data-fault-type="محروق"] {
+    background: linear-gradient(135deg, #8B0000 0%, #DC143C 100%);
+    color: white;
+    border: 2px solid #FFD700;
+    box-shadow: 0 0 8px rgba(139, 0, 0, 0.3);
+}
+
+.fault-type-badge[data-fault-type="كابل"] {
+    background: linear-gradient(135deg, var(--dark-bg) 0%, var(--sidebar-bg) 100%);
+    color: white;
+}
+
+.fault-type-badge[data-fault-type="أخرى"] {
+    background: linear-gradient(135deg, var(--dark-bg) 0%, var(--sidebar-bg) 100%);
+    color: white;
+}
+
+/* Hover effects */
+.fault-type-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.fault-type-badge[data-fault-type="محروق"]:hover {
+    box-shadow: 0 4px 12px rgba(139, 0, 0, 0.5);
+}
+</style>
+{% endblock %}

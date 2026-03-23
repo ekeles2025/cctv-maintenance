@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}{% if fault %}{{ _('تعديل عطل') }}{% else %}{{ _('إضافة عطل جهاز') }}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{% if fault %}{{ _('تعديل عطل') }}{% else %}{{ _('إضافة عطل جهاز جديد') }}{% endif %}</h1>
+</div>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('chains') }}">{{ _('السلاسل') }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('chain_regions', chain_id=device.branch.region.chain.id) }}">{{ device.branch.region.chain.name }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('branches', region_id=device.branch.region.id) }}">{{ device.branch.region.name }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('branches', region_id=device.branch.region.id) }}">{{ device.branch.name }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('devices', branch_id=device.branch.id) }}">{{ _('الأجهزة') }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('device_faults', device_id=device.id) }}">{{ device.name }}</a></li>
+        <li class="breadcrumb-item active">{% if fault %}{{ _('تعديل') }}{% else %}{{ _('إضافة') }}{% endif %}</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="fault_type" class="form-label">{{ _('نوع العطل') }} *</label>
+                                <select class="form-select" id="fault_type" name="fault_type" required>
+                                    <option value="">{{ _('اختر نوع العطل') }}</option>
+                                    <option value="NVR Burnet" {% if fault and fault.fault_type == 'NVR Burnet' %}selected{% endif %}>NVR Burnet</option>
+                                    <option value="NRV Not Recording" {% if fault and fault.fault_type == 'NRV Not Recording' %}selected{% endif %}>NRV Not Recording</option>
+                                    <option value="Router Burnet" {% if fault and fault.fault_type == 'Router Burnet' %}selected{% endif %}>Router Burnet</option>
+                                    <option value="Switch Burnet" {% if fault and fault.fault_type == 'Switch Burnet' %}selected{% endif %}>Switch Burnet</option>
+                                    <option value="HDD Not Recording" {% if fault and fault.fault_type == 'HDD Not Recording' %}selected{% endif %}>HDD Not Recording</option>
+                                    <option value="Camera Offline" {% if fault and fault.fault_type == 'Camera Offline' %}selected{% endif %}>Camera Offline</option>
+                                    <option value="محروق" {% if fault and fault.fault_type == 'محروق' %}selected{% endif %}>محروق</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="reported_by" class="form-label">{{ _('المُبلّغ') }} *</label>
+                                <input type="text" class="form-control" id="reported_by" name="reported_by" 
+                                       value="{{ fault.reported_by if fault else '' }}" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">{{ _('وصف العطل') }} *</label>
+                        <textarea class="form-control" id="description" name="description" rows="4" required>{{ fault.description if fault else '' }}</textarea>
+                        <div class="form-text">{{ _('صف العطل بالتفصيل (حد أقصى 200 حرف)') }}</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="technician_id" class="form-label">{{ _('الفني المسند إليه') }}</label>
+                        <select class="form-select" id="technician_id" name="technician_id">
+                            <option value="">{{ _('اختر فني (اختياري)') }}</option>
+                            {% for technician in technicians %}
+                            <option value="{{ technician.id }}" {% if fault and fault.technician_id == technician.id %}selected{% endif %}>
+                                {{ technician.username }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            {% if fault %}{{ _('حفظ التعديلات') }}{% else %}{{ _('إضافة العطل') }}{% endif %}
+                        </button>
+                        <a href="{{ url_for('device_faults', device_id=device.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> {{ _('إلغاء') }}
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">{{ _('معلومات الجهاز') }}</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>{{ _('الاسم:') }}</strong> {{ device.name }}</p>
+                <p><strong>{{ _('النوع:') }}</strong> 
+                    <span class="badge bg-{{ 'primary' if device.device_type == 'NVR' else 'success' if device.device_type == 'Switch' else 'warning' if device.device_type == 'Router' else 'info' }}">
+                        {{ _(device.device_type) }}
+                    </span>
+                </p>
+                <p><strong>{{ _('عنوان IP:') }}</strong> {{ device.ip_address or '-' }}</p>
+                <p><strong>{{ _('الموقع:') }}</strong> {{ device.location or '-' }}</p>
+                <p><strong>{{ _('الفرع:') }}</strong> {{ device.branch.name }}</p>
+                <p><strong>{{ _('المنطقة:') }}</strong> {{ device.branch.region.name }}</p>
+                <p><strong>{{ _('السلسلة:') }}</strong> {{ device.branch.region.chain.name }}</p>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">{{ _('إحصائيات الجهاز') }}</h6>
+            </div>
+            <div class="card-body">
+                {% set open_faults = device.faults | selectattr('resolved_at', 'equalto', none) | list %}
+                {% set closed_faults = device.faults | selectattr('resolved_at', 'ne', none) | list %}
+                
+                <p><strong>{{ _('الأعطال المفتوحة:') }}</strong> 
+                    <span class="badge bg-danger">{{ open_faults | length }}</span>
+                </p>
+                <p><strong>{{ _('الأعطال المغلقة:') }}</strong> 
+                    <span class="badge bg-success">{{ closed_faults | length }}</span>
+                </p>
+                <p><strong>{{ _('إجمالي الأعطال:') }}</strong> {{ device.faults | length }}</p>
+                
+                <a href="{{ url_for('device_faults', device_id=device.id) }}" class="btn btn-sm btn-outline-primary mt-2">
+                    <i class="fas fa-tools"></i> {{ _('عرض جميع الأعطال') }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

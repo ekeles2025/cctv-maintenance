@@ -1,0 +1,3049 @@
+import os
+import io
+import csv
+import time
+import logging
+import sqlite3
+from datetime import datetime, timedelta, timezone
+from dotenv import load_dotenv
+import pandas as pd
+import io
+from datetime import datetime, timedelta
+from werkzeug.utils import secure_filename
+
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file, session, g, make_response
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from flask_wtf.csrf import CSRFProtect
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+from werkzeug.exceptions import HTTPException
+from openpyxl import Workbook, load_workbook
+from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.utils import get_column_letter
+
+try:
+    from flask_babel import Babel, gettext as _
+except ImportError:  # pragma: no cover
+    def _(x): return x
+
+# Import configuration and utilities
+from config import Config
+from utils import utc_now, local_now, local_dt, allowed_upload_file, ensure_directories, calculate_time_diff
+from menu_config import load_menu_items, save_menu_items, update_menu_item
+
+# تحميل الإعدادات من .env أو .env.local
+load_dotenv('.env.local')
+load_dotenv('.env')
+
+# إنشاء التطبيق
+app = Flask(__name__)
+app.config.from_object(Config)
+
+
+SUPPORTED_LANGS = {"ar", "en"}
+
+
+TRANSLATIONS = {
+    "ar": {
+        "system_subtitle": "Camera System",
+        "home": "الرئيسية",
+        "faults": "الأعطال",
+        "faulty_devices": "الأجهزة المعطلة",
+        "import_excel": "استيراد من Excel",
+        "chains": "السلاسل",
+        "regions": "المناطق",
+        "technicians": "الفنيين",
+        "settings": "الإعدادات",
+        "logout": "تسجيل الخروج",
+        "admin": "مدير",
+        "technician": "فني",
+        "login_title": "تسجيل الدخول",
+        "login_system": "نظام إدارة الكاميرات",
+        "username": "اسم المستخدم",
+        "password": "كلمة المرور",
+        "sign_in": "تسجيل الدخول",
+        "username_placeholder": "أدخل اسم المستخدم",
+        "password_placeholder": "أدخل كلمة المرور",
+        "ping_on_store": "Ping On Store",
+        "test_connection": "اختبار الاتصال",
+        "search_branch": "البحث عن الفرع",
+        "enter_ip_address": "أدخل عنوان IP",
+        "invalid_ip": "عنوان IP غير صحيح",
+        "connection_success": "تم الاتصال بنجاح",
+        "connection_failed": "فشل الاتصال",
+        "connection_timeout": "انتهت مهلة الاتصال",
+        "connection_error": "خطأ في الاتصال",
+        "available_branches": "الفروع المتاحة",
+        "no_matching_branches": "لا توجد فروع مطابقة للبحث",
+        "try_different_search": "جرب البحث بكلمات مختلفة أو تحقق من إضافة الفروع",
+        "select_device": "اختر الجهاز للاتصال",
+        "devices_loaded_auto": "سيتم تحميل الأجهزة تلقائياً عند اختيار الفرع",
+        "enter_ip_or_select": "أدخل عنوان IP مباشرة أو اختر جهازاً من القائمة",
+        "ping_result": "نتيجة الاختبار",
+        "ping_success": "نجح الاتصال!",
+        "ping_failed": "فشل الاتصال",
+        "start_test": "ابدأ الاختبار",
+        "cancel": "إلغاء",
+        "search_by_branch": "ابحث باسم الفرع، المنطقة، أو السلسلة",
+        "example_branch_search": "مثال: فرع القاهرة، السلسلة الرئيسية...",
+        "search": "بحث",
+        "clear_search": "مسح البحث",
+        "no_chain": "بدون سلسلة",
+        "no_region": "بدون منطقة",
+        "no_location": "لا يوجد موقع محدد",
+        "available_devices": "الأجهزة المتاحة:",
+        "no_devices_with_ip": "لا توجد أجهزة بعناوين IP",
+        "response_time": "وقت الاستجابة",
+        "connected": "متصل",
+        "not_connected": "غير متصل",
+        "unavailable": "غير متوفر",
+        "ping_details": "تفاصيل الـ Ping",
+        "connection_error": "خطأ في الاتصال",
+        "status": "الحالة",
+        "time": "الزمن",
+        "testing": "جاري الاختبار",
+        "very_fast": "سريع جداً",
+        "good": "جيد",
+        "slow": "بطيء",
+        "very_slow": "بطيء جداً",
+        "timeout": "انتهت المهلة",
+        "open_cmd_confirm": "فتح CMD للتأكيد",
+        "enter_valid_ip": "الرجاء إدخال عنوان IP صحيح",
+        "copied_to_clipboard": "تم نسخ الأمر إلى الحافظة. افتح CMD والصق الأمر:",
+        "copy_command": "انسخ هذا الأمر وافتح CMD:",
+        "cmd_results": "نتائج CMD",
+        "ping_10_seconds": "جاري تشغيل اختبار Ping لمدة 10 ثواني...",
+        "ping_completed": "اكتمل اختبار Ping. جاري تحميل النتائج...",
+        "ping_test_completed": "تم تشغيل اختبار Ping لمدة 10 ثواني على",
+        "copy_results": "نسخ النتائج",
+        "download_results": "تحميل النتائج",
+        "close": "إغلاق",
+        "results_copied": "تم نسخ النتائج إلى الحافظة",
+        "powershell_script_created": "PowerShell script created. Run it to perform the ping test.",
+        "cmd_open_failed": "Could not open CMD automatically. Please copy the command and run it manually.",
+        "cmd_open_error": "Error opening CMD. Command copied to clipboard.",
+        "camera_offline": "Camera Offline",
+        "other": "أخرى",
+    },
+    "en": {
+        "system_subtitle": "Camera System",
+        "home": "Home",
+        "faults": "Faults",
+        "faulty_devices": "Faulty Devices",
+        "import_excel": "Import Excel",
+        "chains": "Chains",
+        "regions": "Regions",
+        "technicians": "Technicians",
+        "settings": "Settings",
+        "logout": "Logout",
+        "admin": "Admin",
+        "technician": "Technician",
+        "login_title": "Sign In",
+        "login_system": "Camera Management System",
+        "username": "Username",
+        "password": "Password",
+        "sign_in": "Sign In",
+        "username_placeholder": "Enter username",
+        "password_placeholder": "Enter password",
+        "ping_on_store": "Ping On Store",
+        "test_connection": "Test Connection",
+        "search_branch": "Search Branch",
+        "enter_ip_address": "Enter IP Address",
+        "invalid_ip": "Invalid IP Address",
+        "connection_success": "Connection Successful",
+        "connection_failed": "Connection Failed",
+        "connection_timeout": "Connection Timeout",
+        "connection_error": "Connection Error",
+        "available_branches": "Available Branches",
+        "no_matching_branches": "No branches match your search",
+        "try_different_search": "Try searching with different keywords or check if branches are added",
+        "select_device": "Select Device to Connect",
+        "devices_loaded_auto": "Devices will load automatically when you select a branch",
+        "enter_ip_or_select": "Enter IP address directly or select a device from the list",
+        "ping_result": "Test Result",
+        "ping_success": "Connection Successful!",
+        "ping_failed": "Connection Failed",
+        "start_test": "Start Test",
+        "cancel": "Cancel",
+        "search_by_branch": "Search by branch name, region, or chain",
+        "example_branch_search": "Example: Cairo Branch, Main Chain...",
+        "search": "Search",
+        "clear_search": "Clear Search",
+        "no_chain": "No Chain",
+        "no_region": "No Region",
+        "no_location": "No location specified",
+        "available_devices": "Available Devices:",
+        "no_devices_with_ip": "No devices with IP addresses",
+        "response_time": "Response Time",
+        "connected": "Connected",
+        "not_connected": "Not Connected",
+        "unavailable": "Unavailable",
+        "ping_details": "Ping Details",
+        "connection_error": "Connection Error",
+        "status": "Status",
+        "time": "Time",
+        "testing": "Testing",
+        "very_fast": "Very Fast",
+        "good": "Good",
+        "slow": "Slow",
+        "very_slow": "Very Slow",
+        "timeout": "Timeout",
+        "open_cmd_confirm": "Open CMD for Confirmation",
+        "enter_valid_ip": "Please enter a valid IP address",
+        "copied_to_clipboard": "Command copied to clipboard. Open CMD and paste:",
+        "copy_command": "Copy this command and open CMD:",
+        "cmd_results": "CMD Results",
+        "ping_10_seconds": "Running ping test for 10 seconds...",
+        "ping_completed": "Ping test completed. Loading results...",
+        "ping_test_completed": "Ping test completed for 10 seconds on",
+        "copy_results": "Copy Results",
+        "download_results": "Download Results",
+        "close": "Close",
+        "results_copied": "Results copied to clipboard",
+        "powershell_script_created": "PowerShell script created. Run it to perform the ping test.",
+        "cmd_open_failed": "Could not open CMD automatically. Please copy the command and run it manually.",
+        "cmd_open_error": "Error opening CMD. Command copied to clipboard.",
+        "camera_offline": "Camera Offline",
+        "other": "Other",
+    },
+}
+
+
+def get_current_lang():
+    # Force English as default language
+    if hasattr(request, 'session'):
+        lang = request.session.get("lang", "en")
+    else:
+        # Fallback to direct session access
+        from flask import session
+        lang = session.get("lang", "en")
+    
+    # Always default to English if not explicitly set to Arabic
+    if lang != "ar":
+        lang = "en"
+    
+    return lang if lang in SUPPORTED_LANGS else "en"
+
+
+babel = Babel(app, locale_selector=get_current_lang) if Babel else None
+
+try:
+    app.jinja_env.add_extension('jinja2.ext.i18n')
+except Exception:
+    pass
+
+
+@app.before_request
+def set_language_globals():
+    g.lang = get_current_lang()
+    g.dir = "rtl" if g.lang == "ar" else "ltr"
+    
+    # Force English as default for new sessions
+    if 'lang' not in session:
+        session['lang'] = 'en'
+        g.lang = 'en'
+        g.dir = 'ltr'
+
+
+@app.route("/set-language/<lang>")
+def set_language(lang):
+    if lang not in SUPPORTED_LANGS:
+        lang = "en"
+    session["lang"] = lang
+
+    next_url = request.args.get("next")
+    if next_url and next_url.startswith("/"):
+        return redirect(next_url)
+    return redirect(request.referrer or url_for("dashboard"))
+
+
+def t(key: str) -> str:
+    lang = getattr(g, "lang", "en")
+    return TRANSLATIONS.get(lang, {}).get(key, TRANSLATIONS["en"].get(key, key))
+
+# حماية CSRF
+csrf = CSRFProtect(app)
+
+# إعداد Logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logging.Formatter.converter = time.localtime
+logger = logging.getLogger(__name__)
+
+# Create directories and initialize paths
+ensure_directories(app.config['UPLOAD_FOLDER'], app.config['LOGO_FOLDER'])
+
+# Initialize database
+db = SQLAlchemy(app)
+
+# Import menu model after db is initialized
+from menu_model import MenuItem
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
+
+# تعريف النماذج
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    role = db.Column(db.String(20), default="technician")
+    faults_reported = db.relationship('Fault', backref='technician', lazy=True)
+    device_faults_reported = db.relationship('DeviceFault', backref='technician', lazy=True)
+
+    def get_id(self):
+        return str(self.id)
+
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_active(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return False
+
+class Chain(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    regions = db.relationship("Region", backref="chain", lazy=True, cascade="all, delete-orphan")
+
+class Region(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    chain_id = db.Column(db.Integer, db.ForeignKey('chain.id'), nullable=True)
+    branches = db.relationship("Branch", backref="region", cascade="all, delete")
+
+class Branch(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    location = db.Column(db.String(200))
+    ip_address = db.Column(db.String(100))
+    phone_number = db.Column(db.String(20))
+    phone_number_2 = db.Column(db.String(20))
+    phone_number_3 = db.Column(db.String(20))
+    phone_number_4 = db.Column(db.String(20))
+    nvr_count = db.Column(db.Integer, default=0)
+    region_id = db.Column(db.Integer, db.ForeignKey('region.id'))
+    cameras = db.relationship("Camera", backref="branch", cascade="all, delete")
+    devices = db.relationship("Device", backref="branch", cascade="all, delete")
+
+class ExcelData(db.Model):
+    """Model to store raw Excel data for Total Camera"""
+    id = db.Column(db.Integer, primary_key=True)
+    excel_filename = db.Column(db.String(255), nullable=False)
+    upload_date = db.Column(db.DateTime(timezone=True), default=utc_now)
+    row_data = db.Column(db.Text, nullable=False)  # JSON string of row data
+    row_number = db.Column(db.Integer, nullable=False)
+
+    def to_dict(self):
+        """Convert row data back to dictionary"""
+        try:
+            import json
+            return json.loads(self.row_data)
+        except:
+            return {}
+
+class Camera(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    ip_address = db.Column(db.String(100))
+    camera_type = db.Column(db.String(50), default="مراقبة")
+    status = db.Column(db.String(20), default="online")  # online, offline, maintenance
+    branch_id = db.Column(db.Integer, db.ForeignKey('branch.id'))
+    faults = db.relationship("Fault", backref="camera", cascade="all, delete")
+    
+    # Additional fields for Total Camera report
+    ops_area = db.Column(db.String(100))  # Operations Area
+    total_cameras = db.Column(db.Integer, default=0)  # Total cameras count
+    serious_cameras = db.Column(db.Integer, default=0)  # Serious cameras count
+    indoor_cameras = db.Column(db.Integer, default=0)  # Indoor cameras count
+    outdoor_cameras = db.Column(db.Integer, default=0)  # Outdoor cameras count
+    nvr_count = db.Column(db.Integer, default=0)  # NVR count
+    note = db.Column(db.String(500))  # Additional notes
+
+class Fault(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    description = db.Column(db.String(200), nullable=False)
+    fault_type = db.Column(db.String(100), nullable=False)
+    device_type = db.Column(db.String(50), nullable=False, default="NVR")  # NVR, Switch, Router, Up Link
+    reported_by = db.Column(db.String(100), nullable=False)
+    technician_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    date_reported = db.Column(db.DateTime(timezone=True), default=utc_now)
+    expires_at = db.Column(db.DateTime(timezone=True), default=lambda: utc_now() + timedelta(days=7))
+    resolved_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    resolved_by = db.Column(db.String(100), nullable=True)
+    repair_notes = db.Column(db.String(300), nullable=True)
+    repair_image = db.Column(db.String(200), nullable=True)
+    camera_id = db.Column(db.Integer, db.ForeignKey('camera.id'))
+
+class Device(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    device_type = db.Column(db.String(50), nullable=False)  # NVR, Switch, Router, Up Link
+    ip_address = db.Column(db.String(100))
+    location = db.Column(db.String(200))
+    branch_id = db.Column(db.Integer, db.ForeignKey('branch.id'))
+    faults = db.relationship("DeviceFault", backref="device", cascade="all, delete")
+
+class DeviceFault(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    description = db.Column(db.String(200), nullable=False)
+    fault_type = db.Column(db.String(100), nullable=False)
+    reported_by = db.Column(db.String(100), nullable=False)
+    technician_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    date_reported = db.Column(db.DateTime(timezone=True), default=utc_now)
+    expires_at = db.Column(db.DateTime(timezone=True), default=lambda: utc_now() + timedelta(days=7))
+    resolved_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    resolved_by = db.Column(db.String(100), nullable=True)
+    repair_notes = db.Column(db.String(300), nullable=True)
+    repair_image = db.Column(db.String(200), nullable=True)
+    device_id = db.Column(db.Integer, db.ForeignKey('device.id'))
+
+class BBMFault(db.Model):
+    """Model to store faults transferred to BBM"""
+    id = db.Column(db.Integer, primary_key=True)
+    original_fault_id = db.Column(db.Integer, nullable=False)  # Reference to original fault
+    camera_id = db.Column(db.Integer, db.ForeignKey('camera.id'), nullable=False)
+    branch_id = db.Column(db.Integer, db.ForeignKey('branch.id'), nullable=False)
+    description = db.Column(db.String(200), nullable=False)
+    fault_type = db.Column(db.String(100), nullable=False)
+    device_type = db.Column(db.String(50), nullable=False, default="NVR")
+    reported_by = db.Column(db.String(100), nullable=False)
+    technician_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    date_reported = db.Column(db.DateTime(timezone=True), default=utc_now)
+    date_transferred = db.Column(db.DateTime(timezone=True), default=utc_now)
+    transferred_by = db.Column(db.String(100), nullable=False)
+    status = db.Column(db.String(50), nullable=False, default="Pending")  # Pending, In Progress, Resolved
+    notes = db.Column(db.String(500), nullable=True)
+    
+    # Relationships
+    camera = db.relationship('Camera', backref='bbm_faults')
+    branch = db.relationship('Branch', backref='bbm_faults')
+    technician = db.relationship('User', backref='bbm_faults')
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+
+def ensure_device_type_column():
+    """Ensure `device_type` column exists in `fault` table for SQLite databases.
+    This is a safe one-time operation: adds the column and fills existing rows with 'NVR'.
+    """
+    try:
+        uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+        if not uri.startswith('sqlite'):
+            return
+
+        # Support sqlite:///relative.db or sqlite:////absolute/path.db
+        if uri.startswith('sqlite:///'):
+            db_path = uri.replace('sqlite:///', '')
+        else:
+            db_path = uri.replace('sqlite://', '')
+
+        db_path = os.path.abspath(db_path)
+        if not os.path.exists(db_path):
+            logger.info(f"SQLite DB not found at {db_path}; skipping device_type check")
+            return
+
+        conn = sqlite3.connect(db_path)
+        cur = conn.cursor()
+        cur.execute("PRAGMA table_info(fault)")
+        cols = [r[1] for r in cur.fetchall()]
+        if 'device_type' in cols:
+            logger.info('device_type column already present in fault table')
+            conn.close()
+            return
+
+        logger.info('Adding device_type column to fault table (one-time)')
+        cur.execute("ALTER TABLE fault ADD COLUMN device_type TEXT;")
+        cur.execute("UPDATE fault SET device_type = 'NVR' WHERE device_type IS NULL OR device_type = '';")
+        conn.commit()
+        conn.close()
+        logger.info('device_type column added and populated with default NVR')
+
+    except Exception as exc:
+        logger.error(f"Failed ensuring device_type column: {exc}")
+
+
+# Configure Babel (app already exists from line 35)
+app.config['BABEL_DEFAULT_LOCALE'] = 'en'
+app.config['BABEL_DEFAULT_TIMEZONE'] = 'UTC'
+app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
+
+# Additional configurations that were in the duplicate app creation
+app.config['WTF_CSRF_ENABLED'] = True
+
+babel = Babel(app, locale_selector=get_current_lang) if Babel else None
+
+try:
+    app.jinja_env.add_extension('jinja2.ext.i18n')
+except Exception:
+    pass
+
+
+@app.context_processor
+def inject_logo():
+    logo_exists = os.path.exists(app.config['COMPANY_LOGO'])
+    company_name = app.config.get('COMPANY_NAME', 'نظام الكاميرات')
+    logo_size = app.config.get('LOGO_SIZE', 50)
+    
+    # Force English as default
+    current_lang = getattr(g, 'lang', 'en')
+    if current_lang != 'en' and current_lang != 'ar':
+        current_lang = 'en'
+    
+    current_dir = 'ltr' if current_lang == 'en' else 'rtl'
+    
+    return dict(
+        logo_exists=logo_exists,
+        company_name=company_name,
+        logo_size=logo_size,
+        current_lang=current_lang,
+        current_dir=current_dir,
+        t=t,
+        _=_ ,
+    )
+
+
+# Register Jinja filter for local datetime formatting
+app.jinja_env.filters['local_dt'] = local_dt
+
+# Error handlers
+@app.errorhandler(404)
+def not_found_error(error):
+    logger.warning(f"404 error: {request.path}")
+    flash(_("الصفحة المطلوبة غير موجودة"), "danger")
+    return redirect(url_for("dashboard"))
+
+@app.errorhandler(500)
+def internal_error(error):
+    logger.error(f"500 error: {str(error)}", exc_info=True)
+    flash(_("حدث خطأ في الخادم. يرجى المحاولة لاحقاً"), "danger")
+    return redirect(url_for("dashboard"))
+
+@app.errorhandler(403)
+def forbidden_error(error):
+    logger.warning(f"403 error: {request.path}")
+    flash(_("لا تملك صلاحية للوصول لهذه الصفحة"), "danger")
+    return redirect(url_for("dashboard"))
+
+# الروتات
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form['username']
+        password = request.form['password']
+        user = User.query.filter_by(username=username).first()
+        if user and check_password_hash(user.password, password):
+            login_user(user)
+            flash(_("تم تسجيل الدخول بنجاح"), "success")
+            return redirect(url_for("dashboard"))
+        else:
+            flash(_("اسم المستخدم أو كلمة المرور غير صحيحة"), "danger")
+    return render_template("login.html")
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    flash(_("تم تسجيل الخروج بنجاح"), "info")
+    return redirect(url_for("login"))
+
+@app.route("/")
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    now = local_now()
+    # Count only cameras assigned to branches
+    total_cameras = Camera.query.join(Branch).count()
+    total_devices = Device.query.count()
+    
+    # Count actual fault records
+    open_faults = Fault.query.filter(Fault.resolved_at == None).count()
+    closed_faults = Fault.query.filter(Fault.resolved_at != None).count()
+    open_device_faults = DeviceFault.query.filter(DeviceFault.resolved_at == None).count()
+    closed_device_faults = DeviceFault.query.filter(DeviceFault.resolved_at != None).count()
+    
+    # Count unique cameras/devices with faults (from actual fault records)
+    faulty_cameras = db.session.query(Fault.camera_id).filter(
+        Fault.resolved_at == None,
+        Fault.camera_id.in_(db.session.query(Camera.id).join(Branch).subquery())
+    ).distinct().count()
+    faulty_devices = db.session.query(DeviceFault.device_id).filter(
+        DeviceFault.resolved_at == None
+    ).distinct().count()
+    
+    working_cameras = total_cameras - faulty_cameras
+
+    open_faults_list = Fault.query.filter(
+        Fault.resolved_at == None
+    ).order_by(Fault.date_reported.asc()).all()
+    
+    # Calculate durations for recent faults
+    recent_faults_with_duration = []
+    for fault in open_faults_list:
+        duration = calculate_time_diff(fault.date_reported, now)
+        recent_faults_with_duration.append({
+            'fault': fault,
+            'duration': duration
+        })
+    
+    open_device_faults_list = DeviceFault.query.filter(
+        DeviceFault.resolved_at == None
+    ).order_by(DeviceFault.date_reported.asc()).limit(10).all()
+
+    my_faults = []
+    my_device_faults = []
+    if current_user.role == "technician":
+        my_faults = Fault.query.filter(
+            Fault.technician_id == current_user.id,
+            Fault.resolved_at == None
+        ).order_by(Fault.date_reported.asc()).all()
+        
+        my_device_faults = DeviceFault.query.filter(
+            DeviceFault.technician_id == current_user.id,
+            DeviceFault.resolved_at == None
+        ).order_by(DeviceFault.date_reported.asc()).all()
+
+    return render_template("dashboard.html",
+                           total_cameras=total_cameras,
+                           total_devices=total_devices,
+                           faulty_cameras=faulty_cameras,
+                           working_cameras=working_cameras,
+                           faulty_devices=faulty_devices,
+                           open_faults=open_faults,
+                           closed_faults=closed_faults,
+                           open_device_faults=open_device_faults,
+                           closed_device_faults=closed_device_faults,
+                           recent_faults_with_duration=recent_faults_with_duration,
+                           recent_device_faults=open_device_faults_list,
+                           my_faults=my_faults,
+                           my_device_faults=my_device_faults,
+                           now=now)
+
+@app.route("/api/dashboard-stats")
+@login_required
+def dashboard_stats():
+    total_cameras = Camera.query.count()
+    total_devices = Device.query.count()
+    open_faults = Fault.query.filter(Fault.resolved_at == None).count()
+    closed_faults = Fault.query.filter(Fault.resolved_at != None).count()
+    open_device_faults = DeviceFault.query.filter(DeviceFault.resolved_at == None).count()
+    closed_device_faults = DeviceFault.query.filter(DeviceFault.resolved_at != None).count()
+
+    return jsonify({
+        'total_cameras': total_cameras,
+        'total_devices': total_devices,
+        'open_faults': open_faults,
+        'closed_faults': closed_faults,
+        'open_device_faults': open_device_faults,
+        'closed_device_faults': closed_device_faults,
+        'faulty_cameras': open_faults,
+        'faulty_devices': open_device_faults
+    })
+
+# Admin routes - السلاسل (Chains)
+@app.route("/chains")
+@login_required
+def chains():
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه الوصول لهذه الصفحة"), "danger")
+        return redirect(url_for("dashboard"))
+    chains_list = Chain.query.all()
+    return render_template("chains.html", chains=chains_list)
+
+@app.route("/chains/add", methods=["GET", "POST"])
+@login_required
+def add_chain():
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه إضافة سلاسل"), "danger")
+        return redirect(url_for("dashboard"))
+    if request.method == "POST":
+        name = request.form['name']
+        chain = Chain(name=name)
+        db.session.add(chain)
+        db.session.commit()
+        flash(_("تم إضافة السلسلة بنجاح"), "success")
+        return redirect(url_for("chains"))
+    return render_template("add_edit_chain.html", chain=None)
+
+@app.route("/chains/edit/<int:chain_id>", methods=["GET", "POST"])
+@login_required
+def edit_chain(chain_id):
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه تعديل السلاسل"), "danger")
+        return redirect(url_for("dashboard"))
+    chain = Chain.query.get_or_404(chain_id)
+    if request.method == "POST":
+        chain.name = request.form['name']
+        db.session.commit()
+        flash(_("تم تعديل السلسلة بنجاح"), "success")
+        return redirect(url_for("chains"))
+    return render_template("add_edit_chain.html", chain=chain)
+
+@app.route("/chains/delete/<int:chain_id>", methods=["POST"])
+@login_required
+def delete_chain(chain_id):
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه حذف السلاسل"), "danger")
+        return redirect(url_for("dashboard"))
+    chain = Chain.query.get_or_404(chain_id)
+    db.session.delete(chain)
+    db.session.commit()
+    flash(_("تم حذف السلسلة بنجاح"), "success")
+    return redirect(url_for("chains"))
+
+@app.route("/chains/<int:chain_id>/regions")
+@login_required
+def chain_regions(chain_id):
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه الوصول لهذه الصفحة ❌"), "danger")
+        return redirect(url_for("dashboard"))
+    chain = Chain.query.get_or_404(chain_id)
+    regions_list = Region.query.filter_by(chain_id=chain_id).all()
+    return render_template("regions.html", regions=regions_list, chain=chain)
+
+# Admin routes - المناطق (Regions)
+@app.route("/regions")
+@login_required
+def regions():
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه الوصول لهذه الصفحة ❌"), "danger")
+        return redirect(url_for("dashboard"))
+    chain_id = request.args.get("chain_id", type=int)
+    if chain_id:
+        regions_list = Region.query.filter_by(chain_id=chain_id).all()
+        chain = Chain.query.get(chain_id)
+    else:
+        regions_list = Region.query.all()
+        chain = None
+    return render_template("regions.html", regions=regions_list, chain=chain)
+
+@app.route("/regions/add", methods=["GET", "POST"])
+@app.route("/regions/add/<int:chain_id>", methods=["GET", "POST"])
+@login_required
+def add_region(chain_id=None):
+    if current_user.role != "admin":
+        flash("فقط المدير يمكنه إضافة مناطق ❌", "danger")
+        return redirect(url_for("dashboard"))
+    if request.method == "POST":
+        name = request.form['name']
+        cid = request.form.get('chain_id', type=int)
+        region = Region(name=name, chain_id=cid)
+        db.session.add(region)
+        db.session.commit()
+        flash("تم إضافة المنطقة بنجاح ✅", "success")
+        if cid:
+            return redirect(url_for("chain_regions", chain_id=cid))
+        return redirect(url_for("regions"))
+    chains_list = Chain.query.order_by(Chain.name).all()
+    return render_template("add_edit_region.html", region=None, chains=chains_list, preselected_chain_id=chain_id)
+
+@app.route("/regions/edit/<int:region_id>", methods=["GET", "POST"])
+@login_required
+def edit_region(region_id):
+    if current_user.role != "admin":
+        flash("فقط المدير يمكنه تعديل المناطق ❌", "danger")
+        return redirect(url_for("dashboard"))
+    region = Region.query.get_or_404(region_id)
+    if request.method == "POST":
+        region.name = request.form['name']
+        region.chain_id = request.form.get('chain_id', type=int) or None
+        db.session.commit()
+        flash("تم تعديل المنطقة بنجاح ✅", "success")
+        if region.chain_id:
+            return redirect(url_for("chain_regions", chain_id=region.chain_id))
+        return redirect(url_for("regions"))
+    chains_list = Chain.query.order_by(Chain.name).all()
+    return render_template("add_edit_region.html", region=region, chains=chains_list, preselected_chain_id=None)
+
+@app.route("/regions/delete/<int:region_id>", methods=["POST"])
+@login_required
+def delete_region(region_id):
+    if current_user.role != "admin":
+        flash("فقط المدير يمكنه حذف المناطق ❌", "danger")
+        return redirect(url_for("dashboard"))
+    region = Region.query.get_or_404(region_id)
+    db.session.delete(region)
+    db.session.commit()
+    flash("تم حذف المنطقة بنجاح ✅", "success")
+    return redirect(url_for("regions"))
+
+@app.route("/branches/<int:region_id>")
+@login_required
+def branches(region_id):
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه الوصول لهذه الصفحة ❌"), "danger")
+        return redirect(url_for("dashboard"))
+    region = Region.query.get_or_404(region_id)
+    return render_template("branches.html", branches=region.branches, region=region)
+
+@app.route("/branches/add/<int:region_id>", methods=["GET", "POST"])
+@login_required
+def add_branch(region_id):
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه إضافة فروع ❌"), "danger")
+        return redirect(url_for("dashboard"))
+    if request.method == "POST":
+        branch = Branch(
+            name=request.form['name'],
+            location=request.form['location'],
+            phone_number=request.form.get('phone_number', ''),
+            phone_number_2=request.form.get('phone_number_2', ''),
+            phone_number_3=request.form.get('phone_number_3', ''),
+            phone_number_4=request.form.get('phone_number_4', ''),
+            ip_address=request.form.get('ip_address', ''),
+            nvr_count=int(request.form.get('nvr_count', 0)),
+            region_id=region_id
+        )
+        db.session.add(branch)
+        db.session.commit()
+        flash("تم إضافة الفرع بنجاح ✅", "success")
+        return redirect(url_for("branches", region_id=region_id))
+    return render_template("add_edit_branch.html", branch=None, region=Region.query.get(region_id))
+
+@app.route("/branches/edit/<int:branch_id>", methods=["GET", "POST"])
+@login_required
+def edit_branch(branch_id):
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه تعديل الفروع ❌"), "danger")
+        return redirect(url_for("dashboard"))
+    branch = Branch.query.get_or_404(branch_id)
+    if request.method == "POST":
+        branch.name = request.form['name']
+        branch.location = request.form['location']
+        branch.phone_number = request.form.get('phone_number', '')
+        branch.phone_number_2 = request.form.get('phone_number_2', '')
+        branch.phone_number_3 = request.form.get('phone_number_3', '')
+        branch.phone_number_4 = request.form.get('phone_number_4', '')
+        branch.ip_address = request.form.get('ip_address', '')
+        branch.nvr_count = int(request.form.get('nvr_count', 0))
+        db.session.commit()
+        flash("تم تعديل الفرع بنجاح ✅", "success")
+        return redirect(url_for("branches", region_id=branch.region_id))
+    return render_template("add_edit_branch.html", branch=branch, region=branch.region)
+
+@app.route("/branches/delete/<int:branch_id>", methods=["POST"])
+@login_required
+def delete_branch(branch_id):
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه حذف الفروع ❌"), "danger")
+        return redirect(url_for("dashboard"))
+    branch = Branch.query.get_or_404(branch_id)
+    region_id = branch.region_id
+    db.session.delete(branch)
+    db.session.commit()
+    flash("تم حذف الفرع بنجاح ✅", "success")
+    return redirect(url_for("branches", region_id=region_id))
+
+@app.route("/cameras/<int:branch_id>")
+@login_required
+def cameras(branch_id):
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه الوصول لهذه الصفحة ❌"), "danger")
+        return redirect(url_for("dashboard"))
+    branch = Branch.query.get_or_404(branch_id)
+    return render_template("cameras.html", cameras=branch.cameras, branch=branch)
+
+@app.route("/cameras/add/<int:branch_id>", methods=["GET", "POST"])
+@login_required
+def add_camera(branch_id):
+    if current_user.role != "admin":
+        flash("فقط المدير يمكنه إضافة كاميرات ❌", "danger")
+        return redirect(url_for("dashboard"))
+    if request.method == "POST":
+        camera = Camera(
+            name=request.form['name'],
+            ip_address=request.form['ip_address'],
+            camera_type=request.form.get('camera_type', 'مراقبة'),
+            branch_id=branch_id
+        )
+        db.session.add(camera)
+        db.session.commit()
+        flash("تم إضافة الكاميرا بنجاح ✅", "success")
+        return redirect(url_for("cameras", branch_id=branch_id))
+    return render_template("add_edit_camera.html", camera=None, branch=Branch.query.get(branch_id))
+
+@app.route("/cameras/edit/<int:camera_id>", methods=["GET", "POST"])
+@login_required
+def edit_camera(camera_id):
+    if current_user.role != "admin":
+        flash("فقط المدير يمكنه تعديل الكاميرات ❌", "danger")
+        return redirect(url_for("dashboard"))
+    camera = Camera.query.get_or_404(camera_id)
+    if request.method == "POST":
+        camera.name = request.form['name']
+        camera.ip_address = request.form['ip_address']
+        camera.camera_type = request.form.get('camera_type', 'مراقبة')
+        db.session.commit()
+        flash("تم تعديل الكاميرا بنجاح ✅", "success")
+        return redirect(url_for("cameras", branch_id=camera.branch_id))
+    return render_template("add_edit_camera.html", camera=camera, branch=camera.branch)
+
+@app.route("/cameras/delete/<int:camera_id>", methods=["POST"])
+@login_required
+def delete_camera(camera_id):
+    if current_user.role != "admin":
+        flash("فقط المدير يمكنه حذف الكاميرات ❌", "danger")
+        return redirect(url_for("dashboard"))
+    camera = Camera.query.get_or_404(camera_id)
+    branch_id = camera.branch_id
+    db.session.delete(camera)
+    db.session.commit()
+    flash("تم حذف الكاميرا بنجاح ✅", "success")
+    return redirect(url_for("cameras", branch_id=branch_id))
+
+# Device Management Routes
+@app.route("/devices")
+@login_required
+def devices():
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه الوصول لهذه الصفحة ❌"), "danger")
+        return redirect(url_for("dashboard"))
+    
+    branch_id = request.args.get("branch_id", type=int)
+    if branch_id:
+        devices_list = Device.query.filter_by(branch_id=branch_id).all()
+        branch = Branch.query.get(branch_id)
+    else:
+        devices_list = Device.query.all()
+        branch = None
+    
+    return render_template("devices.html", devices=devices_list, branch=branch)
+
+@app.route("/devices/add/<int:branch_id>", methods=["GET", "POST"])
+@login_required
+def add_device(branch_id):
+    if current_user.role != "admin":
+        flash("فقط المدير يمكنه إضافة أجهزة ❌", "danger")
+        return redirect(url_for("dashboard"))
+    
+    branch = Branch.query.get_or_404(branch_id)
+    
+    if request.method == "POST":
+        device = Device(
+            name=request.form['name'],
+            device_type=request.form['device_type'],
+            ip_address=request.form.get('ip_address', ''),
+            location=request.form.get('location', ''),
+            branch_id=branch_id
+        )
+        db.session.add(device)
+        db.session.commit()
+        flash("تم إضافة الجهاز بنجاح ✅", "success")
+        return redirect(url_for("devices", branch_id=branch_id))
+    
+    return render_template("add_edit_device.html", device=None, branch=branch)
+
+@app.route("/devices/edit/<int:device_id>", methods=["GET", "POST"])
+@login_required
+def edit_device(device_id):
+    if current_user.role != "admin":
+        flash("فقط المدير يمكنه تعديل الأجهزة ❌", "danger")
+        return redirect(url_for("dashboard"))
+    
+    device = Device.query.get_or_404(device_id)
+    
+    if request.method == "POST":
+        device.name = request.form['name']
+        device.device_type = request.form['device_type']
+        device.ip_address = request.form.get('ip_address', '')
+        device.location = request.form.get('location', '')
+        db.session.commit()
+        flash("تم تعديل الجهاز بنجاح ✅", "success")
+        return redirect(url_for("devices", branch_id=device.branch_id))
+    
+    return render_template("add_edit_device.html", device=device, branch=device.branch)
+
+@app.route("/devices/delete/<int:device_id>", methods=["POST"])
+@login_required
+def delete_device(device_id):
+    if current_user.role != "admin":
+        flash("فقط المدير يمكنه حذف الأجهزة ❌", "danger")
+        return redirect(url_for("dashboard"))
+    
+    device = Device.query.get_or_404(device_id)
+    branch_id = device.branch_id
+    db.session.delete(device)
+    db.session.commit()
+    flash("تم حذف الجهاز بنجاح ✅", "success")
+    return redirect(url_for("devices", branch_id=branch_id))
+
+# Device Faults Routes
+@app.route("/device-faults")
+@login_required
+def all_device_faults():
+    if current_user.role == "admin":
+        device_faults = DeviceFault.query.order_by(DeviceFault.date_reported.desc()).all()
+    else:
+        device_faults = DeviceFault.query.filter(
+            DeviceFault.technician_id == current_user.id
+        ).order_by(DeviceFault.date_reported.desc()).all()
+    return render_template("all_device_faults.html", device_faults=device_faults)
+
+@app.route("/device-faults/<int:device_id>")
+@login_required
+def device_faults(device_id):
+    device = Device.query.get_or_404(device_id)
+    technicians = User.query.filter_by(role='technician').all()
+    now = utc_now()
+
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه الوصول لهذه الصفحة ❌"), "danger")
+        return redirect(url_for("all_device_faults"))
+
+    # compute average repair duration (in days) for resolved faults of this device
+    faults_list = list(device.faults)
+    resolved = [f for f in faults_list if f.resolved_at]
+    if resolved:
+        total_seconds = sum((f.resolved_at - f.date_reported).total_seconds() for f in resolved)
+        avg_days = total_seconds / len(resolved) / 86400.0
+    else:
+        avg_days = 0
+
+    return render_template("device_faults.html", faults=faults_list, device=device, technicians=technicians, now=now, avg_days=avg_days)
+
+@app.route("/device-faults/add/<int:device_id>", methods=["GET", "POST"])
+@login_required
+def add_device_fault(device_id):
+    if current_user.role != "admin":
+        flash("فقط المدير يمكنه إضافة أعطال ❌", "danger")
+        return redirect(url_for("all_device_faults"))
+
+    device = Device.query.get_or_404(device_id)
+    technicians = User.query.filter_by(role='technician').all()
+
+    if request.method == "POST":
+        technician_id = request.form.get('technician_id')
+        technician_id = int(technician_id) if technician_id else None
+        fault = DeviceFault(
+            description=request.form['description'],
+            fault_type=request.form['fault_type'],
+            reported_by=request.form['reported_by'],
+            technician_id=technician_id,
+            device_id=device_id
+        )
+        db.session.add(fault)
+        db.session.commit()
+        flash("تم تسجيل عطل الجهاز بنجاح ✅", "success")
+        return redirect(url_for("device_faults", device_id=device_id))
+
+    return render_template("add_edit_device_fault.html", fault=None, device=device, technicians=technicians)
+
+@app.route("/device-faults/edit/<int:fault_id>", methods=["GET", "POST"])
+@login_required
+def edit_device_fault(fault_id):
+    if current_user.role != "admin":
+        flash("فقط المدير يمكنه تعديل الأعطال ❌", "danger")
+        return redirect(url_for("all_device_faults"))
+
+    fault = DeviceFault.query.get_or_404(fault_id)
+    technicians = User.query.filter_by(role='technician').all()
+
+    if request.method == "POST":
+        technician_id = request.form.get('technician_id')
+        technician_id = int(technician_id) if technician_id else None
+        
+        fault.description = request.form['description']
+        fault.fault_type = request.form['fault_type']
+        fault.reported_by = request.form['reported_by']
+        fault.technician_id = technician_id
+        
+        db.session.commit()
+        flash("تم تعديل عطل الجهاز بنجاح ✅", "success")
+        return redirect(url_for("device_faults", device_id=fault.device_id))
+
+    return render_template("add_edit_device_fault.html", fault=fault, device=fault.device, technicians=technicians)
+
+@app.route("/device-faults/resolve/<int:fault_id>", methods=["GET", "POST"])
+@login_required
+def resolve_device_fault(fault_id):
+    fault = DeviceFault.query.get_or_404(fault_id)
+
+    if current_user.role == "technician" and fault.technician_id != current_user.id:
+        flash("غير مسموح لك بإصلاح هذا العطل ❌", "danger")
+        return redirect(url_for("all_device_faults"))
+
+    if request.method == "POST":
+        fault.resolved_at = utc_now()
+        fault.resolved_by = current_user.username
+        fault.repair_notes = request.form.get('repair_notes', '')
+
+        if 'repair_image' in request.files:
+            file = request.files['repair_image']
+            if file and file.filename != "" and allowed_upload_file(file.filename, {'png', 'jpg', 'jpeg', 'gif'}):
+                filename = secure_filename(file.filename)
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(filepath)
+                fault.repair_image = filename
+            elif file and file.filename and not allowed_upload_file(file.filename, {'png', 'jpg', 'jpeg', 'gif'}):
+                flash("صيغة الملف غير مدعومة. استخدم: " + ", ".join(app.config['ALLOWED_IMAGE_EXTENSIONS']), "warning")
+
+        db.session.commit()
+        flash("تم إصلاح عطل الجهاز بنجاح ✅", "success")
+        return redirect(url_for("all_device_faults"))
+
+    now = utc_now()
+    return render_template("resolve_device_fault.html", fault=fault, now=now)
+
+@app.route("/device-faults/details/<int:fault_id>")
+@login_required
+def device_fault_details(fault_id):
+    fault = DeviceFault.query.get_or_404(fault_id)
+
+    if current_user.role == "technician" and fault.technician_id != current_user.id:
+        flash("غير مسموح لك بمشاهدة هذا العطل ❌", "danger")
+        return redirect(url_for("all_device_faults"))
+
+    now = utc_now()
+    return render_template("device_fault_details.html", fault=fault, now=now)
+
+def get_menu_items(user_role="admin"):
+    """Get menu items for sidebar"""
+    return load_menu_items()
+
+# Make the function available to templates
+app.jinja_env.globals['get_menu_items'] = get_menu_items
+
+@app.route("/menu-items")
+@login_required
+def get_menu_items_api():
+    """API endpoint to get current menu items"""
+    try:
+        menu_items = get_menu_items(current_user.role)
+        
+        # Process menu items to include translated display names
+        processed_items = []
+        for item in menu_items:
+            processed_item = item.copy()
+            # Apply translation to display name
+            processed_item['display_name'] = _(item['display_name'])
+            processed_items.append(processed_item)
+        
+        return jsonify(processed_items)
+    except Exception as e:
+        print(f"Error in menu-items API: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/search-camera-faults")
+@login_required
+def search_camera_faults():
+    """Search page for camera faults."""
+    if current_user.role == "admin":
+        faults = Fault.query.order_by(Fault.date_reported.desc()).all()
+    else:
+        faults = Fault.query.filter_by(technician_id=current_user.id).order_by(Fault.date_reported.desc()).all()
+    
+    return render_template("search_camera_faults.html", faults=faults)
+
+@app.route("/faults")
+@login_required
+def all_faults():
+    technicians = User.query.filter_by(role="technician").all()
+    
+    if current_user.role == "admin":
+        all_faults = Fault.query.filter(
+            Fault.resolved_at == None
+        ).order_by(Fault.date_reported.desc()).all()
+        # Filter out BBM transferred faults in Python
+        faults = [f for f in all_faults if 'تم النقل إلى قسم BBM' not in (f.repair_notes or '')]
+    else:
+        all_faults = Fault.query.filter(
+            Fault.technician_id == current_user.id,
+            Fault.resolved_at == None
+        ).order_by(Fault.date_reported.desc()).all()
+        # Filter out BBM transferred faults in Python
+        faults = [f for f in all_faults if 'تم النقل إلى قسم BBM' not in (f.repair_notes or '')]
+    
+    return render_template("all_faults.html", faults=faults, technicians=technicians)
+
+@app.route("/faults/<int:camera_id>")
+@login_required
+def faults(camera_id):
+    camera = Camera.query.get_or_404(camera_id)
+    technicians = User.query.filter_by(role='technician').all()
+    now = utc_now()
+
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه الوصول لهذه الصفحة ❌"), "danger")
+        return redirect(url_for("all_faults"))
+
+    # compute average repair duration (in days) for resolved faults of this camera
+    faults_list = list(camera.faults)
+    resolved = [f for f in faults_list if f.resolved_at]
+    if resolved:
+        total_seconds = sum((f.resolved_at - f.date_reported).total_seconds() for f in resolved)
+        avg_days = total_seconds / len(resolved) / 86400.0
+    else:
+        avg_days = 0
+
+    return render_template("faults.html", faults=faults_list, camera=camera, technicians=technicians, now=now, avg_days=avg_days)
+
+@app.route("/faults/add/<int:camera_id>", methods=["GET", "POST"])
+@login_required
+def add_fault(camera_id):
+    if current_user.role != "admin":
+        flash("فقط المدير يمكنه إضافة أعطال ❌", "danger")
+        return redirect(url_for("all_faults"))
+
+    if request.method == "POST":
+        try:
+            # Get form data with error handling
+            fault.fault_type = request.form.get("fault_type", "").strip()
+            fault.device_type = request.form.get("device_type", "").strip()
+            fault.description = request.form.get("description", "").strip()
+            fault.reported_by = request.form.get("reported_by", "").strip()
+            
+            # Validate required fields
+            if not fault.fault_type:
+                flash('نوع العطل مطلوب', 'danger')
+                return render_template("add_edit_fault.html", fault=fault, camera=fault.camera, technicians=technicians)
+            
+            if not fault.device_type:
+                flash('نوع الجهاز مطلوب', 'danger')
+                return render_template("add_edit_fault.html", fault=fault, camera=fault.camera, technicians=technicians)
+            
+            if not fault.description:
+                flash('وصف العطل مطلوب', 'danger')
+                return render_template("add_edit_fault.html", fault=fault, camera=fault.camera, technicians=technicians)
+            
+            if not fault.reported_by:
+                flash('اسم المبلغ مطلوب', 'danger')
+                return render_template("add_edit_fault.html", fault=fault, camera=fault.camera, technicians=technicians)
+    
+    if current_user.role != "admin":
+        flash("غير مسموح لك بحذف هذا العطل ❌", "danger")
+        return redirect(url_for("all_faults"))
+    
+    try:
+        # حذف صور الإصلاح إذا وجدت
+        if fault.repair_image:
+            repair_image_path = os.path.join(app.config['UPLOAD_FOLDER'], fault.repair_image)
+            if os.path.exists(repair_image_path):
+                os.remove(repair_image_path)
+        
+        # حذف العطل
+        db.session.delete(fault)
+        db.session.commit()
+        flash("تم حذف العطل بنجاح ✅", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"خطأ في حذف العطل: {str(e)} ❌", "danger")
+    
+    return redirect(url_for("all_faults"))
+
+
+@app.route("/convert-to-bbm/<int:fault_id>", methods=["POST"])
+@login_required
+def convert_to_bbm(fault_id):
+    """Convert fault to BBM system and remove from main faults list"""
+    if current_user.role != "admin":
+        flash("غير مسموح لك بالتحويل إلى BBM ❌", "danger")
+        return redirect(url_for("all_faults"))
+    
+    fault = Fault.query.get_or_404(fault_id)
+    
+    try:
+        # Create BBM fault record
+        bbm_fault = BBMFault(
+            original_fault_id=fault.id,
+            camera_id=fault.camera_id,
+            branch_id=fault.camera.branch_id if fault.camera else None,
+            description=fault.description,
+            fault_type=fault.fault_type,
+            device_type=fault.device_type or "NVR",
+            reported_by=fault.reported_by,
+            technician_id=fault.technician_id,
+            date_reported=fault.date_reported,
+            transferred_by=current_user.username,
+            status="Pending"
+        )
+        
+        db.session.add(bbm_fault)
+        
+        # Mark original fault as transferred to BBM and hide from main list
+        fault.repair_notes = f"تم التحويل إلى BBM بواسطة {current_user.username} في {utc_now().strftime('%Y-%m-%d %H:%M')} - تم النقل إلى قسم BBM"
+        fault.resolved_at = utc_now()
+        fault.resolved_by = current_user.username
+        
+        db.session.commit()
+        
+        flash(f"تم تحويل العطل #{fault.id} إلى BBM بنجاح ✅", "success")
+        
+    except Exception as e:
+        print(f"Error converting to BBM: {str(e)}")
+        flash(f"حدث خطأ أثناء التحويل إلى BBM: {str(e)} ❌", "danger")
+        db.session.rollback()
+    
+    return redirect(url_for("all_faults"))
+
+
+@app.route("/bbm-management")
+@login_required
+def bbm_management():
+    """BBM Management page - show all transferred faults"""
+    if current_user.role != "admin":
+        flash("فقط المدير يمكنه الوصول لصفحة BBM ❌", "danger")
+        return redirect(url_for("dashboard"))
+    
+    # Get all BBM faults
+    bbm_faults = BBMFault.query.order_by(BBMFault.date_transferred.desc()).all()
+    
+    return render_template("bbm_management.html", 
+                         bbm_faults=bbm_faults,
+                         branches=Branch.query.all(),
+                         technicians=User.query.filter(User.role.in_(["admin", "technician"])).all())
+
+
+@app.route("/resolve-bbm/<int:bbm_id>", methods=["GET", "POST"])
+@login_required
+def resolve_bbm(bbm_id):
+    """Resolve BBM fault"""
+    if current_user.role != "admin":
+        flash("غير مسموح لك بإصلاح عطل BBM ❌", "danger")
+        return redirect(url_for("dashboard"))
+    
+    bbm_fault = BBMFault.query.get_or_404(bbm_id)
+    
+    if request.method == "POST":
+        bbm_fault.status = "Resolved"
+        bbm_fault.resolved_at = utc_now()
+        bbm_fault.resolved_by = current_user.username
+        bbm_fault.notes = request.form.get('notes', '')
+        
+        db.session.commit()
+        flash("تم إصلاح عطل BBM بنجاح ✅", "success")
+        return redirect(url_for("bbm_management"))
+    
+    return render_template("resolve_bbm.html", bbm_fault=bbm_fault)
+
+
+@app.route("/delete-bbm/<int:bbm_id>", methods=["POST"])
+@login_required
+def delete_bbm(bbm_id):
+    """Delete BBM fault"""
+    if current_user.role != "admin":
+        flash("غير مسموح لك بحذف عطل BBM ❌", "danger")
+        return redirect(url_for("dashboard"))
+    
+    bbm_fault = BBMFault.query.get_or_404(bbm_id)
+    
+    try:
+        db.session.delete(bbm_fault)
+        db.session.commit()
+        flash("تم حذف عطل BBM بنجاح ✅", "success")
+    except Exception as e:
+        print(f"Error deleting BBM fault: {str(e)}")
+        flash(f"حدث خطأ أثناء حذف عطل BBM: {str(e)} ❌", "danger")
+        db.session.rollback()
+    
+    return redirect(url_for("bbm_management"))
+
+
+@app.route("/faults/edit/<int:fault_id>", methods=["GET", "POST"])
+@login_required
+def edit_fault(fault_id):
+    fault = Fault.query.get_or_404(fault_id)
+    
+    if current_user.role != "admin":
+        flash("فقط المدير يمكنه تعديل الأعطال ❌", "danger")
+        return redirect(url_for("all_faults"))
+            
+            technician_id = request.form.get("technician_id")
+            if technician_id:
+                fault.technician_id = int(technician_id)
+            else:
+                fault.technician_id = None
+            
+            repair_notes = request.form.get("repair_notes")
+            if repair_notes:
+                fault.repair_notes = repair_notes
+            
+            db.session.commit()
+            flash("تم تعديل بيانات العطل بنجاح ✅", "success")
+            return redirect(url_for("all_faults"))
+            
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error editing fault: {str(e)}", exc_info=True)
+            flash(f"خطأ في تعديل العطل: {str(e)} ❌", "danger")
+    
+    return render_template("add_edit_fault.html", fault=fault, camera=fault.camera, technicians=technicians)
+
+
+@app.route("/faults/resolve/<int:fault_id>", methods=["GET", "POST"])
+@login_required
+def resolve_fault(fault_id):
+    fault = Fault.query.get_or_404(fault_id)
+
+    if current_user.role == "technician" and fault.technician_id != current_user.id:
+        flash("غير مسموح لك بإصلاح هذا العطل ❌", "danger")
+        return redirect(url_for("all_faults"))
+
+    if request.method == "POST":
+        fault.resolved_at = utc_now()
+        fault.resolved_by = current_user.username
+        fault.repair_notes = request.form.get('repair_notes', '')
+
+        if 'repair_image' in request.files:
+            file = request.files['repair_image']
+            if file and file.filename != "" and allowed_upload_file(file.filename, {'png', 'jpg', 'jpeg', 'gif'}):
+                filename = secure_filename(file.filename)
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(filepath)
+                fault.repair_image = filename
+            elif file and file.filename and not allowed_upload_file(file.filename, {'png', 'jpg', 'jpeg', 'gif'}):
+                flash("صيغة الملف غير مدعومة. استخدم: " + ", ".join(app.config['ALLOWED_IMAGE_EXTENSIONS']), "warning")
+
+        db.session.commit()
+        flash("تم إصلاح العطل بنجاح ✅", "success")
+        return redirect(url_for("all_faults"))
+
+    return render_template("resolve_fault.html", fault=fault)
+
+@app.route("/faults/details/<int:fault_id>")
+@login_required
+def fault_details(fault_id):
+    fault = Fault.query.get_or_404(fault_id)
+
+    if current_user.role == "technician" and fault.technician_id != current_user.id:
+        flash("غير مسموح لك بمشاهدة هذا العطل ❌", "danger")
+        return redirect(url_for("all_faults"))
+
+    return render_template("fault_details.html", fault=fault)
+
+@app.route("/technicians")
+@login_required
+def technicians():
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه الوصول لهذه الصفحة ❌"), "danger")
+        return redirect(url_for("dashboard"))
+    technicians_list = User.query.filter(User.role == "technician").all()
+    return render_template("technicians.html", technicians=technicians_list)
+
+@app.route("/technicians/add", methods=["GET", "POST"])
+@login_required
+def add_technician():
+    if current_user.role != "admin":
+        flash("فقط المدير يمكنه إضافة فنيين ❌", "danger")
+        return redirect(url_for("dashboard"))
+    if request.method == "POST":
+        username = request.form['username']
+        password = generate_password_hash(request.form['password'])
+        user = User(username=username, password=password, role="technician")
+        db.session.add(user)
+        db.session.commit()
+        flash("تم إضافة الفني بنجاح ✅", "success")
+        return redirect(url_for("technicians"))
+    return render_template("add_technician.html")
+
+@app.route("/technicians/delete/<int:tech_id>", methods=["POST"])
+@login_required
+def delete_technician(tech_id):
+    if current_user.role != "admin":
+        flash("فقط المدير يمكنه حذف فنيين ❌", "danger")
+        return redirect(url_for("dashboard"))
+
+    tech = User.query.get_or_404(tech_id)
+    technician_faults = Fault.query.filter_by(technician_id=tech_id).count()
+    if technician_faults > 0:
+        flash(f"لا يمكن حذف الفني لأنه لديه {technician_faults} عطل مسند إليه ❌", "danger")
+        return redirect(url_for("technicians"))
+
+    db.session.delete(tech)
+    db.session.commit()
+    flash("تم حذف الفني بنجاح ✅", "success")
+    return redirect(url_for("technicians"))
+
+@app.route('/health')
+def health():
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': utc_now().isoformat(),
+        'service': 'camera_system'
+    })
+
+@app.route("/faults/import-excel", methods=["GET", "POST"])
+@login_required
+def import_excel_faults():
+    """استيراد الأعطال من ملف Excel"""
+    if current_user.role != "admin":
+        flash("فقط المدير يمكنه استيراد الأعطال من Excel ❌", "danger")
+        return redirect(url_for("dashboard"))
+    
+    if request.method == "POST":
+        if "excel_file" not in request.files:
+            flash("لم يتم اختيار ملف ❌", "danger")
+            return redirect(request.url)
+        
+        file = request.files["excel_file"]
+        
+        if file.filename == "":
+            flash("لم يتم اختيار ملف ❌", "danger")
+            return redirect(request.url)
+        
+        if not file.filename.endswith((".xlsx", ".xls")):
+            flash("يجب أن يكون الملف من نوع Excel (.xlsx أو .xls) ❌", "danger")
+            return redirect(request.url)
+        
+        try:
+            # قراءة الملف
+            file_bytes = file.read()
+            workbook = load_workbook(io.BytesIO(file_bytes))
+            worksheet = workbook.active
+            
+            faults_added = 0
+            errors = []
+            
+            # القراءة من الصف الثاني (الصف الأول هو الرؤوس)
+            for row_idx, row in enumerate(worksheet.iter_rows(min_row=2, values_only=True), start=2):
+                try:
+                    # تصفية الصف من القيم الفارغة و None
+                    filtered_row = [cell for cell in row if cell is not None and str(cell).strip() != '']
+                    
+                    # التحقق من طول الصف بعد التصفية - يتطلب 3 أعمدة فقط
+                    if len(filtered_row) < 3:
+                        errors.append(f"الصف {row_idx}: بيانات ناقصة (يجب أن يحتوي على 3 أعمدة: Name, Address, Network Status)")
+                        continue
+                    
+                    # الأعمدة المتوقعة (3 أعمدة فقط): Name, Address, Network Status
+                    camera_name = str(row[0]).strip() if len(row) > 0 and row[0] is not None else ''
+                    address = str(row[1]).strip() if len(row) > 1 and row[1] is not None else ''
+                    network_status = str(row[2]).strip() if len(row) > 2 and row[2] is not None else ''
+                    
+                    # القيم الاختيارية من الأعمدة الإضافية
+                    reported_by = str(row[3]).strip() if len(row) > 3 and row[3] is not None else ''
+                    technician_name = str(row[4]).strip() if len(row) > 4 and row[4] is not None and str(row[4]).strip() != '' else None
+                    
+                    # التحقق من البيانات الأساسية
+                    if not camera_name or not address or not network_status:
+                        errors.append(f"الصف {row_idx}: بيانات ناقصة (Name, Address, Network Status إلزامية)")
+                        continue
+                    
+                    # تحويل Network Status إلى fault_type
+                    if network_status.lower() in ['offline', 'معطلة', 'disconnected']:
+                        fault_type = 'offline'
+                    elif network_status.lower() in ['online', 'متاحة', 'connected']:
+                        fault_type = 'online'
+                    else:
+                        fault_type = 'unknown'
+                    
+                    # البحث عن الكاميرا
+                    camera = Camera.query.filter_by(name=camera_name).first()
+                    if not camera:
+                        errors.append(f"الصف {row_idx}: لم يتم العثور على كاميرا باسم '{camera_name}'")
+                        continue
+                    
+                    # البحث عن الفني إن وجد
+                    technician_id = None
+                    if technician_name:
+                        technician = User.query.filter_by(username=technician_name, role="technician").first()
+                        if not technician:
+                            errors.append(f"الصف {row_idx}: لم يتم العثور على فني باسم '{technician_name}'")
+                            continue
+                        technician_id = technician.id
+                    
+                    # إنشاء العطل إذا كانت الكاميرا معطلة
+                    if fault_type == 'offline':
+                        # Check if there's an NVR fault for this camera's branch
+                        print(f"Checking NVR faults for camera {camera.name} in branch {camera.branch_id}")
+                        
+                        # First check if camera has branch_id
+                        if not camera.branch_id:
+                            print(f"Camera {camera.name} has no branch_id")
+                            errors.append(f"الصف {row_idx}: الكاميرا '{camera_name}' غير مرتبطة بفرع")
+                            continue
+                        
+                        # Check for NVR faults in this branch
+                        branch_nvr_faults = []
+                        nvr_faults_simple = Fault.query.filter(
+                            Fault.fault_type == 'NVR Issue',
+                            Fault.resolved_at.is_(None)
+                        ).all()
+                        
+                        # Check each NVR fault's camera branch manually
+                        for nvr_fault in nvr_faults_simple:
+                            if nvr_fault.camera and nvr_fault.camera.branch_id == camera.branch_id:
+                                branch_nvr_faults.append(nvr_fault)
+                        
+                        # Check for DeviceFaults in this branch
+                        branch_device_faults = []
+                        all_device_faults = DeviceFault.query.filter(
+                            DeviceFault.resolved_at.is_(None)
+                        ).all()
+                        
+                        # Check each device fault's branch
+                        for device_fault in all_device_faults:
+                            if device_fault.device and device_fault.device.branch_id == camera.branch_id:
+                                branch_device_faults.append(device_fault)
+                        
+                        print(f"Found {len(branch_nvr_faults)} NVR faults in branch {camera.branch_id}")
+                        print(f"Found {len(branch_device_faults)} Device faults in branch {camera.branch_id}")
+                        
+                        # If branch has NVR faults OR Device faults, don't create new offline faults
+                        if branch_nvr_faults or branch_device_faults:
+                            print(f"Skipping camera {camera.name} - branch has NVR/Switch or Device faults")
+                            if branch_nvr_faults:
+                                errors.append(f"الصف {row_idx}: الفرع لديه بالفعل أعطال NVR/Switch، لا يمكن إضافة عطل جديد للكاميرا '{camera_name}'")
+                            else:
+                                errors.append(f"الصف {row_idx}: الفرع لديه بالفعل أعطال أجهزة، لا يمكن إضافة عطل جديد للكاميرا '{camera_name}'")
+                            continue
+                        
+                        # التحقق من وجود عطل مفتوح لنفس الكاميرا
+                        existing_fault = Fault.query.filter_by(
+                            camera_id=camera.id,
+                            resolved_at=None
+                        ).first()
+                        
+                        if not existing_fault:
+                            print(f"Creating offline fault for camera {camera.name}")
+                            fault = Fault(
+                                description=f'Camera {camera_name} is offline - Address: {address}',
+                                fault_type='offline',
+                                device_type='Camera',
+                                reported_by=reported_by,
+                                camera_id=camera.id,
+                                technician_id=technician_id,
+                                date_reported=utc_now(),
+                                expires_at=utc_now() + timedelta(days=7)
+                            )
+                            db.session.add(fault)
+                            faults_added += 1
+                        else:
+                            print(f"Camera {camera.name} already has existing fault")
+                            fault = existing_fault
+                    else:
+                        fault = Fault(
+                            description=description[:200],
+                            fault_type=fault_type,
+                            device_type=device_type,
+                            reported_by=reported_by or "استيراد Excel",
+                            camera_id=camera.id,
+                            technician_id=technician_id,
+                            date_reported=utc_now(),
+                            expires_at=utc_now() + timedelta(days=7)
+                        )
+                        db.session.add(fault)
+                        faults_added += 1
+                
+                except Exception as e:
+                    errors.append(f"الصف {row_idx}: {str(e)}")
+                    logger.error(f"خطأ في الصف {row_idx}: {str(e)}")
+            
+            # حفظ التغييرات
+            try:
+                db.session.commit()
+                flash(f"✅ تم إضافة {faults_added} عطل بنجاح من ملف Excel", "success")
+                
+                if errors:
+                    logger.warning(f"أخطاء أثناء الاستيراد: {errors}")
+                    flash(f"⚠️ هناك {len(errors)} أخطاء: " + " | ".join(errors[:3]), "warning")
+                
+                return redirect(url_for("all_faults"))
+            
+            except Exception as e:
+                db.session.rollback()
+                logger.error(f"خطأ في حفظ البيانات: {str(e)}")
+                flash(f"خطأ في حفظ البيانات: {str(e)} ❌", "danger")
+                return redirect(request.url)
+        
+        except Exception as e:
+            logger.error(f"خطأ في قراءة الملف: {str(e)}")
+            flash(f"خطأ في قراءة الملف: {str(e)} ❌", "danger")
+            return redirect(request.url)
+    
+    return render_template("import_excel.html")
+
+@app.route("/faults/download-template")
+@login_required
+def download_template():
+    """تحميل نموذج Excel لاستيراد الأعطال"""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+
+    # إنشاء workbook جديد
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "استيراد الأعطال"
+
+    # تعريف الأعمدة
+    headers = ["اسم الكاميرا", "نوع العطل", "نوع الجهاز", "الوصف", "المبلّغ", "الفني (اختياري)"]
+    
+    # تنسيق رؤوس الأعمدة
+    header_font = Font(bold=True, color="FFFFFF", size=12)
+    header_fill = PatternFill(start_color="2E7D32", end_color="2E7D32", fill_type="solid")
+    header_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    
+    # إضافة الرؤوس
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+        cell.border = border
+
+    # إضافة بيانات نموذجية (مثال)
+    sample_data = [
+        ["كاميرا المدخل الرئيسي", "عطل صورة", "NVR", "الصورة غير واضحة ومشوشة", "أحمد محمد", "فني1"],
+        ["كاميرا الممر", "عطل تسجيل", "Switch", "لا تسجيل منذ يومين", "محمد علي", "فني2"],
+        ["كاميرا الموقف", "عطل اتصال", "Router", "فقدان الاتصال بالشبكة", "سارة حسن", ""],
+    ]
+    
+    # تنسيق بيانات النموذج
+    data_alignment = Alignment(horizontal="right", vertical="center", wrap_text=True)
+    data_font = Font(size=11)
+    
+    for row_idx, row_data in enumerate(sample_data, 2):
+        for col_idx, value in enumerate(row_data, 1):
+            cell = ws.cell(row=row_idx, column=col_idx, value=value)
+            cell.alignment = data_alignment
+            cell.font = data_font
+            cell.border = border
+
+    # ضبط عرض الأعمدة
+    ws.column_dimensions['A'].width = 25
+    ws.column_dimensions['B'].width = 20
+    ws.column_dimensions['C'].width = 12
+    ws.column_dimensions['D'].width = 30
+    ws.column_dimensions['E'].width = 15
+    ws.column_dimensions['F'].width = 15
+
+    # ضبط ارتفاع الصف الأول
+    ws.row_dimensions[1].height = 25
+
+    # إضافة ورقة التعليمات
+    ws_info = wb.create_sheet("التعليمات")
+    ws_info.column_dimensions['A'].width = 40
+    ws_info.column_dimensions['B'].width = 50
+
+    # كتابة التعليمات
+    info_data = [
+        ["", ""],
+        ["تعليمات الاستخدام", ""],
+        ["", ""],
+        ["اسم الكاميرا", "يجب أن يطابق بالضبط أسماء الكاميرات المسجلة في النظام"],
+        ["نوع العطل", "أدخل نوع العطل (مثال: عطل صورة، عطل صوت، عطل تسجيل، عطل اتصال)"],
+        ["الوصف", "وصف تفصيلي للعطل - بحد أقصى 200 حرف"],
+        ["المبلّغ", "اسم الشخص الذي أبلّغ عن العطل"],
+        ["الفني (اختياري)", "اسم مستخدم الفني - اترك فارغاً إذا لم تحدد فني"],
+        ["", ""],
+        ["ملاحظات مهمة:", ""],
+        ["1", "تأكد من أن أسماء الكاميرات موجودة في النظام"],
+        ["2", "أسماء الفنيين يجب أن تكون أسماء مستخدمين موجودة"],
+        ["3", "لا تحذف أو تعيد ترتيب الأعمدة"],
+        ["4", "لا تترك أعمدة إلزامية فارغة (الكاميرا والنوع والوصف)"],
+        ["5", "صيغة الملف يجب أن تكون .xlsx أو .xls"],
+    ]
+
+    info_font = Font(size=11)
+    info_title_font = Font(size=12, bold=True, color="FFFFFF")
+    info_title_fill = PatternFill(start_color="2E7D32", end_color="2E7D32", fill_type="solid")
+
+    for row_idx, row_data in enumerate(info_data, 1):
+        for col_idx, value in enumerate(row_data, 1):
+            cell = ws_info.cell(row=row_idx, column=col_idx, value=value)
+            cell.font = info_font
+            if row_idx == 2:
+                cell.font = info_title_font
+                cell.fill = info_title_fill
+            if row_idx == 10:
+                cell.font = Font(size=11, bold=True)
+            cell.alignment = Alignment(horizontal="right", vertical="top", wrap_text=True)
+
+    # حفظ الملف في الذاكرة
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    return send_file(
+        output,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name=f"نموذج_استيراد_الأعطال_{local_now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    )
+
+@app.route("/reports/excel")
+@login_required
+def report_excel():
+    """تنزيل تقرير الأعطال بصيغة Excel."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Faults Report"
+
+    headers = [
+        "#",
+        "Chain",
+        "Region",
+        "Branch",
+        "Camera",
+        "Fault Type",
+        "Description",
+        "Reported By",
+        "Reported At",
+        "Status",
+        "Technician",
+        "Repaired At",
+        "Repair Notes",
+    ]
+    for col, h in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=h)
+        cell.font = Font(bold=True)
+        cell.fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    if current_user.role == "admin":
+        faults = Fault.query.order_by(Fault.date_reported.desc()).all()
+    else:
+        faults = Fault.query.filter(Fault.technician_id == current_user.id).order_by(Fault.date_reported.desc()).all()
+
+    fault_type_map = {
+        "كهرباء": "Electrical",
+        "شبكة": "Network",
+        "جهاز": "Device",
+        "برمجيات": "Software",
+    }
+
+    for row, f in enumerate(faults, 2):
+        region = f.camera.branch.region
+        chain_name = (region.chain.name if region and region.chain else "") or ""
+        region_name = (region.name if region else "") or ""
+        ws.cell(row=row, column=1, value=f.id)
+        ws.cell(row=row, column=2, value=chain_name)
+        ws.cell(row=row, column=3, value=region_name)
+        ws.cell(row=row, column=4, value=f.camera.branch.name)
+        ws.cell(row=row, column=5, value=f.camera.name)
+        ws.cell(row=row, column=6, value=fault_type_map.get(f.fault_type, f.fault_type or ""))
+        ws.cell(row=row, column=7, value=f.description or "")
+        ws.cell(row=row, column=8, value=f.reported_by or "")
+        ws.cell(row=row, column=9, value=f.date_reported.strftime("%Y-%m-%d %H:%M") if f.date_reported else "")
+        ws.cell(row=row, column=10, value="Resolved" if f.resolved_at else "Pending")
+        ws.cell(row=row, column=11, value=f.technician.username if f.technician else "")
+        ws.cell(row=row, column=12, value=f.resolved_at.strftime("%Y-%m-%d %H:%M") if f.resolved_at else "")
+        ws.cell(row=row, column=13, value=(f.repair_notes or "")[:500])
+
+    for col in range(1, len(headers) + 1):
+        ws.column_dimensions[ws.cell(row=1, column=col).column_letter].width = 16
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    fn = f"faults_report_{local_now().strftime('%Y%m%d_%H%M')}.xlsx"
+    return send_file(buf, as_attachment=True, download_name=fn, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+# Settings routes (Admin only)
+@app.route("/settings", methods=["GET", "POST"])
+@login_required
+def settings():
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه الوصول لهذه الصفحة ❌"), "danger")
+        return redirect(url_for("dashboard"))
+    
+    if request.method == "POST":
+        # Handle logo upload
+        if 'company_logo' in request.files:
+            file = request.files['company_logo']
+            if file and file.filename != "":
+                # Check if file is an image
+                allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'svg'}
+                if file.filename.rsplit('.', 1)[1].lower() in allowed_extensions:
+                    filename = secure_filename(file.filename)
+                    filepath = os.path.join(app.config['LOGO_FOLDER'], 'company_logo.png')
+                    file.save(filepath)
+                    flash("تم رفع لوجو الشركة بنجاح ✅", "success")
+        
+        # Handle company name
+        company_name = request.form.get('company_name', '')
+        if company_name:
+            app.config['COMPANY_NAME'] = company_name
+            flash("تم تحديث اسم الشركة بنجاح ✅", "success")
+        
+        # Handle logo size
+        logo_size = request.form.get('logo_size', '50')
+        try:
+            logo_size = int(logo_size)
+            if 20 <= logo_size <= 200:  # Limit between 20 and 200 pixels
+                app.config['LOGO_SIZE'] = logo_size
+                flash("تم تحديث حجم اللوجو بنجاح ✅", "success")
+            else:
+                flash("حجم اللوجو يجب أن يكون بين 20 و 200 بكسل ❌", "danger")
+        except ValueError:
+            flash("حجم اللوجو غير صحيح ❌", "danger")
+        
+        return redirect(url_for("settings"))
+    
+    # Check if logo exists
+    logo_exists = os.path.exists(app.config['COMPANY_LOGO'])
+    logo_size = app.config.get('LOGO_SIZE', 50)
+    
+    return render_template("settings.html", 
+                          company_name=app.config.get('COMPANY_NAME', 'نظام الكاميرات'),
+                          logo_exists=logo_exists,
+                          logo_size=logo_size)
+
+import platform
+import subprocess
+import re
+
+@app.route("/ping-store", methods=["GET", "POST"])
+@login_required
+def ping_store():
+    """
+    Ping Store feature - allows users to ping branches by their device IP addresses.
+    Search by branch code or name, select Router or NVR device, and ping.
+    """
+    if current_user.role != "admin":
+        flash(_("فقط المدير يمكنه استخدام هذه الميزة"), "danger")
+        return redirect(url_for("dashboard"))
+    
+    ping_result = None
+    selected_branch = None
+    selected_device = None
+    search_query = request.args.get('q', '').strip()
+    
+    # Get all branches with their devices
+    branches_query = Branch.query.join(Region).join(Chain).options(
+        db.joinedload(Branch.region).joinedload(Region.chain),
+        db.joinedload(Branch.devices)
+    )
+    
+    if search_query:
+        # Search by branch name or region name or chain name
+        branches_query = branches_query.filter(
+            db.or_(
+                Branch.name.ilike(f'%{search_query}%'),
+                Region.name.ilike(f'%{search_query}%'),
+                Chain.name.ilike(f'%{search_query}%')
+            )
+        )
+    
+    branches = branches_query.order_by(Branch.name).all()
+    
+    if request.method == "POST":
+        branch_id = request.form.get('branch_id', type=int)
+        device_id = request.form.get('device_id', type=int)
+        ip_address = request.form.get('ip_address', '').strip()
+        
+        if not ip_address:
+            flash(_("يرجى إدخال عنوان IP"), "danger")
+        else:
+            # Validate IP address
+            ip_pattern = re.compile(r'^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$')
+            if not ip_pattern.match(ip_address):
+                flash(_("عنوان IP غير صحيح"), "danger")
+            else:
+                # Perform ping
+                try:
+                    # Test ping command for Windows
+                    command = ['ping', '-n', '1', ip_address]
+                    
+                    print(f"Executing command: {' '.join(command)}")  # Debug line
+                    result = subprocess.run(command, capture_output=True, text=True, timeout=10, shell=True)
+                    
+                    print(f"Return code: {result.returncode}")  # Debug line
+                    print(f"Stdout: {result.stdout}")  # Debug line
+                    print(f"Stderr: {result.stderr}")  # Debug line
+                    
+                    ping_result = {
+                        'ip': ip_address,
+                        'success': result.returncode == 0,
+                        'output': result.stdout,
+                        'error': result.stderr if result.returncode != 0 else None
+                    }
+                    
+                    if ping_result['success']:
+                        flash(_(f"تم الاتصال بنجاح بـ {ip_address}"), "success")
+                    else:
+                        flash(_(f"فشل الاتصال بـ {ip_address}"), "warning")
+                        
+                except subprocess.TimeoutExpired:
+                    ping_result = {
+                        'ip': ip_address,
+                        'success': False,
+                        'output': None,
+                        'error': _('انتهت مهلة الاتصال')
+                    }
+                    flash(_("انتهت مهلة الاتصال"), "warning")
+                except Exception as e:
+                    ping_result = {
+                        'ip': ip_address,
+                        'success': False,
+                        'output': None,
+                        'error': str(e)
+                    }
+                    flash(_(f"خطأ في الاتصال: {str(e)}"), "danger")
+        
+        if branch_id:
+            selected_branch = Branch.query.get(branch_id)
+        if device_id:
+            selected_device = Device.query.get(device_id)
+    
+    print(f"DEBUG: ping_result = {ping_result}")  # Debug line
+    return render_template("ping_store_simple.html",
+                           branches=branches,
+                           selected_branch=selected_branch,
+                           selected_device=selected_device,
+                           ping_result=ping_result,
+                           search_query=search_query)
+
+@app.route("/upload-document", methods=["GET", "POST"])
+@login_required
+def upload_document():
+    """Upload document and create automatic NVR faults for branch cameras."""
+    if request.method == "GET":
+        # Get all chains with their regions and branches for the form
+        chains = Chain.query.all()
+        return render_template("upload_document.html", chains=chains)
+    
+    if request.method == "POST":
+        try:
+            # Get form data
+            branch_id = request.form.get("branch_id")
+            technician_name = request.form.get("technician_name", current_user.username)
+            notes = request.form.get("notes", "")
+            
+            if not branch_id:
+                flash(_("يجب اختيار الفرع"), "danger")
+                return redirect(request.referrer)
+            
+            # Get branch and its cameras
+            branch = Branch.query.get(branch_id)
+            if not branch:
+                flash(_("الفرع غير موجود"), "danger")
+                return redirect(request.referrer)
+            
+            # Create automatic NVR fault for all cameras in branch
+            cameras = Camera.query.filter_by(branch_id=branch_id).all()
+            
+            # Get cameras that already have faults before this NVR event
+            cameras_with_existing_faults = []
+            
+            for camera in cameras:
+                # Check if there are any existing unresolved faults for this camera (before NVR)
+                existing_other_faults = Fault.query.filter(
+                    Fault.camera_id == camera.id,
+                    Fault.resolved_at.is_(None),
+                    Fault.fault_type != 'NVR Issue'
+                ).first()
+                
+                if existing_other_faults:
+                    cameras_with_existing_faults.append(camera)
+            
+            # Delete all existing faults for this branch (except NVR issues and cameras with pre-existing faults)
+            all_branch_faults = []
+            all_faults = Fault.query.filter(
+                Fault.resolved_at.is_(None),
+                Fault.fault_type != 'NVR Issue'
+            ).all()
+            
+            # Check each fault's camera branch manually
+            for fault in all_faults:
+                if fault.camera and fault.camera.branch_id == branch_id:
+                    all_branch_faults.append(fault)
+            
+            # Collect faults to delete (excluding cameras with pre-existing faults)
+            faults_to_delete = []
+            for fault in all_branch_faults:
+                if fault.camera and fault.camera not in cameras_with_existing_faults:
+                    faults_to_delete.append(fault)
+            
+            # Delete the faults
+            for fault in faults_to_delete:
+                # Delete repair image if exists
+                if fault.repair_image:
+                    repair_image_path = os.path.join(app.config['UPLOAD_FOLDER'], fault.repair_image)
+                    if os.path.exists(repair_image_path):
+                        os.remove(repair_image_path)
+                db.session.delete(fault)
+            
+            # Logic for creating NVR faults
+            for camera in cameras:
+                # Check if there's already an unresolved NVR fault for this camera
+                existing_nvr_fault = Fault.query.filter_by(
+                    camera_id=camera.id,
+                    fault_type='NVR Issue',
+                    resolved_at=None
+                ).first()
+                
+                if existing_nvr_fault:
+                    continue
+                
+                # Create NVR fault for this camera
+                new_fault = Fault(
+                    description=f'NVR issue detected for camera {camera.name}',
+                    fault_type='NVR Issue',
+                    device_type='NVR',
+                    reported_by=technician_name,
+                    camera_id=camera.id,
+                    repair_notes=notes
+                )
+                db.session.add(new_fault)
+            
+            db.session.commit()
+            flash(_("تم تسجيل أعطال NVR تلقائياً لجميع كاميرات الفرع"), "success")
+            
+        except Exception as e:
+            flash(_("خطأ في رفع المستند: {}").format(str(e)), "danger")
+            db.session.rollback()
+    
+    return redirect(request.referrer or url_for("dashboard"))
+
+@app.template_filter('sum')
+def sum_filter(data, attribute, default=0):
+    """Custom filter to sum values from Excel data - skips text, only sums numbers"""
+    total = 0
+    for item in data:
+        try:
+            # Get the value from the nested dictionary
+            value = item
+            for attr in attribute.split('.'):
+                if hasattr(value, attr):
+                    value = getattr(value, attr)
+                elif isinstance(value, dict) and attr in value:
+                    value = value[attr]
+                else:
+                    value = default
+                    break
+            
+            # Skip if value is empty or None
+            if value is None or value == '':
+                continue
+            
+            # Convert to number if possible, skip if not a number
+            if isinstance(value, str):
+                # Try to extract numbers from string, skip if no numbers found
+                import re
+                numbers = re.findall(r'\d+', str(value))
+                if numbers:
+                    total += int(numbers[0])  # Take first number found
+            elif isinstance(value, (int, float)):
+                total += int(value)
+        except:
+            continue
+    return total
+
+@app.template_filter('sum_column')
+def sum_column_filter(data, column_name, default=0):
+    """Filter to sum values from a specific column in Excel data"""
+    total = 0
+    for item in data:
+        try:
+            # Get the row data as dictionary
+            row_dict = item.to_dict()
+            
+            # Get the value for the specific column
+            value = row_dict.get(column_name, default)
+            
+            # Debug: Print what we're trying to sum
+            print(f"DEBUG: Column '{column_name}', value: '{value}', type: {type(value)}")
+            
+            # Skip if value is empty or None
+            if value is None or value == '':
+                continue
+            
+            # Convert to number if possible, skip if not a number
+            if isinstance(value, str):
+                # Try to extract numbers from string, skip if no numbers found
+                import re
+                # Try different patterns
+                numbers = re.findall(r'\d+', str(value))
+                if numbers:
+                    extracted_num = int(numbers[0])
+                    total += extracted_num
+                    print(f"DEBUG: Extracted {extracted_num} from '{value}', running total: {total}")
+                else:
+                    print(f"DEBUG: No numbers found in '{value}'")
+            elif isinstance(value, (int, float)):
+                total += int(value)
+                print(f"DEBUG: Added number {value}, running total: {total}")
+        except Exception as e:
+            print(f"DEBUG: Error processing '{value}': {e}")
+            continue
+    
+    print(f"DEBUG: Final total for column '{column_name}': {total}")
+    return total
+
+
+@app.route("/total-camera")
+@login_required
+def total_camera_report():
+    """Total Camera page - completely independent Excel data storage"""
+    if current_user.role != "admin":
+        flash("فقط المدير يمكنه الوصول لهذه الصفحة ❌", "danger")
+        return redirect(url_for("dashboard"))
+    
+    # Get all Excel data records
+    excel_data_records = ExcelData.query.order_by(ExcelData.row_number).all()
+    
+    # Group by filename and get the latest upload
+    latest_filename = None
+    if excel_data_records:
+        latest_filename = excel_data_records[0].excel_filename
+    
+    # Get data for the latest file
+    latest_data = ExcelData.query.filter_by(excel_filename=latest_filename).order_by(ExcelData.row_number).all() if latest_filename else []
+    
+    return render_template("total_camera_report.html", 
+                         excel_data=latest_data, 
+                         filename=latest_filename,
+                         branches=Branch.query.all())
+
+
+@app.route("/total-camera/upload-excel", methods=["POST"])
+@login_required
+def upload_camera_excel():
+    """Upload camera data from Excel file - stores raw data"""
+    if current_user.role != "admin":
+        return jsonify({"error": "Unauthorized"}), 403
+    
+    try:
+        if 'excel_file' not in request.files:
+            flash("الرجاء اختيار ملف Excel ❌", "danger")
+            return redirect(url_for("total_camera_report"))
+        
+        file = request.files['excel_file']
+        if file.filename == '':
+            flash("الرجاء اختيار ملف Excel ❌", "danger")
+            return redirect(url_for("total_camera_report"))
+        
+        if file and allowed_upload_file(file.filename, {'xlsx', 'xls'}):
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+            
+            # Read Excel file
+            df = pd.read_excel(filepath)
+            
+            # Debug: Print Excel structure
+            print("=== Excel File Structure ===")
+            print(f"Columns found: {list(df.columns)}")
+            print(f"Rows count: {len(df)}")
+            print("First 5 rows:")
+            print(df.head().to_string())
+            
+            # Delete ALL existing Excel data when new file is uploaded
+            ExcelData.query.delete()
+            db.session.commit()
+            
+            # Store each row as raw JSON data
+            import json
+            uploaded_count = 0
+            
+            for index, row in df.iterrows():
+                try:
+                    # Convert row to dictionary and store as JSON
+                    row_dict = {}
+                    for col in df.columns:
+                        if pd.notna(row[col]):
+                            # Store exactly as it appears in Excel
+                            row_dict[str(col)] = str(row[col])
+                        else:
+                            row_dict[str(col)] = ""
+                    
+                    # Create ExcelData record
+                    excel_record = ExcelData(
+                        excel_filename=filename,
+                        row_data=json.dumps(row_dict, ensure_ascii=False),
+                        row_number=index + 1
+                    )
+                    db.session.add(excel_record)
+                    uploaded_count += 1
+                    
+                except Exception as e:
+                    print(f"Error processing row {index}: {str(e)}")
+                    continue
+            
+            db.session.commit()
+            
+            flash(f"✅ تم رفع {uploaded_count} صف بنجاح من ملف {filename}!", "success")
+            return redirect(url_for("total_camera_report"))
+        
+        else:
+            flash("صيغة الملف غير مدعومة. استخدم ملف Excel (.xlsx أو .xls) ❌", "danger")
+            return redirect(url_for("total_camera_report"))
+            
+    except Exception as e:
+        print(f"Upload error: {str(e)}")
+        flash(f"خطأ في رفع الملف: {str(e)} ❌", "danger")
+        return redirect(url_for("total_camera_report"))
+
+
+@app.route("/total-camera/save-changes", methods=["POST"])
+@login_required
+def save_camera_changes():
+    """Save edited changes to Excel data"""
+    if current_user.role != "admin":
+        return jsonify({"error": "Unauthorized"}), 403
+    
+    try:
+        data = request.get_json()
+        if not data or 'data' not in data:
+            return jsonify({"success": False, "error": "No data provided"}), 400
+        
+        excel_data = data['data']
+        filename = f"edited_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        
+        # Delete all existing Excel data
+        ExcelData.query.delete()
+        db.session.commit()
+        
+        # Store new data
+        import json
+        uploaded_count = 0
+        
+        for index, row_data in enumerate(excel_data):
+            try:
+                # Create ExcelData record
+                excel_record = ExcelData(
+                    excel_filename=filename,
+                    row_data=json.dumps(row_data, ensure_ascii=False),
+                    row_number=index + 1
+                )
+                db.session.add(excel_record)
+                uploaded_count += 1
+                
+            except Exception as e:
+                print(f"Error processing row {index}: {str(e)}")
+                continue
+        
+        db.session.commit()
+        
+        return jsonify({
+            "success": True, 
+            "message": f"Successfully saved {uploaded_count} rows",
+            "filename": filename
+        })
+        
+    except Exception as e:
+        print(f"Save error: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/total-camera/download-excel")
+@login_required
+def download_camera_excel():
+    """Download Excel data as Excel file"""
+    if current_user.role != "admin":
+        flash("فقط المدير يمكنه تنزيل البيانات ❌", "danger")
+        return redirect(url_for("dashboard"))
+    
+    try:
+        # Get the latest Excel data
+        excel_data_records = ExcelData.query.order_by(ExcelData.upload_date.desc()).first()
+        if not excel_data_records:
+            flash("لا توجد بيانات للتنزيل ❌", "warning")
+            return redirect(url_for("total_camera_report"))
+        
+        # Get all records for the latest file
+        latest_filename = excel_data_records.excel_filename
+        excel_records = ExcelData.query.filter_by(excel_filename=latest_filename).order_by(ExcelData.row_number).all()
+        
+        if not excel_records:
+            flash("لا توجد بيانات للتنزيل ❌", "warning")
+            return redirect(url_for("total_camera_report"))
+        
+        # Convert back to DataFrame
+        import json
+        data_list = []
+        for record in excel_records:
+            row_dict = record.to_dict()
+            data_list.append(row_dict)
+        
+        df = pd.DataFrame(data_list)
+        
+        # Create Excel file
+        output = io.BytesIO()
+        wb = Workbook()
+        ws = wb.active
+        ws.title = 'Camera Data'
+        
+        # Add headers (from the first row keys)
+        if data_list:
+            headers = list(data_list[0].keys())
+            ws.append(headers)
+            
+            # Add data
+            for row_data in data_list:
+                row_values = [row_data.get(header, "") for header in headers]
+                ws.append(row_values)
+        
+        # Save to memory
+        wb.save(output)
+        output.seek(0)
+        
+        # Create response
+        response = make_response(output.getvalue())
+        response.headers['Content-Disposition'] = f'attachment; filename=camera_data_{latest_filename}'
+        response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        
+        return response
+        
+    except Exception as e:
+        print(f"Download error: {str(e)}")
+        flash(f"خطأ في تنزيل البيانات: {str(e)} ❌", "danger")
+        return redirect(url_for("total_camera_report"))
+
+
+@app.route("/reports")
+@login_required
+def reports():
+    """Reports page - main dashboard for all reports."""
+    if current_user.role != "admin":
+        flash("فقط المدير يمكنه الوصول إلى التقارير ❌", "danger")
+        return redirect(url_for("dashboard"))
+    
+    # Get statistics
+    camera_faults_count = Fault.query.count()
+    device_faults_count = DeviceFault.query.count()
+    total_faults_count = camera_faults_count + device_faults_count
+    resolved_faults_count = Fault.query.filter(Fault.resolved_at.isnot(None)).count() + \
+                           DeviceFault.query.filter(DeviceFault.resolved_at.isnot(None)).count()
+    
+    return render_template("reports.html",
+                           camera_faults_count=camera_faults_count,
+                           device_faults_count=device_faults_count,
+                           total_faults_count=total_faults_count,
+                           resolved_faults_count=resolved_faults_count)
+
+@app.route("/reports/camera-repaired")
+@login_required
+def camera_repaired_report():
+    """Generate and download repaired cameras report in Excel format."""
+    from datetime import datetime
+    try:
+        # Get all repaired camera faults
+        faults = Fault.query.filter(Fault.resolved_at.isnot(None)).join(Camera).all()
+        
+        # Create Excel workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Repaired Cameras Report"
+        
+        # Define styles
+        header_font = Font(name='Arial', size=12, bold=True, color='FFFFFF')
+        header_fill = PatternFill(start_color='28a745', end_color='28a745', fill_type='solid')
+        header_alignment = Alignment(horizontal='center', vertical='center')
+        
+        # Write headers
+        headers = [
+            'ID', 'Camera Name', 'Branch', 'Region', 'Chain',
+            'Fault Type', 'Description', 'Reported By', 'Date Reported',
+            'Status', 'Resolved By', 'Date Resolved', 'Repair Notes'
+        ]
+        
+        # Apply header styles
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col_num, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+        
+        # Write data
+        row_num = 2
+        for fault in faults:
+            ws.cell(row=row_num, column=1, value=fault.id)
+            ws.cell(row=row_num, column=2, value=fault.camera.name if fault.camera else '')
+            ws.cell(row=row_num, column=3, value=fault.camera.branch.name if fault.camera and fault.camera.branch else '')
+            ws.cell(row=row_num, column=4, value=fault.camera.branch.region.name if fault.camera and fault.camera.branch and fault.camera.branch.region else '')
+            ws.cell(row=row_num, column=5, value=fault.camera.branch.region.chain.name if fault.camera and fault.camera.branch and fault.camera.branch.region and fault.camera.branch.region.chain else '')
+            ws.cell(row=row_num, column=6, value=fault.fault_type)
+            ws.cell(row=row_num, column=7, value=fault.description)
+            ws.cell(row=row_num, column=8, value=fault.reported_by)
+            ws.cell(row=row_num, column=9, value=fault.date_reported.strftime('%Y-%m-%d %H:%M') if fault.date_reported else '')
+            ws.cell(row=row_num, column=10, value='Resolved' if fault.resolved_at else 'Open')
+            ws.cell(row=row_num, column=11, value=fault.resolved_by or '')
+            ws.cell(row=row_num, column=12, value=fault.resolved_at.strftime('%Y-%m-%d %H:%M') if fault.resolved_at else '')
+            ws.cell(row=row_num, column=13, value=fault.repair_notes or '')
+            row_num += 1
+        
+        # Auto-adjust column widths
+        for col in ws.columns:
+            max_length = 0
+            column = col[0].column_letter
+            for cell in col:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = min(max_length + 2, 50)
+            ws.column_dimensions[column].width = adjusted_width
+        
+        # Save to memory
+        excel_file = io.BytesIO()
+        wb.save(excel_file)
+        excel_file.seek(0)
+        
+        return send_file(
+            excel_file,
+            as_attachment=True,
+            download_name=f"repaired_cameras_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        
+    except Exception as e:
+        flash(f"Error generating repaired cameras report: {str(e)}", "danger")
+        return redirect(url_for("reports"))
+
+@app.route("/reports/camera-faults")
+@login_required
+def camera_faults_report():
+    """Generate and download camera faults report in Excel format."""
+    from datetime import datetime
+    try:
+        # Get all cameras with offline status and create automatic faults
+        offline_cameras = Camera.query.filter_by(status='offline').all()
+        
+        # Create automatic faults for offline cameras if they don't exist
+        for camera in offline_cameras:
+            # Check if there's an NVR fault for this camera's branch
+            branch_nvr_faults = []
+            all_nvr_faults = Fault.query.filter(
+                Fault.fault_type == 'NVR Issue',
+                Fault.resolved_at.is_(None)
+            ).all()
+            
+            # Check each NVR fault's camera branch manually
+            for nvr_fault in all_nvr_faults:
+                if nvr_fault.camera and nvr_fault.camera.branch_id == camera.branch_id:
+                    branch_nvr_faults.append(nvr_fault)
+            
+            # If branch has NVR faults, don't create new offline faults
+            if branch_nvr_faults:
+                continue
+            
+            existing_fault = Fault.query.filter_by(
+                camera_id=camera.id,
+                fault_type='offline',
+                resolved_at=None
+            ).first()
+            
+            if not existing_fault:
+                # Create automatic fault for offline camera
+                new_fault = Fault(
+                    description=f'Camera {camera.name} is offline',
+                    fault_type='offline',
+                    device_type='Camera',
+                    reported_by='System',
+                    camera_id=camera.id
+                )
+                db.session.add(new_fault)
+        
+        db.session.commit()
+        
+        # Get all unresolved camera faults (including offline cameras)
+        faults = Fault.query.filter(Fault.resolved_at.is_(None)).join(Camera).all()
+        
+        # Create Excel workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Camera Faults Report"
+        
+        # Define styles
+        header_font = Font(name='Arial', size=12, bold=True, color='FFFFFF')
+        header_fill = PatternFill(start_color='366092', end_color='366092', fill_type='solid')
+        header_alignment = Alignment(horizontal='center', vertical='center')
+        
+        # Write headers
+        headers = [
+            'ID', 'Camera Name', 'Branch', 'Region', 'Chain',
+            'Fault Type', 'Description', 'Reported By', 'Date Reported',
+            'Status', 'Priority', 'Days Open'
+        ]
+        
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col_num, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+        
+        # Write data
+        for row_num, fault in enumerate(faults, 2):
+            # Calculate days open
+            days_open = 0
+            if fault.date_reported:
+                from datetime import datetime
+                days_open = (datetime.now() - fault.date_reported).days
+            
+            ws.cell(row=row_num, column=1, value=fault.id)
+            ws.cell(row=row_num, column=2, value=fault.camera.name if fault.camera else 'N/A')
+            ws.cell(row=row_num, column=3, value=fault.camera.branch.name if fault.camera and fault.camera.branch else 'N/A')
+            ws.cell(row=row_num, column=4, value=fault.camera.branch.region.name if fault.camera and fault.camera.branch and fault.camera.branch.region else 'N/A')
+            ws.cell(row=row_num, column=5, value=fault.camera.branch.region.chain.name if fault.camera and fault.camera.branch and fault.camera.branch.region and fault.camera.branch.region.chain else 'N/A')
+            ws.cell(row=row_num, column=6, value=fault.fault_type)
+            ws.cell(row=row_num, column=7, value=fault.description)
+            ws.cell(row=row_num, column=8, value=fault.reported_by)
+            ws.cell(row=row_num, column=9, value=fault.date_reported.strftime('%Y-%m-%d %H:%M:%S') if fault.date_reported else '')
+            ws.cell(row=row_num, column=10, value='Open' if fault.status == 'open' else 'Resolved')
+            ws.cell(row=row_num, column=11, value=fault.priority or 'Medium')
+            ws.cell(row=row_num, column=12, value=days_open)
+        
+        # Auto-adjust column widths
+        for column in ws.columns:
+            max_length = 0
+            column_letter = get_column_letter(column[0].column)
+            for cell in column:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = min(max_length + 2, 50)
+            ws.column_dimensions[column_letter].width = adjusted_width
+        
+        # Save to memory
+        excel_file = io.BytesIO()
+        wb.save(excel_file)
+        excel_file.seek(0)
+        
+        # Create response
+        response = make_response(excel_file.getvalue())
+        response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        response.headers['Content-Disposition'] = f'attachment; filename=camera_faults_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+        
+        return response
+        
+    except Exception as e:
+        flash(_(f"خطأ في إنشاء التقرير: {str(e)}"), "danger")
+        return redirect(url_for("reports"))
+
+@app.route("/reports/device-repaired")
+@login_required
+def device_repaired_report():
+    """Generate and download repaired devices report in Excel format."""
+    from datetime import datetime
+    try:
+        # Get all repaired device faults
+        faults = DeviceFault.query.filter(DeviceFault.resolved_at.isnot(None)).join(Device).all()
+        
+        # Create Excel workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Repaired Devices Report"
+        
+        # Define styles
+        header_font = Font(name='Arial', size=12, bold=True, color='FFFFFF')
+        header_fill = PatternFill(start_color='17a2b8', end_color='17a2b8', fill_type='solid')
+        header_alignment = Alignment(horizontal='center', vertical='center')
+        
+        # Write headers
+        headers = [
+            'ID', 'Device Name', 'Device Type', 'Branch', 'Region', 'Chain',
+            'Fault Type', 'Description', 'Reported By', 'Date Reported',
+            'Status', 'Resolved By', 'Date Resolved', 'Repair Notes'
+        ]
+        
+        # Apply header styles
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col_num, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+        
+        # Write data
+        row_num = 2
+        for fault in faults:
+            ws.cell(row=row_num, column=1, value=fault.id)
+            ws.cell(row=row_num, column=2, value=fault.device.name if fault.device else '')
+            ws.cell(row=row_num, column=3, value=fault.device.device_type if fault.device else '')
+            ws.cell(row=row_num, column=4, value=fault.device.branch.name if fault.device and fault.device.branch else '')
+            ws.cell(row=row_num, column=5, value=fault.device.branch.region.name if fault.device and fault.device.branch and fault.device.branch.region else '')
+            ws.cell(row=row_num, column=6, value=fault.device.branch.region.chain.name if fault.device and fault.device.branch and fault.device.branch.region and fault.device.branch.region.chain else '')
+            ws.cell(row=row_num, column=7, value=fault.fault_type)
+            ws.cell(row=row_num, column=8, value=fault.description)
+            ws.cell(row=row_num, column=9, value=fault.reported_by)
+            ws.cell(row=row_num, column=10, value=fault.date_reported.strftime('%Y-%m-%d %H:%M') if fault.date_reported else '')
+            ws.cell(row=row_num, column=11, value='Resolved' if fault.resolved_at else 'Open')
+            ws.cell(row=row_num, column=12, value=fault.resolved_by or '')
+            ws.cell(row=row_num, column=13, value=fault.resolved_at.strftime('%Y-%m-%d %H:%M') if fault.resolved_at else '')
+            ws.cell(row=row_num, column=14, value=fault.repair_notes or '')
+            row_num += 1
+        
+        # Auto-adjust column widths
+        for col in ws.columns:
+            max_length = 0
+            column = col[0].column_letter
+            for cell in col:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = min(max_length + 2, 50)
+            ws.column_dimensions[column].width = adjusted_width
+        
+        # Save to memory
+        excel_file = io.BytesIO()
+        wb.save(excel_file)
+        excel_file.seek(0)
+        
+        return send_file(
+            excel_file,
+            as_attachment=True,
+            download_name=f"repaired_devices_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        
+    except Exception as e:
+        flash(f"Error generating repaired devices report: {str(e)}", "danger")
+        return redirect(url_for("reports"))
+
+@app.route("/reports/device-faults")
+@login_required
+def device_faults_report():
+    """Generate and download device faults report in Excel format."""
+    from datetime import datetime
+    try:
+        # Get all unresolved device faults only
+        faults = DeviceFault.query.filter(DeviceFault.resolved_at.is_(None)).join(Device).all()
+        
+        # Create Excel workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Device Faults Report"
+        
+        # Define styles
+        header_font = Font(name='Arial', size=12, bold=True, color='FFFFFF')
+        header_fill = PatternFill(start_color='28a745', end_color='28a745', fill_type='solid')
+        header_alignment = Alignment(horizontal='center', vertical='center')
+        
+        # Write headers
+        headers = [
+            'ID', 'Device Name', 'Device Type', 'Branch', 'Region', 'Chain',
+            'Fault Type', 'Description', 'Reported By', 'Date Reported',
+            'Status', 'Priority', 'Days Open'
+        ]
+        
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col_num, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+        
+        # Write data
+        for row_num, fault in enumerate(faults, 2):
+            ws.cell(row=row_num, column=1, value=fault.id)
+            ws.cell(row=row_num, column=2, value=fault.device.name if fault.device else 'N/A')
+            ws.cell(row=row_num, column=3, value=fault.device.device_type if fault.device else 'N/A')
+            ws.cell(row=row_num, column=4, value=fault.device.branch.name if fault.device and fault.device.branch else 'N/A')
+            ws.cell(row=row_num, column=5, value=fault.device.branch.region.name if fault.device and fault.device.branch and fault.device.branch.region else 'N/A')
+            ws.cell(row=row_num, column=6, value=fault.device.branch.region.chain.name if fault.device and fault.device.branch and fault.device.branch.region and fault.device.branch.region.chain else 'N/A')
+            ws.cell(row=row_num, column=7, value=fault.fault_type)
+            ws.cell(row=row_num, column=8, value=fault.description)
+            ws.cell(row=row_num, column=9, value=fault.reported_by)
+            ws.cell(row=row_num, column=10, value=fault.date_reported.strftime('%Y-%m-%d %H:%M:%S') if fault.date_reported else '')
+            ws.cell(row=row_num, column=11, value='Resolved' if fault.resolved_at else 'Pending')
+            ws.cell(row=row_num, column=12, value=fault.technician.username if fault.technician else 'Not Specified')
+            ws.cell(row=row_num, column=13, value=fault.resolved_by or '')
+            ws.cell(row=row_num, column=14, value=fault.resolved_at.strftime('%Y-%m-%d %H:%M:%S') if fault.resolved_at else '')
+            ws.cell(row=row_num, column=15, value=fault.repair_notes or '')
+        
+        # Auto-adjust column widths
+        for column in ws.columns:
+            max_length = 0
+            column_letter = get_column_letter(column[0].column)
+            for cell in column:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = min(max_length + 2, 50)
+            ws.column_dimensions[column_letter].width = adjusted_width
+        
+        # Save to memory
+        excel_file = io.BytesIO()
+        wb.save(excel_file)
+        excel_file.seek(0)
+        
+        # Create response
+        response = make_response(excel_file.getvalue())
+        response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        response.headers['Content-Disposition'] = f'attachment; filename=device_faults_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+        
+        return response
+        
+    except Exception as e:
+        flash(_(f"خطأ في إنشاء التقرير: {str(e)}"), "danger")
+        return redirect(url_for("reports"))
+
+@app.route("/reports/all-faults")
+@login_required
+def all_faults_report():
+    """Generate and download all faults report in Excel format."""
+    try:
+        # Create Excel workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "All Faults Report"
+        
+        # Define styles
+        header_font = Font(name='Arial', size=12, bold=True, color='FFFFFF')
+        header_fill = PatternFill(start_color='ffc107', end_color='ffc107', fill_type='solid')
+        header_alignment = Alignment(horizontal='center', vertical='center')
+        
+        # Write headers
+        headers = [
+            'Report Type', 'ID', 'Item Name', 'Item Type', 'Branch', 'Region', 'Chain',
+            'Fault Type', 'Description', 'Reported By', 'Date Reported',
+            'Status', 'Technician/Resolved By', 'Date Resolved', 'Repair Notes'
+        ]
+        
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col_num, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+        
+        # Write camera faults
+        camera_faults = Fault.query.all()
+        for fault in camera_faults:
+            ws.append([
+                'Camera Fault',
+                fault.id,
+                fault.camera.name if fault.camera else 'N/A',
+                'Camera',
+                fault.camera.branch.name if fault.camera and fault.camera.branch else 'N/A',
+                fault.camera.branch.region.name if fault.camera and fault.camera.branch and fault.camera.branch.region else 'N/A',
+                fault.camera.branch.region.chain.name if fault.camera and fault.camera.branch and fault.camera.branch.region and fault.camera.branch.region.chain else 'N/A',
+                fault.fault_type,
+                fault.description,
+                fault.reported_by,
+                fault.date_reported.strftime('%Y-%m-%d %H:%M:%S') if fault.date_reported else '',
+                'Resolved' if fault.resolved_at else 'Pending',
+                fault.resolved_by or '',
+                fault.resolved_at.strftime('%Y-%m-%d %H:%M:%S') if fault.resolved_at else '',
+                fault.repair_notes or ''
+            ])
+        
+        # Write device faults
+        device_faults = DeviceFault.query.all()
+        for fault in device_faults:
+            ws.append([
+                'Device Fault',
+                fault.id,
+                fault.device.name if fault.device else 'N/A',
+                fault.device.device_type if fault.device else 'N/A',
+                fault.device.branch.name if fault.device and fault.device.branch else 'N/A',
+                fault.device.branch.region.name if fault.device and fault.device.branch and fault.device.branch.region else 'N/A',
+                fault.device.branch.region.chain.name if fault.device and fault.device.branch and fault.device.branch.region and fault.device.branch.region.chain else 'N/A',
+                fault.fault_type,
+                fault.description,
+                fault.reported_by,
+                fault.date_reported.strftime('%Y-%m-%d %H:%M:%S') if fault.date_reported else '',
+                'Resolved' if fault.resolved_at else 'Pending',
+                fault.technician.username if fault.technician else 'Not Specified',
+                fault.resolved_by or '',
+                fault.resolved_at.strftime('%Y-%m-%d %H:%M:%S') if fault.resolved_at else '',
+                fault.repair_notes or ''
+            ])
+        
+        # Auto-adjust column widths
+        for column in ws.columns:
+            max_length = 0
+            column_letter = get_column_letter(column[0].column)
+            for cell in column:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = min(max_length + 2, 50)
+            ws.column_dimensions[column_letter].width = adjusted_width
+        
+        # Save to memory
+        excel_file = io.BytesIO()
+        wb.save(excel_file)
+        excel_file.seek(0)
+        
+        # Create response
+        response = make_response(excel_file.getvalue())
+        response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        response.headers['Content-Disposition'] = f'attachment; filename=all_faults_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+        
+        return response
+        
+    except Exception as e:
+        flash(_(f"خطأ في إنشاء التقرير: {str(e)}"), "danger")
+        return redirect(url_for("reports"))
+
+@app.route("/quick-ping", methods=["POST"])
+@login_required
+def quick_ping():
+    """Quick ping API endpoint for AJAX requests."""
+    if current_user.role != "admin":
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    try:
+        data = request.get_json()
+        ip_address = data.get('ip_address', '').strip()
+        
+        if not ip_address:
+            return jsonify({'error': 'IP address is required'}), 400
+        
+        # Validate IP address
+        ip_pattern = re.compile(r'^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$')
+        if not ip_pattern.match(ip_address):
+            return jsonify({'error': 'Invalid IP address'}), 400
+        
+        # Perform ping
+        command = ['ping', '-n', '1', ip_address]
+        result = subprocess.run(command, capture_output=True, text=True, timeout=10, shell=True)
+        
+        ping_result = {
+            'ip': ip_address,
+            'success': result.returncode == 0,
+            'output': result.stdout,
+            'error': result.stderr if result.returncode != 0 else None
+        }
+        
+        return jsonify(ping_result)
+        
+    except subprocess.TimeoutExpired:
+        return jsonify({
+            'ip': ip_address,
+            'success': False,
+            'output': None,
+            'error': 'Connection timeout'
+        })
+    except Exception as e:
+        return jsonify({
+            'ip': ip_address if 'ip_address' in locals() else 'unknown',
+            'success': False,
+            'output': None,
+            'error': str(e)
+        }), 500
+
+@app.route("/api/branch-devices/<int:branch_id>")
+@login_required
+def get_branch_devices(branch_id):
+    """API endpoint to get devices for a specific branch."""
+    if current_user.role != "admin":
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    branch = Branch.query.get_or_404(branch_id)
+    devices = Device.query.filter_by(branch_id=branch_id).all()
+    
+    devices_data = [{
+        'id': d.id,
+        'name': d.name,
+        'device_type': d.device_type,
+        'ip_address': d.ip_address
+    } for d in devices if d.ip_address]
+    
+    return jsonify({
+        'branch_id': branch_id,
+        'branch_name': branch.name,
+        'devices': devices_data
+    })
+
+
+if __name__ == "__main__":
+    with app.app_context():
+        # Create all tables
+        db.create_all()
+        
+        # Add missing columns
+        try:
+            # Add status column to camera table
+            db.session.execute(db.text("ALTER TABLE camera ADD COLUMN status VARCHAR(20) DEFAULT 'online'"))
+            db.session.commit()
+            print("Added status column to camera table")
+        except Exception as e:
+            print(f"Status column already exists or error: {e}")
+            db.session.rollback()
+        
+        try:
+            # Add ip_address column to branch table
+            db.session.execute(db.text("ALTER TABLE branch ADD COLUMN ip_address VARCHAR(100)"))
+            db.session.commit()
+            print("Added ip_address column to branch table")
+        except Exception as e:
+            print(f"IP address column already exists or error: {e}")
+            db.session.rollback()
+        
+        try:
+            # Add phone_number column to branch table
+            db.session.execute(db.text("ALTER TABLE branch ADD COLUMN phone_number VARCHAR(20)"))
+            db.session.commit()
+            print("Added phone_number column to branch table")
+        except Exception as e:
+            print(f"Phone number column already exists or error: {e}")
+            db.session.rollback()
+        
+        try:
+            # Add phone_number_2 column to branch table
+            db.session.execute(db.text("ALTER TABLE branch ADD COLUMN phone_number_2 VARCHAR(20)"))
+            db.session.commit()
+            print("Added phone_number_2 column to branch table")
+        except Exception as e:
+            print(f"Phone number 2 column already exists or error: {e}")
+            db.session.rollback()
+        
+        try:
+            # Add phone_number_3 column to branch table
+            db.session.execute(db.text("ALTER TABLE branch ADD COLUMN phone_number_3 VARCHAR(20)"))
+            db.session.commit()
+            print("Added phone_number_3 column to branch table")
+        except Exception as e:
+            print(f"Phone number 3 column already exists or error: {e}")
+            db.session.rollback()
+        
+        try:
+            # Add phone_number_4 column to branch table
+            db.session.execute(db.text("ALTER TABLE branch ADD COLUMN phone_number_4 VARCHAR(20)"))
+            db.session.commit()
+            print("Added phone_number_4 column to branch table")
+        except Exception as e:
+            print(f"Phone number 4 column already exists or error: {e}")
+            db.session.rollback()
+        
+        print("Database tables created/verified")
+        
+        # Create initial admin user if not exists
+        try:
+            if not User.query.filter_by(username="admin").first():
+                admin = User(username="admin", password=generate_password_hash("admin123"), role="admin")
+                tech1 = User(username="فني1", password=generate_password_hash("tech123"), role="technician")
+                tech2 = User(username="فني2", password=generate_password_hash("tech123"), role="technician")
+                db.session.add_all([admin, tech1, tech2])
+                db.session.commit()
+                logger.info("✅ Default users created successfully")
+                print("✅ تم إنشاء المستخدمين الافتراضيين بنجاح")
+                print("   المدير: admin / admin123")
+                print("   الفني 1: فني1 / tech123")
+                print("   الفني 2: فني2 / tech123")
+            else:
+                logger.info("✅ Admin user already exists")
+        except Exception as e:
+            logger.error(f"Error creating default users: {str(e)}", exc_info=True)
+        
+        # Create directories
+        for folder in [app.config['UPLOAD_FOLDER'], app.config['LOGO_FOLDER']]:
+            os.makedirs(folder, exist_ok=True)
+        
+        logger.info("✅ Application initialized successfully")
+        print("Application initialized successfully")
+    
+    try:
+        app.run(debug=True, host='0.0.0.0', port=5000)
+    except Exception as e:
+        logger.error(f"Failed to start server: {str(e)}", exc_info=True)
+        print(f"Failed to start server: {str(e)}")

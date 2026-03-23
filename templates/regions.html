@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-map me-2"></i>{% if chain %}{{ _('مناطق السلسلة') }}: {{ chain.name }}{% else %}{{ _('إدارة المناطق') }}{% endif %}</h1>
+        <div class="d-flex">
+            {% if chain %}
+            <a href="{{ url_for('add_region', chain_id=chain.id) }}" class="btn btn-primary btn-lg me-2">
+                <i class="fas fa-plus-circle me-2"></i>{{ _('إضافة منطقة داخل هذه السلسلة') }}
+            </a>
+            <form method="POST" action="{{ url_for('import_regions_excel', chain_id=chain.id) }}" class="d-inline" enctype="multipart/form-data">
+                <input type="file" name="excel_file" accept=".xlsx,.xls" class="form-control d-none" id="excelFileInput">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="button" class="btn btn-success btn-lg me-2" onclick="document.getElementById('excelFileInput').click()">
+                    <i class="fas fa-file-excel me-2"></i>{{ _('استيراد من Excel') }}
+                </button>
+                <button type="submit" id="submitExcelBtn" class="btn btn-success btn-lg d-none">
+                    <i class="fas fa-upload me-2"></i>{{ _('رفع الملف') }}
+                </button>
+            </form>
+            <a href="{{ url_for('chains') }}" class="btn btn-secondary btn-lg"><i class="fas fa-arrow-right me-1"></i>{{ _('العودة للسلاسل') }}</a>
+            {% if regions|length > 0 %}
+            <form method="POST" action="{{ url_for('delete_all_chain_regions', chain_id=chain.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-danger btn-lg me-2" onclick="return confirm('WARNING: This will delete ALL regions in this chain and ALL related data (branches, cameras, devices, faults). This action CANNOT be undone. Are you sure you want to continue?');">
+                    <i class="fas fa-trash-alt me-2"></i>{{ _('مسح جميع المناطق') }}
+                </button>
+            </form>
+            {% endif %}
+            {% else %}
+            <a href="{{ url_for('add_region') }}" class="btn btn-primary btn-lg me-2">
+                <i class="fas fa-plus-circle me-2"></i>{{ _('إضافة منطقة جديدة') }}
+            </a>
+            <form method="POST" action="{{ url_for('import_regions_excel') }}" class="d-inline" enctype="multipart/form-data">
+                <input type="file" name="excel_file" accept=".xlsx,.xls" class="form-control d-none" id="excelFileInput">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="button" class="btn btn-success btn-lg" onclick="document.getElementById('excelFileInput').click()">
+                    <i class="fas fa-file-excel me-2"></i>{{ _('استيراد من Excel') }}
+                </button>
+                <button type="submit" id="submitExcelBtn" class="btn btn-success btn-lg d-none">
+                    <i class="fas fa-upload me-2"></i>{{ _('رفع الملف') }}
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- بطاقات الإحصائيات -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stat-card text-center">
+                <div class="h2 text-primary">{{ regions|length }}</div>
+                <div class="text-muted">{{ _('إجمالي المناطق') }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card text-center">
+                <div class="h2 text-info">
+                    {% set total_branches = 0 %}
+                    {% for item in regions %}
+                        {% set total_branches = total_branches + item.region.branches|length %}
+                    {% endfor %}
+                    {{ total_branches }}
+                </div>
+                <div class="text-muted">{{ _('إجمالي الفروع') }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card text-center">
+                <div class="h2 text-success">
+                    {% set total_cameras = 0 %}
+                    {% for item in regions %}
+                        {% for branch in item.region.branches %}
+                            {% if not branch.closed %}
+                                {% for camera in branch.cameras %}
+                                    {% if camera.ip_address and camera.ip_address.strip() %}
+                                        {% set total_cameras = total_cameras + 1 %}
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endfor %}
+                    {{ total_cameras }}
+                </div>
+                <div class="text-muted">{{ _('إجمالي الكاميرات') }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card text-center">
+                <div class="h2 text-warning">
+                    {% set total_faults = 0 %}
+                    {% for item in regions %}
+                        {% for branch in item.region.branches %}
+                            {% for camera in branch.cameras %}
+                                {% set total_faults = total_faults + camera.faults|length %}
+                            {% endfor %}
+                        {% endfor %}
+                    {% endfor %}
+                    {{ total_faults }}
+                </div>
+                <div class="text-muted">{{ _('إجمالي الأعطال') }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- خانة البحث -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" id="regionSearch" class="form-control" placeholder="{% if current_lang == 'ar' %}ابحث عن منطقة...{% else %}Search for region...{% endif %}">
+            </div>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        {% if regions %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th><input type="checkbox" id="selectAllRegions" title="{{ _('تحديد الكل') }}"></th>
+                        <th>#</th>
+                        {% if not chain %}<th>{% if current_lang == 'ar' %}{{ _('السلسلة') }}{% else %}Chain{% endif %}</th>{% endif %}
+                        <th>{{ _('اسم المنطقة') }}</th>
+                        <th>{{ _('عدد الفروع') }}</th>
+                        <th>{{ _('عدد الكاميرات') }}</th>
+                        <th>{{ _('عدد أجهزة NVR') }}</th>
+                        <th>{{ _('عدد الأعطال') }}</th>
+                        <th>{{ _('الإجراءات') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in regions %}
+                    <tr>
+                        <td><input type="checkbox" class="region-checkbox" data-region-id="{{ item.region.id }}" data-region-name="{{ item.region.name }}"></td>
+                        <td><strong>{{ item.row_number }}</strong></td>
+                        {% if not chain %}
+                        <td>
+                            {% if item.region.chain %}
+                            <a href="{{ url_for('chain_regions', chain_id=item.region.chain.id) }}" class="badge bg-secondary text-decoration-none">{{ item.region.chain.name }}</a>
+                            {% else %}
+                            <span class="text-muted">{{ _('—') }}</span>
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-map-marker-alt text-primary me-3 fa-lg"></i>
+                                <div>
+                                    <h6 class="mb-1">{{ item.region.name }}</h6>
+                                    <small class="text-muted">{{ _('منطقة رئيسية') }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-info fs-6">{{ item.region.branches|length }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-success fs-6">
+                                {% set region_cameras = 0 %}
+                                {% for branch in item.region.branches %}
+                                    {% if not branch.closed %}
+                                        {% for camera in branch.cameras %}
+                                            {% if camera.ip_address and camera.ip_address.strip() %}
+                                                {% set region_cameras = region_cameras + 1 %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endfor %}
+                                {{ region_cameras }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-primary fs-6">
+                                {% set region_nvrs = 0 %}
+                                {% for branch in item.region.branches %}
+                                    {% for device in branch.devices %}
+                                        {% if device.device_type == 'NVR' %}
+                                            {% set region_nvrs = region_nvrs + 1 %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endfor %}
+                                {{ region_nvrs }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-warning fs-6">
+                                {% set region_faults = 0 %}
+                                {% for branch in item.region.branches %}
+                                    {% for camera in branch.cameras %}
+                                        {% set region_faults = region_faults + camera.faults|length %}
+                                    {% endfor %}
+                                {% endfor %}
+                                {{ region_faults }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{{ url_for('branches', region_id=item.region.id) }}" class="btn btn-info btn-sm">
+                                    <i class="fas fa-building me-1"></i>{{ _('الفروع') }}
+                                </a>
+                                <a href="{{ url_for('add_branch', region_id=item.region.id) }}" class="btn btn-success btn-sm">
+                                    <i class="fas fa-plus me-1"></i>{{ _('إضافة فرع') }}
+                                </a>
+                                <a href="{{ url_for('edit_region', region_id=item.region.id) }}" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-edit me-1"></i>{{ _('تعديل') }}
+                                </a>
+                                <form method="POST" action="{{ url_for('delete_region', region_id=item.region.id) }}" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف المنطقة {{ item.region.name }}؟ سيتم حذف جميع الفروع والكاميرات التابعة لها.');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash me-1"></i>{{ _('حذف') }}</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-map-marked-alt text-muted fa-4x mb-3"></i>
+            <h4 class="text-muted">{{ _('لا توجد مناطق مسجلة') }}</h4>
+            <p class="text-muted mb-4">{{ _('ابدأ بإضافة أول منطقة لنظام الكاميرات') }}</p>
+            <a href="{{ url_for('add_region') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus-circle me-2"></i>{{ _('إضافة أول منطقة') }}
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('regionSearch');
+    const tableRows = document.querySelectorAll('tbody tr');
+    const excelFileInput = document.getElementById('excelFileInput');
+    const submitBtn = document.getElementById('submitExcelBtn');
+    const selectAllCheckbox = document.getElementById('selectAllRegions');
+    const regionCheckboxes = document.querySelectorAll('.region-checkbox');
+    const deleteSelectedBtn = document.getElementById('deleteSelectedRegions');
+    
+    // Handle select all checkbox
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            regionCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateDeleteButton();
+        });
+    }
+    
+    // Handle individual checkboxes
+    regionCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateDeleteButton);
+    });
+    
+    // Update delete button visibility
+    function updateDeleteButton() {
+        const checkedBoxes = document.querySelectorAll('.region-checkbox:checked');
+        if (deleteSelectedBtn) {
+            if (checkedBoxes.length > 0) {
+                deleteSelectedBtn.classList.remove('d-none');
+                deleteSelectedBtn.innerHTML = '<i class="fas fa-trash-alt me-2"></i>حذف المحدد (' + checkedBoxes.length + ')';
+            } else {
+                deleteSelectedBtn.classList.add('d-none');
+            }
+        }
+    }
+    
+    // Show upload button when file is selected
+    if (excelFileInput && submitBtn) {
+        excelFileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                submitBtn.classList.remove('d-none');
+                submitBtn.classList.add('d-inline-block');
+            } else {
+                submitBtn.classList.add('d-none');
+                submitBtn.classList.remove('d-inline-block');
+            }
+        });
+    }
+    
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        
+        tableRows.forEach(function(row) {
+            let regionName = '';
+            let chainName = '';
+            
+            // Check if we're in chain regions view (no chain column)
+            const hasChainColumn = document.querySelector('thead th:nth-child(3)')?.textContent.includes('Chain') || 
+                                 document.querySelector('thead th:nth-child(3)')?.textContent.includes('السلسلة');
+            
+            if (hasChainColumn) {
+                // Full regions view: checkbox, #, Chain, Region Name, Branches, Cameras, Faults, Actions
+                regionName = row.querySelector('td:nth-child(4)')?.textContent.toLowerCase() || '';
+                chainName = row.querySelector('td:nth-child(3) a')?.textContent.toLowerCase() || '';
+            } else {
+                // Chain regions view: checkbox, #, Region Name, Branches, Cameras, Faults, Actions
+                regionName = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
+                chainName = '';
+            }
+            
+            const matchesSearch = regionName.includes(searchTerm) || chainName.includes(searchTerm);
+            
+            row.style.display = matchesSearch ? '' : 'none';
+        });
+    });
+});
+
+// Function to confirm and delete selected regions
+function confirmDeleteSelectedRegions() {
+    const checkedBoxes = document.querySelectorAll('.region-checkbox:checked');
+    
+    if (checkedBoxes.length === 0) {
+        alert('الرجاء تحديد منطقة واحدة على الأقل');
+        return;
+    }
+    
+    const regionNames = Array.from(checkedBoxes).map(cb => cb.dataset.regionName);
+    const regionIds = Array.from(checkedBoxes).map(cb => cb.dataset.regionId);
+    
+    const confirmMessage = 'هل أنت متأكد من حذف المناطق التالية؟\n\n' + 
+                          regionNames.join('\n') + 
+                          '\n\nسيتم حذف جميع الفروع والكاميرات والأجهزة والأعطال المرتبطة بهذه المناطق. هذا الإجراء لا يمكن التراجع عنه.';
+    
+    if (confirm(confirmMessage)) {
+        // Create form and submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for("delete_multiple_regions") }}';
+        
+        // Add CSRF token
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = 'csrf_token';
+        csrfToken.value = '{{ csrf_token() }}';
+        form.appendChild(csrfToken);
+        
+        // Add region IDs
+        regionIds.forEach(id => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'region_ids';
+            input.value = id;
+            form.appendChild(input);
+        });
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+
+{% endblock %}

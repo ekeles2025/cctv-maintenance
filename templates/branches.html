@@ -1,0 +1,546 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{{ t('فروع منطقة:') }} {{ region.name }}</h1>
+    <div>
+        <a href="{{ url_for('add_branch', region_id=region.id) }}" class="btn btn-primary">➕ {{ t('إضافة فرع') }}</a>
+        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#importBranchesModal">
+            📊 {{ t('استيراد Excel') }}
+        </button>
+        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#importPhoneNumbersModal">
+            📱 {{ t('استيراد أرقام التليفونات') }}
+        </button>
+        <button type="button" class="btn btn-danger" onclick="confirmDeleteAllBranches()">
+            🗑️ {{ t('حذف جميع الفروع') }}
+        </button>
+        <a href="{{ url_for('regions') }}" class="btn btn-secondary">{{ t('العودة للمناطق') }}</a>
+    </div>
+</div>
+
+<!-- خانة البحث -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="input-group">
+            <span class="input-group-text">
+                <i class="fas fa-search"></i>
+            </span>
+            <input type="text" id="branchSearch" class="form-control" placeholder="{% if current_lang == 'ar' %}ابحث عن فرع...{% else %}Search for branch...{% endif %}">
+        </div>
+    </div>
+</div>
+
+<div class="stat-card">
+    {% if branches %}
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>{{ t('الرقم') }}</th>
+                    <th>{{ t('اسم الفرع') }}</th>
+                    <th>{{ t('الحالة') }}</th>
+                    <th>{{ t('الموقع') }}</th>
+                    <th>{{ t('رقم التليفون') }}</th>
+                    <th>{{ t('رقم التليفون 2') }}</th>
+                    <th>{{ t('رقم التليفون 3') }}</th>
+                    <th>{{ t('رقم التليفون 4') }}</th>
+                    <th>{{ t('IP') }}</th>
+                    <th>{{ t('عدد الكاميرات') }}</th>
+                    <th>{{ t('عدد أجهزة NVR') }}</th>
+                    <th>{{ t('الإجراءات') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for branch_data in branches %}
+                {% set branch = branch_data.branch %}
+                {% set row_number = branch_data.row_number %}
+                <tr>
+                    <td>{{ row_number }}</td>
+                    <td>{{ branch.name }}</td>
+                    <td>
+                        {% if branch.closed %}
+                            <span class="badge bg-danger">
+                                <i class="fas fa-lock me-1"></i>{{ t('مغلق') }}
+                            </span>
+                            {% if branch.closure_date %}
+                                <br><small class="text-muted">{{ t('في:') }} {{ branch.closure_date.strftime('%Y-%m-%d') }}</small>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-lock-open me-1"></i>{{ t('مفتوح') }}
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td>{{ branch.location }}</td>
+                    <td>
+                        {% if branch.phone_number %}
+                            <a href="tel:{{ branch.phone_number }}" class="text-decoration-none">
+                                <i class="fas fa-phone me-1"></i>{{ branch.phone_number }}
+                            </a>
+                        {% else %}
+                            <span class="text-muted">{{ t('غير محدد') }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if branch.phone_number_2 %}
+                            <a href="tel:{{ branch.phone_number_2 }}" class="text-decoration-none">
+                                <i class="fas fa-phone-alt me-1"></i>{{ branch.phone_number_2 }}
+                            </a>
+                        {% else %}
+                            <span class="text-muted">{{ t('غير محدد') }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if branch.phone_number_3 %}
+                            <a href="tel:{{ branch.phone_number_3 }}" class="text-decoration-none">
+                                <i class="fas fa-mobile-alt me-1"></i>{{ branch.phone_number_3 }}
+                            </a>
+                        {% else %}
+                            <span class="text-muted">{{ t('غير محدد') }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if branch.phone_number_4 %}
+                            <a href="tel:{{ branch.phone_number_4 }}" class="text-decoration-none">
+                                <i class="fas fa-phone-square-alt me-1"></i>{{ branch.phone_number_4 }}
+                            </a>
+                        {% else %}
+                            <span class="text-muted">{{ t('غير محدد') }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            {% if branch.ip_address %}
+                                <span class="badge bg-primary me-2">{{ branch.ip_address }}</span>
+                                <button type="button" 
+                                        class="btn btn-sm btn-success" 
+                                        onclick="quickPing('{{ branch.ip_address }}')"
+                                        title="{{ t('اختبار اتصال سريع') }}">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            {% else %}
+                                <span class="text-muted">{{ t('غير محدد') }}</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>{{ branch.cameras|length }}</td>
+                    <td>
+                        <span class="badge bg-primary fs-6">
+                            {{ branch.nvr_count if branch.nvr_count else 0 }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('cameras', branch_id=branch.id) }}" class="btn btn-sm btn-info">{{ t('الكاميرات') }}</a>
+                        <a href="{{ url_for('devices', branch_id=branch.id) }}" class="btn btn-sm btn-primary">{{ t('الأجهزة') }}</a>
+                        <a href="{{ url_for('edit_branch', branch_id=branch.id) }}" class="btn btn-sm btn-warning">{{ t('تعديل') }}</a>
+                        {% if not branch.closed %}
+                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#closeBranchModal" 
+                                data-branch-id="{{ branch.id }}" data-branch-name="{{ branch.name|e }}" onclick="setCloseBranchData(this)">
+                            {{ t('إغلاق') }}
+                        </button>
+                        {% endif %}
+                        <button type="button" class="btn btn-sm btn-danger" data-branch-id="{{ branch.id }}" data-branch-name="{{ branch.name|e }}" onclick="confirmDeleteBranch(this)">
+                            {{ t('حذف') }}
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted text-center">{{ t('لا توجد فروع مسجلة') }}</p>
+    {% endif %}
+</div>
+
+<!-- Quick Ping Modal -->
+<div class="modal fade" id="pingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ t('نتيجة اختبار الاتصال') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="pingResult"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Import Branches Modal -->
+<div class="modal fade" id="importBranchesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ t('استيراد الفروع من Excel') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('import_branches_excel', region_id=region.id) }}" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label for="excel_file" class="form-label">{{ t('اختر ملف Excel') }}</label>
+                        <input type="file" class="form-control" id="excel_file" name="excel_file" 
+                               accept=".xlsx,.xls" required>
+                        <div class="form-text">
+                            {{ t('ملاحظة: سيتم استيراد البيانات من الأعمدة التالية:') }}<br>
+                            <code>العمود A: أسماء الكاميرات | العمود B: عناوين IP | العمود C: أسماء الفروع | العمود D: أرقام التليفونات</code>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="handleDuplicates" name="handle_duplicates" value="true" checked>
+                            <label class="form-check-label" for="handleDuplicates">
+                                {{ t('عدم استيراد الأسماء المكررة من العمود C') }}
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        {{ t('ملاحظة: الحقل الإلزامي فقط هو اسم الفرع (العمود C). سيتم إنشاء جميع الكاميرات تلقائياً لكل فرع إذا كانت أسماء الكاميرات موجودة في العمود A.') }}
+                    </div>
+                    
+                    <div class="alert alert-secondary">
+                        <i class="fas fa-table me-2"></i>
+                        <strong>{{ t('مثال على ملف Excel:') }}</strong>
+                        <table class="table table-sm mt-2 mb-0">
+                            <thead>
+                                <tr>
+                                    <th>A</th><th>B</th><th>C</th><th>D</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>اسم الكاميرا</td><td>عنوان IP</td><td>اسم الفرع</td><td>رقم التليفون</td>
+                                </tr>
+                                <tr>
+                                    <td>كاميرا مدخل</td><td>192.168.1.1</td><td>فرع 1</td><td>01234567890</td>
+                                </tr>
+                                <tr>
+                                    <td>كاميرا خزينة</td><td>192.168.1.2</td><td>فرع 1</td><td>01234567890</td>
+                                </tr>
+                                <tr>
+                                    <td>كاميرا خارجية</td><td>192.168.1.3</td><td>فرع 1</td><td>01234567890</td>
+                                </tr>
+                                <tr>
+                                    <td>كاميرا رئيسية</td><td>192.168.2.1</td><td>فرع 2</td><td>01123456789</td>
+                                </tr>
+                                <tr>
+                                    <td>كاميرا فرعية</td><td>192.168.2.2</td><td>فرع 2</td><td>01123456789</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('إلغاء') }}</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-upload me-2"></i>{{ t('استيراد') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Import Phone Numbers Modal -->
+<div class="modal fade" id="importPhoneNumbersModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ t('استيراد أرقام التليفونات من Excel') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('import_phone_numbers_excel', region_id=region.id) }}" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label for="phone_excel_file" class="form-label">{{ t('اختر ملف Excel') }}</label>
+                        <input type="file" class="form-control" id="phone_excel_file" name="excel_file" 
+                               accept=".xlsx,.xls" required>
+                        <div class="form-text">
+                            {{ t('ملاحظة: سيتم استيراد أرقام التليفونات للفروع الموجودة فقط. أسماء الفروع من العمود C وأرقام التليفونات من العمود D.') }}<br>
+                            <code>العمود C: أسماء الفروع | العمود D: أرقام التليفونات</code>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        {{ t('ملاحظة: سيتم تحديث رقم التليفون الأول فقط للفروع الموجودة في نفس المنطقة.') }}
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        {{ t('تأكد من أن أسماء الفروع في ملف Excel تطابق أسماء الفروع في النظام تماماً.') }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('إلغاء') }}</button>
+                    <button type="submit" class="btn btn-info">
+                        <i class="fas fa-phone me-2"></i>{{ t('استيراد الأرقام') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Close Branch Modal -->
+<div class="modal fade" id="closeBranchModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ t('إغلاق الفرع') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="closeBranchForm">
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" id="closeBranchId" name="branch_id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">{{ t('اسم الفرع') }}:</label>
+                        <p class="form-control-plaintext fw-bold" id="closeBranchName"></p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="closureReason" class="form-label">{{ t('سبب الإغلاق') }} *</label>
+                        <textarea class="form-control" id="closureReason" name="closure_reason" rows="3" required 
+                                  placeholder="{{ t('اكتب سبب إغلاق الفرع...') }}"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="reporterName" class="form-label">{{ t('اسم المبلغ') }} *</label>
+                        <input type="text" class="form-control" id="reporterName" name="reporter_name" required 
+                               placeholder="{{ t('اكتب اسم الشخص الذي أبلغ عن الإغلاق...') }}">
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        {{ t('هل أنت متأكد من إغلاق هذا الفرع؟ سيتم نقله إلى قائمة الفروع المغلقة.') }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('إلغاء') }}</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-lock me-2"></i>{{ t('تأكيد الإغلاق') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDeleteAllBranches() {
+    if (confirm('{{ t("هل أنت متأكد من حذف جميع فروع هذه المنطقة؟ هذا الإجراء لا يمكن التراجع عنه.") }}')) {
+        if (confirm('{{ t("تحذير: سيتم حذف جميع الكاميرات والأجهزة المرتبطة بهذه الفروع أيضاً. هل تريد المتابعة؟") }}')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ url_for("delete_all_branches", region_id=region.id) }}';
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = 'csrf_token';
+            csrfToken.value = '{{ csrf_token() }}';
+            form.appendChild(csrfToken);
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+}
+
+function quickPing(ipAddress) {
+    if (!ipAddress) {
+        alert('{{ t("لا يوجد عنوان IP محدد للفرع") }}');
+        return;
+    }
+    
+    // Show loading
+    const resultDiv = document.getElementById('pingResult');
+    resultDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin fa-2x"></i><p class="mt-2">' + '{{ t("جاري اختبار الاتصال...") }}' + '</p></div>';
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('pingModal'));
+    modal.show();
+    
+    // Send ping request
+    fetch('/quick-ping', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ ip_address: ipAddress })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle fa-2x me-3"></i>
+                        <div>
+                            <h5 class="mb-1">{{ t('نجح الاتصال!') }}</h5>
+                            <p class="mb-0">${data.ip}</p>
+                        </div>
+                    </div>
+                    ${data.output ? `<pre class="mt-3" style="background: #f8f9fa; padding: 10px; border-radius: 5px; font-size: 12px;">${data.output}</pre>` : ''}
+                </div>
+            `;
+        } else {
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-times-circle fa-2x me-3"></i>
+                        <div>
+                            <h5 class="mb-1">{{ t('فشل الاتصال') }}</h5>
+                            <p class="mb-0">${data.ip}</p>
+                        </div>
+                    </div>
+                    ${data.error ? `<p class="mt-2 text-danger">${data.error}</p>` : ''}
+                    ${data.output ? `<pre class="mt-3" style="background: #f8f9fa; padding: 10px; border-radius: 5px; font-size: 12px;">${data.output}</pre>` : ''}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        resultDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                {{ t('خطأ في الاتصال:') }} ${error.message}
+            </div>
+        `;
+    });
+}
+
+function confirmDeleteBranch(element) {
+    const branchId = element.getAttribute('data-branch-id');
+    const branchName = element.getAttribute('data-branch-name');
+    console.log(`DEBUG: confirmDeleteBranch called with branchId: ${branchId}, branchName: ${branchName}`);
+    
+    if (confirm(`{{ t("هل أنت متأكد من حذف الفرع؟") }} ${branchName}`)) {
+        console.log(`DEBUG: User confirmed deletion for branch: ${branchId}`);
+        
+        // Create form dynamically
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/branches/delete/${branchId}`;
+        form.style.display = 'none';
+        
+        // Add CSRF token
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = 'csrf_token';
+        csrfToken.value = '{{ csrf_token() }}';
+        form.appendChild(csrfToken);
+        
+        console.log(`DEBUG: Form created with action: ${form.action}`);
+        
+        // Add to body and submit
+        document.body.appendChild(form);
+        console.log(`DEBUG: Submitting form...`);
+        form.submit();
+    } else {
+        console.log(`DEBUG: User cancelled deletion for branch: ${branchId}`);
+    }
+}
+
+function setCloseBranchData(element) {
+    const branchId = element.getAttribute('data-branch-id');
+    const branchName = element.getAttribute('data-branch-name');
+    document.getElementById('closeBranchId').value = branchId;
+    document.getElementById('closeBranchName').textContent = branchName;
+    document.getElementById('closeBranchForm').action = '/close-branch/' + branchId;
+}
+
+// Handle close branch form submission
+document.getElementById('closeBranchForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{{ t("جاري الإغلاق...") }}';
+    
+    fetch(this.action, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            "X-CSRFToken": document.querySelector("input[name=\"csrf_token\"]").value
+        },
+        body: formData
+    })
+    .then(response => {
+        // Always try to parse as JSON first
+        return response.json().catch(() => {
+            // If JSON parsing fails, check if it's an error response
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            throw new Error('Invalid JSON response');
+        });
+    })
+    .then(data => {
+        if (data.success) {
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('closeBranchModal'));
+            modal.hide();
+            
+            // Reset form
+            this.reset();
+            document.getElementById('closeBranchName').textContent = '';
+            
+            // Show success message
+            alert(data.message || '{{ t("تم إغلاق الفرع بنجاح") }}');
+            
+            // Reload page to show updated status
+            window.location.reload();
+        } else {
+            // Show the actual error message from server
+            alert(data.message || '{{ t("حدث خطأ في إغلاق الفرع") }}');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('{{ t("حدث خطأ في الاتصال") }}: ' + error.message);
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    });
+});
+
+// Search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('branchSearch');
+    const tableRows = document.querySelectorAll('tbody tr');
+    
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        
+        tableRows.forEach(row => {
+            const branchName = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
+            const location = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
+            const phone = row.querySelector('td:nth-child(4)')?.textContent.toLowerCase() || '';
+            const ip = row.querySelector('td:nth-child(8)')?.textContent.toLowerCase() || '';
+            
+            const matchesSearch = branchName.includes(searchTerm) || 
+                              location.includes(searchTerm) || 
+                              phone.includes(searchTerm) || 
+                              ip.includes(searchTerm);
+            
+            row.style.display = matchesSearch ? '' : 'none';
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="stat-card mb-4">
+        <h2 style="color: var(--primary-color); font-weight: 700; margin-bottom: 8px;">
+            <i class="fas fa-cog me-2" style="color: var(--secondary-color);"></i>
+            {{ _('إعدادات النظام') }}
+        </h2>
+        <p class="text-muted mb-0">{{ _('تخصيص إعدادات النظام والعلامة التجارية') }}</p>
+    </div>
+
+    <div class="row g-4">
+        <!-- Logo Settings -->
+        <div class="col-lg-6">
+            <div class="stat-card">
+                <h4 style="color: var(--primary-color); font-weight: 700; margin-bottom: 24px;">
+                    <i class="fas fa-image me-2" style="color: var(--secondary-color);"></i>
+                    {{ _('لوجو الشركة') }}
+                </h4>
+                
+                <form method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold" style="color: var(--primary-color);">
+                            {{ _('رفع لوجو جديد') }}
+                        </label>
+                        <input type="file" name="company_logo" class="form-control" accept="image/*" id="logoInput" onchange="previewLogo(this)">
+                        <small class="text-muted d-block mt-2">
+                            <i class="fas fa-info-circle me-1"></i>
+                            {{ _('الصيغ المدعومة: PNG, JPG, JPEG, GIF, SVG (الحجم الموصى به: 200x200 بكسل)') }}
+                        </small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold" style="color: var(--primary-color);">
+                            {{ _('اسم الشركة') }}
+                        </label>
+                        <input type="text" name="company_name" class="form-control" value="{{ company_name }}" placeholder="{{ _('أدخل اسم الشركة') }}">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold" style="color: var(--primary-color);">
+                            {{ _('حجم اللوجو (بكسل)') }}
+                        </label>
+                        <input type="number" name="logo_size" class="form-control" value="{{ logo_size }}" min="20" max="200" step="5" placeholder="50">
+                        <small class="text-muted d-block mt-2">
+                            <i class="fas fa-info-circle me-1"></i>
+                            {{ _('الحجم الحالي:') }} {{ logo_size }} {{ _('بكسل (الحد الأدنى: 20، الحد الأقصى: 200)') }}
+                        </small>
+                    </div>
+
+                    <button type="submit" class="btn bg-primary-custom" style="color: white; border: none; border-radius: 12px; padding: 12px 32px; font-weight: 600;">
+                        <i class="fas fa-save me-2"></i>
+                        {{ _('حفظ الإعدادات') }}
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Logo Preview -->
+        <div class="col-lg-6">
+            <div class="stat-card">
+                <h4 style="color: var(--primary-color); font-weight: 700; margin-bottom: 24px;">
+                    <i class="fas fa-eye me-2" style="color: var(--secondary-color);"></i>
+                    {{ _('معاينة اللوجو') }}
+                </h4>
+                
+                <div class="text-center p-4" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(96, 165, 250, 0.05) 100%); border-radius: 16px; border: 2px dashed rgba(59, 130, 246, 0.3);">
+                    {% if logo_exists %}
+                        <img id="logoPreview" 
+                             src="{{ url_for('static', filename='logo/company_logo.png') }}?v={{ range(1000, 9999) | random }}" 
+                             alt="Company Logo" 
+                             style="width: {{ logo_size }}px; height: {{ logo_size }}px; object-fit: contain; border-radius: 12px; box-shadow: var(--shadow-lg);">
+                        <p class="mt-3 mb-0 text-muted">
+                            <i class="fas fa-check-circle text-success-custom me-2"></i>
+                            {{ _('لوجو الشركة الحالي') }} ({{ logo_size }}x{{ logo_size }} {{ _('بكسل') }})
+                        </p>
+                    {% else %}
+                        <div id="logoPreview" style="display: none;">
+                            <img src="" alt="Logo Preview" id="previewImg" style="object-fit: contain; border-radius: 12px; box-shadow: var(--shadow-lg);">
+                        </div>
+                        <div id="noLogo" style="display: block;">
+                            <i class="fas fa-image" style="font-size: 64px; color: #cbd5e1; margin-bottom: 16px;"></i>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                {{ _('لا يوجد لوجو حالياً') }}
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="mt-4">
+                    <h6 class="fw-semibold mb-3" style="color: var(--primary-color);">{{ _('معلومات اللوجو') }}</h6>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="p-3 rounded" style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2);">
+                                <div class="small text-muted mb-1">{{ _('الحالة') }}</div>
+                                <div class="fw-bold" style="color: var(--secondary-color);">
+                                    {% if logo_exists %}
+                                        <i class="fas fa-check-circle me-1"></i>{{ _('مثبت') }}
+                                    {% else %}
+                                        <i class="fas fa-times-circle me-1"></i>{{ _('غير مثبت') }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 rounded" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2);">
+                                <div class="small text-muted mb-1">{{ _('اسم الشركة') }}</div>
+                                <div class="fw-bold text-success-custom">
+                                    {{ company_name }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 mt-3">
+                            <div class="p-3 rounded" style="background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.2);">
+                                <div class="small text-muted mb-1">{{ _('حجم اللوجو') }}</div>
+                                <div class="fw-bold text-info-custom">
+                                    {{ logo_size }}x{{ logo_size }} {{ _('بكسل') }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="stat-card" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(251, 191, 36, 0.05) 100%); border-left: 4px solid var(--warning-color);">
+                <h5 class="text-primary-custom" style="font-weight: 700; margin-bottom: 16px;">
+                    <i class="fas fa-lightbulb me-2 text-warning-custom"></i>
+                    {{ _('تعليمات') }}
+                </h5>
+                <ul class="mb-0" style="list-style: none; padding: 0;">
+                    <li style="color: var(--primary-color) !important; line-height: 2.5; font-size: 15px; font-weight: 500; margin-bottom: 12px; padding-right: 20px;">
+                        <i class="fas fa-check-circle text-success-custom me-2"></i>
+                        {{ _('اللوجو سيظهر في الهيدر الرئيسي والسايد بار') }}
+                    </li>
+                    <li style="color: var(--primary-color) !important; line-height: 2.5; font-size: 15px; font-weight: 500; margin-bottom: 12px; padding-right: 20px;">
+                        <i class="fas fa-check-circle text-success-custom me-2"></i>
+                        {{ _('يُنصح باستخدام صورة بخلفية شفافة (PNG) للحصول على أفضل نتيجة') }}
+                    </li>
+                    <li style="color: var(--primary-color) !important; line-height: 2.5; font-size: 15px; font-weight: 500; margin-bottom: 12px; padding-right: 20px;">
+                        <i class="fas fa-check-circle text-success-custom me-2"></i>
+                        {{ _('الحجم المثالي للوجو: 200x200 بكسل أو أكبر') }}
+                    </li>
+                    <li style="color: var(--primary-color) !important; line-height: 2.5; font-size: 15px; font-weight: 500; margin-bottom: 12px; padding-right: 20px;">
+                        <i class="fas fa-check-circle text-success-custom me-2"></i>
+                        {{ _('اسم الشركة سيظهر بجانب اللوجو في جميع صفحات النظام') }}
+                    </li>
+                    <li style="color: var(--primary-color) !important; line-height: 2.5; font-size: 15px; font-weight: 500; margin-bottom: 12px; padding-right: 20px;">
+                        <i class="fas fa-check-circle text-success-custom me-2"></i>
+                        {{ _('يمكنك تخصيص حجم اللوجو من 20 إلى 200 بكسل من الإعدادات أعلاه') }}
+                    </li>
+                    <li style="color: var(--primary-color) !important; line-height: 2.5; font-size: 15px; font-weight: 500; padding-right: 20px;">
+                        <i class="fas fa-check-circle text-success-custom me-2"></i>
+                        {{ _('بعد رفع اللوجو، قد تحتاج لتحديث الصفحة (F5) لرؤية التغييرات') }}
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function previewLogo(input) {
+    const preview = document.getElementById('logoPreview');
+    const noLogo = document.getElementById('noLogo');
+    const logoSizeInput = document.querySelector('input[name="logo_size"]');
+    const logoSize = logoSizeInput ? parseInt(logoSizeInput.value) || 50 : 50;
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            if (preview) {
+                let img = preview.querySelector('img');
+                if (!img) {
+                    img = document.createElement('img');
+                    img.id = 'previewImg';
+                    preview.appendChild(img);
+                }
+                img.src = e.target.result;
+                img.style.width = logoSize + 'px';
+                img.style.height = logoSize + 'px';
+                img.style.objectFit = 'contain';
+                img.style.borderRadius = '12px';
+                img.style.boxShadow = 'var(--shadow-lg)';
+                
+                preview.style.display = 'block';
+                if (noLogo) {
+                    noLogo.style.display = 'none';
+                }
+            }
+        };
+        
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// Update preview when logo size changes
+document.addEventListener('DOMContentLoaded', function() {
+    const logoSizeInput = document.querySelector('input[name="logo_size"]');
+    if (logoSizeInput) {
+        logoSizeInput.addEventListener('input', function() {
+            const logoSize = parseInt(this.value) || 50;
+            const previewImg = document.getElementById('previewImg');
+            const existingImg = document.querySelector('#logoPreview img');
+            
+            if (previewImg) {
+                previewImg.style.width = logoSize + 'px';
+                previewImg.style.height = logoSize + 'px';
+            }
+            if (existingImg) {
+                existingImg.style.width = logoSize + 'px';
+                existingImg.style.height = logoSize + 'px';
+            }
+        });
+    }
+});
+
+// Form submission with loading state
+document.querySelector('form').addEventListener('submit', function(e) {
+    const btn = this.querySelector('button[type="submit"]');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>' + {{ _('جاري الحفظ...')|tojson }};
+    btn.disabled = true;
+});
+</script>
+{% endblock %}

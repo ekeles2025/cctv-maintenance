@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('تفاصيل عطل الجهاز') }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{{ _('تفاصيل عطل الجهاز') }}</h1>
+</div>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('chains') }}">{{ _('السلاسل') }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('chain_regions', chain_id=fault.device.branch.region.chain.id) }}">{{ fault.device.branch.region.chain.name }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('branches', region_id=fault.device.branch.region.id) }}">{{ fault.device.branch.region.name }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('branches', region_id=fault.device.branch.region.id) }}">{{ fault.device.branch.name }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('devices', branch_id=fault.device.branch.id) }}">{{ _('الأجهزة') }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('device_faults', device_id=fault.device.id) }}">{{ fault.device.name }}</a></li>
+        <li class="breadcrumb-item active">{{ _('تفاصيل العطل') }}</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{{ _('معلومات العطل') }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>{{ _('رقم العطل:') }}</strong> #{{ fault.id }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>{{ _('الحالة:') }}</strong>
+                        {% if fault.resolved_at %}
+                            <span class="badge bg-success">{{ _('مُصلح') }}</span>
+                        {% else %}
+                            <span class="badge bg-danger">{{ _('قيد الانتظار') }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>{{ _('الجهاز:') }}</strong> {{ fault.device.name }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>{{ _('نوع الجهاز:') }}</strong>
+                        <span class="badge bg-{{ 'primary' if fault.device.device_type == 'NVR' else 'success' if fault.device.device_type == 'Switch' else 'warning' if fault.device.device_type == 'Router' else 'info' }}">
+                            {{ _(fault.device.device_type) }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>{{ _('نوع العطل:') }}</strong> {{ _(fault.fault_type) }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>{{ _('المُبلّغ:') }}</strong> {{ fault.reported_by }}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>{{ _('تاريخ الإبلاغ:') }}</strong> {{ fault.date_reported | local_dt('%Y-%m-%d %H:%M') }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>{{ _('الفني:') }}</strong> {{ fault.technician.username if fault.technician else _('غير محدد') }}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>{{ _('وصف العطل:') }}</strong><br>
+                    <div class="p-3 bg-light rounded">
+                        {{ fault.description }}
+                    </div>
+                </div>
+                
+                {% if fault.resolved_at %}
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-check-circle"></i> {{ _('تم الإصلاح') }}</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>{{ _('تاريخ الإصلاح:') }}</strong> {{ fault.resolved_at | local_dt('%Y-%m-%d %H:%M') }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>{{ _('قام بالإصلاح:') }}</strong> {{ fault.resolved_by }}
+                        </div>
+                    </div>
+                    
+                    {% if fault.repair_notes %}
+                    <div class="mt-3">
+                        <strong>{{ _('ملاحظات الإصلاح:') }}</strong><br>
+                        <div class="p-3 bg-light rounded">
+                            {{ fault.repair_notes }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if fault.repair_image %}
+                    <div class="mt-3">
+                        <strong>{{ _('صورة بعد الإصلاح:') }}</strong><br>
+                        <img src="{{ url_for('static', filename='uploads/' + fault.repair_image) }}" 
+                             alt="{{ _('صورة الإصلاح') }}" class="img-thumbnail" style="max-width: 300px;">
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">{{ _('معلومات الجهاز') }}</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>{{ _('الاسم:') }}</strong> {{ fault.device.name }}</p>
+                <p><strong>{{ _('النوع:') }}</strong> 
+                    <span class="badge bg-{{ 'primary' if fault.device.device_type == 'NVR' else 'success' if fault.device.device_type == 'Switch' else 'warning' if fault.device.device_type == 'Router' else 'info' }}">
+                        {{ _(fault.device.device_type) }}
+                    </span>
+                </p>
+                <p><strong>{{ _('عنوان IP:') }}</strong> {{ fault.device.ip_address or '-' }}</p>
+                <p><strong>{{ _('الموقع:') }}</strong> {{ fault.device.location or '-' }}</p>
+                <p><strong>{{ _('الفرع:') }}</strong> {{ fault.device.branch.name }}</p>
+                <p><strong>{{ _('المنطقة:') }}</strong> {{ fault.device.branch.region.name }}</p>
+                <p><strong>{{ _('السلسلة:') }}</strong> {{ fault.device.branch.region.chain.name }}</p>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">{{ _('إجراءات') }}</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('device_faults', device_id=fault.device.id) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-list"></i> {{ _('جميع أعطال الجهاز') }}
+                    </a>
+                    
+                    {% if not fault.resolved_at %}
+                        {% if current_user.role == 'admin' or (current_user.role == 'technician' and fault.technician_id == current_user.id) %}
+                        <a href="{{ url_for('resolve_device_fault', fault_id=fault.id) }}" class="btn btn-success">
+                            <i class="fas fa-check"></i> {{ _('إصلاح العطل') }}
+                        </a>
+                        {% endif %}
+                    {% endif %}
+                    
+                    <a href="{{ url_for('all_device_faults') }}" class="btn btn-outline-info">
+                        <i class="fas fa-tools"></i> {{ _('جميع أعطال الأجهزة') }}
+                    </a>
+                    
+                    <a href="{{ url_for('devices', branch_id=fault.device.branch.id) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-hdd"></i> {{ _('جميع الأجهزة') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">{{ _('معلومات الوقت') }}</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>{{ _('وقت الإبلاغ:') }}</strong> {{ fault.date_reported | local_dt('%Y-%m-%d %H:%M:%S') }}</p>
+                {% if fault.resolved_at %}
+                <p><strong>{{ _('وقت الإصلاح:') }}</strong> {{ fault.resolved_at | local_dt('%Y-%m-%d %H:%M:%S') }}</p>
+                <p><strong>{{ _('مدة الإصلاح:') }}</strong> 
+                    {% set duration = fault.resolved_at - fault.date_reported %}
+                    {% set days = duration.days %}
+                    {% set hours = (duration.seconds // 3600) %}
+                    {% if days > 0 %}
+                        {{ days }} يوم{% if days > 1 %}s{% endif %}
+                    {% endif %}
+                    {% if hours > 0 %}
+                        {{ hours }} ساعة{% if hours > 1 %}s{% endif %}
+                    {% endif %}
+                </p>
+                {% else %}
+                <p><strong>{{ _('المدة منذ الإبلاغ:') }}</strong> 
+                    {{ (now - fault.date_reported.replace(tzinfo=None)).days }} {{ _('يوم') }}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="stat-card">
+            <h3 class="text-center">{{ _('تعديل السلسلة') if chain else _('إضافة سلسلة جديدة') }}</h3>
+            <p class="text-center text-muted small">{{ _('السلسلة تحتوي على مناطق، والمنطقة تحتوي على فروع وكاميرات.') }}</p>
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="mb-3">
+                    <label class="form-label">{{ _('اسم السلسلة') }}</label>
+                    <input type="text" name="name" class="form-control" 
+                           value="{{ chain.name if chain }}" placeholder="{{ _('مثال: سلسلة الفرع الرئيسي') }}" required>
+                </div>
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">{{ _('حفظ') }}</button>
+                    <a href="{{ url_for('chains') }}" class="btn btn-secondary">{{ _('إلغاء') }}</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

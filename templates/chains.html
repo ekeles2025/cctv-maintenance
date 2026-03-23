@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-link me-2"></i>{{ _('إدارة السلاسل') }}</h1>
+        <a href="{{ url_for('add_chain') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-plus-circle me-2"></i>{{ _('إضافة سلسلة جديدة') }}
+        </a>
+    </div>
+
+    <p class="text-muted mb-4">{{ _('السلسلة تجمع تحتلها عدة مناطق. أنشئ سلسلة ثم أضف داخلها المناطق من صفحة «المناطق» أو من زر «المناطق» بكل سلسلة.') }}</p>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="stat-card text-center">
+                <div class="h2 text-primary">{{ chains|length }}</div>
+                <div class="text-muted">{{ _('إجمالي السلاسل') }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card text-center">
+                {% set total_regions_in_chains = 0 %}
+                {% for c in chains %}
+                    {% set total_regions_in_chains = total_regions_in_chains + c.regions|length %}
+                {% endfor %}
+                <div class="h2 text-info">{{ total_regions_in_chains }}</div>
+                <div class="text-muted">{{ _('المناطق ضمن السلاسل') }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card text-center">
+                <a href="{{ url_for('regions') }}" class="btn btn-outline-primary btn-sm">{{ _('عرض كل المناطق') }}</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- خانة البحث -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" id="chainSearch" class="form-control" placeholder="{% if current_lang == 'ar' %}ابحث عن سلسلة...{% else %}Search for chain...{% endif %}">
+            </div>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        {% if chains %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>{{ _('اسم السلسلة') }}</th>
+                        <th>{{ _('عدد المناطق') }}</th>
+                        <th>{{ _('عدد الفروع') }}</th>
+                        <th>{{ _('الإجراءات') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for chain_data in chains %}
+                    {% set c = chain_data.chain %}
+                    {% set row_number = chain_data.row_number %}
+                    <tr>
+                        <td><strong>{{ row_number }}</strong></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-link text-primary me-3 fa-lg"></i>
+                                <div>
+                                    <h6 class="mb-1">{{ c.name }}</h6>
+                                    <small class="text-muted">{{ _('سلسلة') }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-info fs-6">{{ c.regions|length }}</span>
+                        </td>
+                        <td>
+                            {% set chain_branches = 0 %}
+                            {% for region in c.regions %}
+                                {% set chain_branches = chain_branches + region.branches|length %}
+                            {% endfor %}
+                            <span class="badge bg-success fs-6">{{ chain_branches }}</span>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{{ url_for('chain_regions', chain_id=c.id) }}" class="btn btn-info btn-sm">
+                                    <i class="fas fa-map me-1"></i>{{ _('المناطق') }}
+                                </a>
+                                <a href="{{ url_for('add_region', chain_id=c.id) }}" class="btn btn-success btn-sm">
+                                    <i class="fas fa-plus me-1"></i>{{ _('إضافة منطقة') }}
+                                </a>
+                                <a href="{{ url_for('edit_chain', chain_id=c.id) }}" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-edit me-1"></i>{{ _('تعديل') }}
+                                </a>
+                                <form method="POST" action="{{ url_for('delete_chain', chain_id=c.id) }}" class="d-inline" 
+                                      onsubmit="return confirm('{{ _('هل أنت متأكد من حذف هذه السلسلة؟')|tojson }}');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-trash me-1"></i>{{ _('حذف') }}
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-link text-muted fa-4x mb-3"></i>
+            <h4 class="text-muted">{{ _('لا توجد سلاسل') }}</h4>
+            <p class="text-muted mb-4">{{ _('أضف أول سلسلة ثم أضف تحتها المناطق من نفس الصفحة أو من «المناطق»') }}</p>
+            <a href="{{ url_for('add_chain') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus-circle me-2"></i>{{ _('إضافة أول سلسلة') }}
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('chainSearch');
+    const tableRows = document.querySelectorAll('tbody tr');
+    
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        
+        tableRows.forEach(row => {
+            const chainName = row.querySelector(`td:nth-child(2)`)?.textContent.toLowerCase() || '';
+            
+            const matchesSearch = chainName.includes(searchTerm);
+            
+            row.style.display = matchesSearch ? '' : 'none';
+        });
+    });
+});
+</script>
+
+{% endblock %}

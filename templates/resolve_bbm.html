@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('إصلاح عطل BBM') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="fas fa-wrench me-2"></i>
+            {{ _('إصلاح عطل BBM') }}
+        </h1>
+        <a href="{{ url_for('bbm_management') }}" class="btn btn-primary">
+            <i class="fas fa-arrow-left me-1"></i>
+            {{ _('العودة لصرف BBM') }}
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="stat-card">
+                <h5 class="mb-3">
+                    <i class="fas fa-tools me-2"></i>
+                    {{ _('تفاصيل عطل BBM') }}
+                </h5>
+                
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">{{ _('رقم العطل الأصلي') }}</label>
+                                <input type="text" class="form-control" value="#{{ bbm_fault.original_fault_id }}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">{{ _('الحالة الحالية') }}</label>
+                                <input type="text" class="form-control" value="{{ _(bbm_fault.status) }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">{{ _('الكاميرا') }}</label>
+                                <input type="text" class="form-control" value="{{ bbm_fault.camera.name if bbm_fault.camera else '---' }}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">{{ _('الفرع') }}</label>
+                                <input type="text" class="form-control" value="{{ bbm_fault.branch.name if bbm_fault.branch else '---' }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('نوع العطل') }}</label>
+                        <input type="text" class="form-control" value="{{ _(bbm_fault.fault_type) }}" readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('وصف العطل') }}</label>
+                        <textarea class="form-control" rows="3" readonly>{{ bbm_fault.description }}</textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">{{ _('تاريخ الإبلاغ') }}</label>
+                                <input type="text" class="form-control" value="{{ bbm_fault.date_reported|local_dt('%Y-%m-%d %H:%M') }}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">{{ _('تاريخ التحويل') }}</label>
+                                <input type="text" class="form-control" value="{{ bbm_fault.date_transferred|local_dt('%Y-%m-%d %H:%M') }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">{{ _('حول بواسطة') }}</label>
+                                <input type="text" class="form-control" value="{{ bbm_fault.transferred_by }}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">{{ _('الفني الحالي') }}</label>
+                                <input type="text" class="form-control" value="{{ bbm_fault.technician.username if bbm_fault.technician else '---' }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('ملاحظات الإصلاح') }}</label>
+                        <textarea class="form-control" 
+                                  name="notes" 
+                                  rows="4" 
+                                  placeholder="{{ _('اكتب ملاحظات الإصلاح هنا...') }}">{{ bbm_fault.notes or '' }}</textarea>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check me-1"></i>
+                            {{ _('تأكيد الإصلاح') }}
+                        </button>
+                        <a href="{{ url_for('bbm_management') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>
+                            {{ _('إلغاء') }}
+                        </a>
+                    </div>
+
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                </form>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="stat-card">
+                <h5 class="mb-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    {{ _('معلومات إضافية') }}
+                </h5>
+                
+                <div class="mb-3">
+                    <strong>{{ _('جهاز') }}:</strong>
+                    <span class="badge bg-secondary">{{ _(bbm_fault.device_type) }}</span>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>{{ _('أبلغ بواسطة') }}:</strong>
+                    <div>{{ bbm_fault.reported_by }}</div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-lightbulb me-1"></i>
+                        {{ _('ملاحظات هامة') }}
+                    </h6>
+                    <p class="mb-2">
+                        <strong>{{ _('عطل BBM') }}:</strong> {{ _('هذا عطل تم تحويله من نظام الأعطال الرئيسي إلى نظام BBM للمعالجة المتخصصة.') }}
+                    </p>
+                    <p class="mb-2">
+                        <strong>{{ _('الإجراء المطلوب') }}:</strong> {{ _('قم بإصلاح العطل وإضافة ملاحظات تفصيلية عن العمل المنجز.') }}
+                    </p>
+                    <p>
+                        <strong>{{ _('الحالة النهائية') }}:</strong> {{ _('بعد الإصلاح، سيتم تحديث حالة العطل إلى "مُصلح" ولن يظهر في قائمة الأعطال النشطة.') }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

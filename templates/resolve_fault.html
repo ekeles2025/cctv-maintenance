@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="text-success">
+                        <i class="fas fa-wrench me-2"></i>
+                        {{ _('إصلاح العطل') }} #{{ fault.id }}
+                    </h3>
+                    <a href="{{ url_for('all_faults') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-right me-1"></i>{{ _('العودة للأعطال') }}
+                    </a>
+                </div>
+
+                <!-- معلومات العطل -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>{{ _('معلومات العطل') }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>{{ _('الكاميرا:') }}</strong> {{ fault.camera.name }}<br>
+                                <strong>{{ _('الفرع:') }}</strong> {{ fault.camera.branch.name }}<br>
+                                <strong>{{ _('المنطقة:') }}</strong> {{ fault.camera.branch.region.name }}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>{{ _('نوع العطل:') }}</strong>
+                                <span class="badge bg-secondary">{{ _(fault.fault_type) }}</span><br>
+                                <strong>{{ _('تاريخ الإبلاغ:') }}</strong> {{ fault.date_reported|local_dt('%Y-%m-%d %H:%M') }}<br>
+                                <strong>{{ _('المبلغ:') }}</strong> {{ fault.reported_by }}
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <strong>{{ _('وصف العطل:') }}</strong>
+                            <p class="border p-3 rounded bg-light">{{ fault.description }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- نموذج إصلاح العطل -->
+                <form method="POST" enctype="multipart/form-data" onsubmit="closeModalAfterRepair()">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-check-circle me-2"></i>{{ _('تفاصيل الإصلاح') }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">{{ _('ملاحظات الإصلاح') }}</label>
+                                <textarea name="repair_notes" class="form-control" rows="4" 
+                                          placeholder="{{ _('اكتب هنا تفاصيل الإصلاح الذي قمت به...') }}"></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">{{ _('صورة الإصلاح (اختياري)') }}</label>
+                                <input type="file" name="repair_image" class="form-control" 
+                                       accept="image/*">
+                                <small class="text-muted">{{ _('يمكنك رفع صورة تثبت الإصلاح') }}</small>
+                            </div>
+
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>{{ _('ملاحظة:') }}</strong> {{ _('بعد الضغط على "تأكيد الإصلاح" سيتم تسجيل الوقت والتاريخ الحاليين تلقائياً.') }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{{ url_for('all_faults') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times me-1"></i>{{ _('إلغاء') }}
+                        </a>
+                        <button type="submit" class="btn btn-success" onclick="closeModalAfterRepair()">
+                            <i class="fas fa-check-circle me-1"></i>{{ _('تأكيد الإصلاح') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Enhanced modal closing function for Bootstrap 5
+function closeModalAfterRepair() {
+    console.log('Closing modal after repair...');
+    
+    // Immediate attempt to close modal
+    closeModalNow();
+    
+    // Fallback after a short delay
+    setTimeout(function() {
+        closeModalNow();
+        // Force redirect to all faults page
+        window.location.href = "{{ url_for('all_faults') }}";
+    }, 100);
+}
+
+function closeModalNow() {
+    // Method 1: Bootstrap 5 Modal API
+    const modalElements = document.querySelectorAll('.modal.show');
+    modalElements.forEach(function(modal) {
+        try {
+            const modal = bootstrap.Modal.getInstance(modal);
+            if (modal) {
+                modal.hide();
+                console.log('Closed modal using Bootstrap 5 API');
+            }
+        } catch (e) {
+            console.log('Bootstrap 5 API error:', e);
+        }
+    });
+    
+    // Method 2: jQuery fallback
+    try {
+        if (typeof $ !== 'undefined') {
+            $('.modal.show').modal('hide');
+            console.log('Closed modal using jQuery');
+        }
+    } catch (e) {
+        console.log('jQuery error:', e);
+    }
+    
+    // Method 3: Manual cleanup
+    document.querySelectorAll('.modal').forEach(function(modal) {
+        modal.classList.remove('show', 'in');
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+    });
+    
+    // Remove backdrops
+    document.querySelectorAll('.modal-backdrop').forEach(function(backdrop) {
+        backdrop.remove();
+    });
+    
+    // Clean up body
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    
+    console.log('Modal cleanup completed');
+}
+
+// Auto-close on page load if any modal is showing
+document.addEventListener('DOMContentLoaded', function() {
+    // Close any modals that might be stuck open
+    setTimeout(function() {
+        closeModalNow();
+    }, 500);
+});
+</script>
+{% endblock %}

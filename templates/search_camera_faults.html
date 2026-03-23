@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('البحث عن أعطال الكاميرات')}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="fas fa-search me-2"></i>{{ _('البحث عن أعطال الكاميرات')}
+        </h1>
+        <a href="{{ url_for('dashboard')}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-right me-1"></i>{{ _('العودة للرئيسية')}
+        </a>
+    </div>
+
+    <div class="stat-card">
+        <!-- Search Box -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" 
+                           id="cameraSearch" 
+                           class="form-control" 
+                           placeholder="{{ _('ابحث عن كاميرا...')}"
+                           onkeyup="searchCameraFaults()">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <button class="btn btn-primary w-100" onclick="clearSearch()">
+                    <i class="fas fa-times me-1"></i>{{ _('مسح البحث')}
+                </button>
+            </div>
+        </div>
+
+        <!-- All Faults Table (will be filtered by JavaScript) -->
+        {% if faults %}
+        <div class="table-responsive">
+            <table class="table table-hover" id="faultsTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>{{ _('الكاميرا')}</th>
+                        <th>{{ _('الفرع')}</th>
+                        <th>{{ _('نوع العطل')}</th>
+                        <th>{{ _('الوصف')}</th>
+                        <th>{{ _('الحالة')}</th>
+                        <th>{{ _('تاريخ الإبلاغ')}</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% set row_num = 1 %}
+                    {% for fault in faults %}
+                    <tr class="{% if fault.resolved_at %}table-success{% else %}table-warning{% endif %}" 
+                        data-camera-name="{{ fault.camera.name|lower }}">
+                        <td><strong>#{{ row_num }}</strong></td>
+                        <td>{{ fault.camera.name }}</td>
+                        <td>{{ fault.camera.branch.name if fault.camera.branch else '---' }}</td>
+                        <td>
+                            <span class="badge bg-secondary">{{ _(fault.fault_type) }}</span>
+                        </td>
+                        <td>{{ fault.description[:50] }}{% if fault.description|length > 50 %}...{% endif %}</td>
+                        <td>
+                            {% if fault.resolved_at %}
+                                <span class="badge bg-success">{{ _('مُصلح')}}</span>
+                            {% else %}
+                                <span class="badge bg-danger">{{ _('قيد الانتظار')}}</span>
+                            {% endif %}
+                        </td>
+
+                        <td>{{ fault.date_reported|local_dt('%Y-%m-%d %H:%M')}}</td>
+
+                        <td>
+                            {% if fault.technician %}
+                                {{ fault.technician.username }}
+                            {% else %}
+                                <span class="text-muted">---</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                {% if not fault.resolved_at %}
+                                    {% if current_user.role == "admin" or fault.technician_id == current_user.id %}
+                                    <a href="{{ url_for('resolve_fault', fault_id=fault.id) }}" 
+                                       class="btn btn-success">
+                                        <i class="fas fa-wrench me-1"></i>{{ _('إصلاح')}}
+                                    </a>
+                                    {% else %}
+                                    <span class="text-muted">{{ _('غير مسموح')}}</span>
+                                    {% endif %}
+                                {% else %}
+                                    <a href="{{ url_for('fault_details', fault_id=fault.id) }}" 
+                                       class="btn btn-info">
+                                        <i class="fas fa-eye me-1"></i>{{ _('عرض')}}
+                                    </a>
+                                {% endif %}
+                                {% if current_user.role == "admin" %}
+                                <form method="POST" action="{{ url_for('delete_fault', fault_id=fault.id) }}" 
+                                      style="display: inline;" 
+                                      onsubmit="return confirm('هل أنت متأكد من حذف هذا العطل؟');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-danger">
+                                        <i class="fas fa-trash me-1"></i>{{ _('حذف')}}
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% set row_num = row_num + 1 %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-exclamation-circle text-muted fa-4x mb-3"></i>
+            <h4 class="text-muted">{{ _('لا توجد أعطال')}</h4>
+            <p class="text-muted">{{ _('لم يتم تسجيل أي أعطال بعد')}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.search-highlight {
+    background-color: #fff3cd !important;
+    font-weight: bold;
+}
+
+.no-results {
+    text-align: center;
+    padding: 40px;
+    color: #6c757d;
+}
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function searchCameraFaults() {
+    var searchValue = document.getElementById('cameraSearch').value.toLowerCase();
+    var rows = document.querySelectorAll('#faultsTable tbody tr');
+    var hasResults = false;
+    
+    for (var i = 0; i < rows.length; i++) {
+        var row = rows[i];
+        var cameraName = row.getAttribute('data-camera-name');
+        
+        if (cameraName && cameraName.indexOf(searchValue) > -1) {
+            row.style.display = '';
+            hasResults = true;
+        } else {
+            row.style.display = 'none';
+        }
+    }
+    
+    // Show/hide no results message
+    var table = document.getElementById('faultsTable');
+    var noResultsMsg = table.nextElementSibling;
+    
+    if (!hasResults && searchValue !== '') {
+        if (!noResultsMsg || !noResultsMsg.classList.contains('no-results')) {
+            var noResultsDiv = document.createElement('div');
+            noResultsDiv.className = 'no-results';
+            noResultsDiv.innerHTML = `
+                <i class="fas fa-exclamation-circle fa-3x mb-3"></i>
+                <h4>{{ _('لا توجد نتائج')}</h4>
+                <p>{{ _('لم يتم العثور على أعطال للكاميرا')} "${searchValue}"</p>
+            `;
+            table.parentNode.insertBefore(noResultsDiv, table.nextSibling);
+        }
+    } else {
+        if (noResultsMsg && noResultsMsg.classList.contains('no-results')) {
+            noResultsMsg.remove();
+        }
+    }
+}
+
+function clearSearch() {
+    document.getElementById('cameraSearch').value = '';
+    searchCameraFaults();
+}
+</script>
+{% endblock %}
