@@ -1215,37 +1215,31 @@ def import_regions_excel(chain_id=None):
                 try:
                     row_idx = idx + 1  # رقم الصف في Excel (1-based)
                     
-                    # استخراج البيانات حسب تنسيق المستخدم: اسم الكاميرا, ip Address, اسم الفرع
-                    camera_name = str(row.iloc[0]).strip() if len(df.columns) >= 1 and pd.notna(row.iloc[0]) else ''
-                    camera_ip = str(row.iloc[1]).strip() if len(df.columns) >= 2 and pd.notna(row.iloc[1]) else ''
-                    branch_name = str(row.iloc[2]).strip() if len(df.columns) >= 3 and pd.notna(row.iloc[2]) else ''
+                    # استخراج البيانات لاستيراد المناطق: اسم المنطقة (العمود الأول)
+                    region_name = str(row.iloc[0]).strip() if len(df.columns) >= 1 and pd.notna(row.iloc[0]) else ''
                     
-                    logger.info(f"معالجة الصف {row_idx}: كاميرا='{camera_name}', IP='{camera_ip}', فرع='{branch_name}'")
+                    logger.info(f"معالجة الصف {row_idx}: منطقة='{region_name}'")
                     
-                    if not camera_name:
-                        errors.append(f"الصف {row_idx}: اسم الكاميرا إلزامي")
-                        continue
-                    
-                    if not branch_name:
-                        errors.append(f"الصف {row_idx}: اسم الفرع إلزامي")
+                    if not region_name:
+                        errors.append(f"الصف {row_idx}: اسم المنطقة إلزامي")
                         continue
                     
                     # التحقق من وجود المنطقة مسبقاً في نفس السلسلة فقط
-                    existing_region = Region.query.filter_by(name=branch_name, chain_id=chain_id if chain else None).first()
+                    existing_region = Region.query.filter_by(name=region_name, chain_id=chain_id if chain else None).first()
                     if existing_region:
                         # المنطقة موجودة بالفعل في نفس السلسلة
-                        logger.warning(f"⚠️ المنطقة '{branch_name}' موجودة بالفعل في السلسلة {'(' + chain.name + ')' if chain else '(بدون سلسلة)'}")
+                        logger.warning(f"⚠️ المنطقة '{region_name}' موجودة بالفعل في السلسلة {'(' + chain.name + ')' if chain else '(بدون سلسلة)'}")
                         skipped_regions += 1
                     else:
                         # إنشاء المنطقة الجديدة مع ربطها بالسلسلة
-                        region = Region(name=branch_name, chain_id=chain_id if chain else None)
+                        region = Region(name=region_name, chain_id=chain_id if chain else None)
                         db.session.add(region)
                         regions_added += 1
                         
                         if chain:
-                            logger.info(f"✅ تمت إضافة المنطقة: '{branch_name}' وربطها بالسلسلة '{chain.name}'")
+                            logger.info(f"✅ تمت إضافة المنطقة: '{region_name}' وربطها بالسلسلة '{chain.name}'")
                         else:
-                            logger.info(f"✅ تمت إضافة المنطقة: '{branch_name}' (بدون سلسلة)")
+                            logger.info(f"✅ تمت إضافة المنطقة: '{region_name}' (بدون سلسلة)")
                 
                 except Exception as e:
                     errors.append(f"الصف {row_idx}: {str(e)}")
