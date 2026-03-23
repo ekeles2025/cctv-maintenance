@@ -8,3 +8,4 @@ openpyxl>=3.1.0
 Flask-Migrate>=4.0.0
 Flask-Babel==3.1.0
 pandas>=2.0.0
+gunicorn
