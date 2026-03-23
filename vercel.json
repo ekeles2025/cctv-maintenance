@@ -1,15 +1,13 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "hello.py",
-      "use": "@vercel/python"
+  "functions": {
+    "api/hello.py": {
+      "runtime": "python3.12"
     }
-  ],
-  "routes": [
+  },
+  "rewrites": [
     {
-      "src": "/(.*)",
-      "dest": "hello.py"
+      "source": "/(.*)",
+      "destination": "/api/hello"
     }
   ]
 }
