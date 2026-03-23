@@ -924,8 +924,14 @@ def add_chain():
         name = request.form['name']
         chain = Chain(name=name)
         db.session.add(chain)
-        db.session.commit()
-        flash(_("تم إضافة السلسلة بنجاح"), "success")
+        try:
+            db.session.commit()
+            print(f"DEBUG: Successfully added chain '{name}' with ID: {chain.id}")
+            flash(_("تم إضافة السلسلة بنجاح"), "success")
+        except Exception as e:
+            db.session.rollback()
+            print(f"ERROR: Failed to add chain: {str(e)}")
+            flash(f"خطأ في إضافة السلسلة: {str(e)}", "danger")
         return redirect(url_for("chains"))
     return render_template("add_edit_chain.html", chain=None)
 
