@@ -2,14 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "minimal.py",
+      "src": "hello.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "minimal.py"
+      "dest": "hello.py"
     }
   ]
 }
