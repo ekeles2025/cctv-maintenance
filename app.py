@@ -925,9 +925,12 @@ def add_chain():
         chain = Chain(name=name)
         db.session.add(chain)
         try:
+            db.session.flush()  # Force immediate write to database
             db.session.commit()
             print(f"DEBUG: Successfully added chain '{name}' with ID: {chain.id}")
             flash(_("تم إضافة السلسلة بنجاح"), "success")
+            # Force database sync
+            db.session.expire_all()
         except Exception as e:
             db.session.rollback()
             print(f"ERROR: Failed to add chain: {str(e)}")

@@ -15,6 +15,12 @@ def _get_database_uri():
         except ImportError:
             print("Warning: psycopg2 not installed. Falling back to SQLite.")
             return 'sqlite:///camera_system.db'
+    
+    # For SQLite, use absolute path to ensure database is in project directory
+    if url.startswith('sqlite:///'):
+        db_path = os.path.abspath('camera_system.db')
+        return f'sqlite:///{db_path}'
+    
     return url
 
 
@@ -32,9 +38,6 @@ class Config:
         'pool_timeout': 30,
         'max_overflow': 20
     }
-    
-    # Auto-commit settings
-    SQLALCHEMY_COMMIT_ON_TEARDOWN = True
 
     BABEL_DEFAULT_LOCALE = 'en'
     BABEL_DEFAULT_TIMEZONE = 'UTC'
