@@ -1,13 +1,15 @@
 {
-  "functions": {
-    "simple.py": {
-      "runtime": "@vercel/python@4.0.0"
-    }
-  },
-  "rewrites": [
+  "version": 2,
+  "builds": [
     {
-      "source": "/(.*)",
-      "destination": "/simple.py"
+      "src": "simple.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "simple.py"
     }
   ]
 }
